@@ -75,6 +75,13 @@ function displayName(id: string) {
   if (id === 'gemini-3.8-flash') return 'Gemini 3.8 Flash'
   return id
 }
+/**
+ * 11/16 사용자: Fable·Opus 는 한 턴에 토큰을 1.5배 더 받는다(Fable 5.1 약 190 → 290, Opus 5.5 약 56 → 84) — 출석 500토큰으로 Fable 을 2.6턴 쓸 수 있었다.
+ * 원가 비중을 그만큼 낮춰 견적·예약·차감·최소 차감이 한 값으로 같이 움직인다. 직결(claude-opus-5-5)과 OpenRouter(anthropic/claude-opus-5.5) 이름 모두.
+ */
+export const PREMIUM_CHARGE = 1.5
+const pricingFor = (model: ModelDefinition, base = tokenPricing()) =>
+  /claude-(fable|opus)-/.test(model.providerModelId) ? { ...base, costShare: base.costShare / PREMIUM_CHARGE } : base
 /** A cheap renderer still shares its envelope with the server-pinned verifier. */
 function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {
   const quote = tokenQuote(model, output, pricing)
@@ -87,8 +94,9 @@ function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<t
 }
 export async function chatModelOptions(_userId: string, adult = false) {
   try {
-    const pricing = tokenPricing()
+    const base = tokenPricing()
     const choices: ChatModelChoice[] = choiceModels(adult).flatMap(({ key, model }) => LENGTHS.map(length => {
+      const pricing = pricingFor(model, base)
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
       return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
@@ -112,7 +120,7 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   if (!model) throw new Error('chat model unavailable')
   const tierName = TIER_OF[length]
   const tier = POLICY.chatTier[tierName]
-  const pricing = tokenPricing()
+  const pricing = pricingFor(model)
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
   // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
   const main = adult ? availableModels(false).find(m => m.id === key) : model
