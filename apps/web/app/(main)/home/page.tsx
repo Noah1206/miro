@@ -17,9 +17,9 @@ import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile, HeaderProfileGuest } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
-import { HomeViewBeacon } from './view-beacon'
+import { HomeViewBeacon, HomeVoiceWake } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
-import { voicePaused } from '@miro/config'
+import { feature, voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 import { AfterMount } from '@/components/after-mount'
 import { CreatorInvite } from '@/components/creator-invite'
@@ -78,6 +78,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
 
       <InstallAppHint />
       <HomeViewBeacon signedIn={!!user} />
+      {user && feature('characterVoice') && !voicePaused() && <HomeVoiceWake />}
 
       {/* 11/12 음성 서버가 멈춘 동안: 음성 모드 예고 시트(이 기기에 한 번, 로그인한 사람만). */}
       {settled && voicePaused() && <VoiceSoonSheet />}
