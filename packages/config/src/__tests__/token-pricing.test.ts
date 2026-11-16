@@ -2,18 +2,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { tokenPricing, tokenQuote, tokensForCost, tokenRates } from '../token-pricing'
 afterEach(() => vi.unstubAllEnvs())
 describe('purchase token pricing', () => {
-  it('uses the cheapest bonus pack and limits provider cost to half its revenue', () => {
+  it('uses the cheapest bonus pack and limits provider cost to 40% of its revenue', () => {
     vi.stubEnv('MIRO_RECHARGE_PRODUCTS', '')
     const p = tokenPricing()
     expect(p.revenueKRWPerToken).toBe(50000 / 7500)
-    expect(p.costShare).toBe(.5)
-    expect(tokensForCost(.04448, p)).toBe(21)
-    expect(21 * p.revenueKRWPerToken * .5).toBeGreaterThanOrEqual(.04448 * p.fxKRWPerUSD)
+    expect(p.costShare).toBe(.4)
+    expect(tokensForCost(.04448, p)).toBe(26)
+    expect(26 * p.revenueKRWPerToken * .4).toBeGreaterThanOrEqual(.04448 * p.fxKRWPerUSD)
   })
   it('accounts for an even cheaper configured product', () => {
     vi.stubEnv('MIRO_RECHARGE_PRODUCTS', JSON.stringify([{ id: 'sale', name: 'sale', units: 1000, priceMinor: 1000, currency: 'KRW' }]))
     expect(tokenPricing().revenueKRWPerToken).toBe(1)
-    expect(tokensForCost(.01)).toBe(30)
+    expect(tokensForCost(.01)).toBe(38)
   })
   it('clamps output to the registered model limit and reserves analysis/retry allowance', () => {
     const q = tokenQuote({ inputCost: 2, outputCost: 10, maxContextTokens: 200000, maxOutputTokens: 2048 }, 4096)

@@ -19,7 +19,7 @@ export function tokenPricing(): TokenPricing {
   const raw = JSON.parse(process.env.MIRO_TOKEN_PRICING || '{}')
   const rates = [...PLANNED_RECHARGE_TIERS.map(p => p.priceKRW / p.units),
     ...rechargeCatalog().products.filter(p => p.currency === 'KRW').map(p => p.priceMinor / p.units)]
-  const p = { fxKRWPerUSD: raw.fxKRWPerUSD ?? 1500, costShare: 0.5,
+  const p = { fxKRWPerUSD: raw.fxKRWPerUSD ?? 1500, costShare: 0.4, // 11/16 사용자: 0.5 → 0.4(차감 1.25배) — 차감되지 않는 배경 작업(대화 원가의 30~45%)과 창작 보상(유료 1토큰 1.5원)까지 더하면 최저가 상품(6.2원)에서 남지 않았다
     revenueKRWPerToken: Math.min(...rates), maxInputTokens: raw.maxInputTokens ?? 64000, turnAllowance: raw.turnAllowance ?? 2 }
   if (!Number.isFinite(p.fxKRWPerUSD) || p.fxKRWPerUSD <= 0 || !Number.isFinite(p.revenueKRWPerToken) || p.revenueKRWPerToken <= 0
     || !Number.isSafeInteger(p.maxInputTokens) || p.maxInputTokens < 1024 || !Number.isFinite(p.turnAllowance) || p.turnAllowance < 1 || p.turnAllowance > 10)
