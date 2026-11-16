@@ -88,7 +88,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       <section className={styles.section} aria-label={t('내 설정')}>
         <h3>{t('내 설정')}</h3>
         {/* 음성 모드(11/9 사용자: 헤더 대신 메뉴 안) — 켜면 캐릭터 답장을 목소리로 듣는다. 이 탭이 아이폰 소리 잠금도 푼다. */}
-        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={() => { if (!on) toast(t('음성 모드가 켜졌어요')); toggle() }}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
+        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={() => { if (!on) toast(t('음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요')); toggle() }}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
         {/* 11/12 음성 서버가 멈춘 동안: 켤 수 없는 줄로 '곧 열림' 만 알린다. */}
         {!available && soon && <button type="button" disabled className={styles.voiceRow}><span>{t('음성 모드')}</span><em>{t('곧 열림')}</em></button>}
         {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}

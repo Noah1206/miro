@@ -7,7 +7,8 @@ import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
-import { characterAgencyMode, feature, tokensForCost, POLICY, MIN_TURN_BALANCE } from '@miro/config'
+import { characterAgencyMode, feature, tokensForCost, voicePaused, POLICY, MIN_TURN_BALANCE } from '@miro/config'
+import { VOICE_TOKENS_MAX, voiceTokens } from '../voice-text'
 import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
 import { looksLikeBackstageLeak, looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
@@ -139,9 +140,11 @@ async function executeTurn(opts: {
     // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
     if (opts.tokenCeiling !== undefined && (!Number.isSafeInteger(opts.tokenCeiling) || opts.tokenCeiling < 0)) return { ok: false, reason: 'model_unavailable' }
     const maximumTokens = Math.min(Math.max(model.quote.maximumTokens * thinkScale, model.floorTokens), availableTokens, opts.tokenCeiling ?? Infinity)
+    // 11/16 음성 모드 턴은 읽는 대사만큼 더 받는다 — 모델 몫(maximumTokens) 위에 음성 몫을 따로 예약한다.
+    const voiceOn = !!opts.voice && feature('characterVoice') && !voicePaused()
     const maximumUSD = Math.min(model.quote.maximumUSD * thinkScale, maximumTokens * model.pricing.revenueKRWPerToken * model.pricing.costShare / model.pricing.fxKRWPerUSD)
     if (resolveTurnPolicy({ ...policyInput, agencyReady: false }).metered) {
-      try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, tokenAmount: maximumTokens, idempotencyKey: `turn:${opts.requestId}` })) }
+      try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, tokenAmount: Math.min(maximumTokens + (voiceOn ? VOICE_TOKENS_MAX : 0), availableTokens), idempotencyKey: `turn:${opts.requestId}` })) }
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     }
     const refund = () => { turnMeter.closed = true; return reservation ? rollback(reservation.reservationId) : Promise.resolve() }
@@ -260,9 +263,9 @@ async function executeTurn(opts: {
 
     turnMeter.closed = true
     const costTokens = tokensForCost(turnMeter.customerCostUSD, model.pricing)
-    if (costTokens > (reservation?.cost ?? 0)) { await refund(); return { ok: false, reason: 'generation' } }
+    if (costTokens > (reservation ? maximumTokens : 0)) { await refund(); return { ok: false, reason: 'generation' } }
     // 11/14 사용자: 한 턴 최소 차감은 모델별(floorTokens) — 검증 없는 언베일 방도 같은 모델이면 일반 방과 같은 최소(예약 안에서만).
-    const actualTokens = reservation ? Math.min(Math.max(costTokens, model.floorTokens), reservation.cost) : costTokens
+    const actualTokens = reservation ? Math.min(Math.min(Math.max(costTokens, model.floorTokens), maximumTokens) + (voiceOn ? voiceTokens(transition.blocks as Array<Record<string, unknown>>) : 0), reservation.cost) : costTokens
     const responseText = renderBlocks(transition.blocks)
     // 상황별 사진(10/28) — 만든 사람이 적은 상황이 지금 장면이 됐으면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
     // 10/31: 싼 분류 모델이 상황 설명을 보고 고른다(실패하면 키워드). 이번 턴 차감 계량기는 이미 닫혔으므로 서비스 예산으로 부른다.
