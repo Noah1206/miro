@@ -55,5 +55,12 @@ export function charsPerTick(speed: number): number {
  * 한 글자씩 일정하게 친다. 기분의 빠르기는 유지하되 이 비율로 조금 빠르게, 끊는 자리는 문장 끝과 박스 끝뿐.
  */
 export const REPLY_TYPING_PACE = 0.6
+/**
+ * 11/16 사용자: 밀린 글이 많을 때만 빨라진다 — 아직 안 친 글(지금 문단 포함)이 200자를 넘으면 그 배수만큼 빨리 쳐서 따라잡는다(최대 12배).
+ * 200자까지는 원래 빠르기 그대로다. 전엔 모델이 다 쓴 뒤에도 1,000자에 30초, 2,000자에 1분을 더 쳤다.
+ */
+export function replyTypingPace(backlogChars: number): number {
+  return REPLY_TYPING_PACE / Math.min(12, Math.max(1, backlogChars / 200))
+}
 /** 박스(서술 칸·말풍선) 안의 글을 다 친 뒤 다음 박스로 넘어가기 전의 멈칫. */
 export const BOX_END_PAUSE_MS = 450
