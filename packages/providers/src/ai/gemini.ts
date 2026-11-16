@@ -1,4 +1,5 @@
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
+import { flatPrompt } from './types'
 import type { ProviderInfo } from '../types'
 
 /**
@@ -43,7 +44,7 @@ export class GeminiProvider implements AIProvider {
       signal: req.signal,
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: req.system }] },
-        contents: [{ role: 'user', parts: [{ text: req.prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: flatPrompt(req) }] }],
         safetySettings: ['HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_HARASSMENT']
           .map(category => ({ category, threshold: req.safety === 'relaxed' ? 'BLOCK_ONLY_HIGH' : 'BLOCK_MEDIUM_AND_ABOVE' })),
         generationConfig: {

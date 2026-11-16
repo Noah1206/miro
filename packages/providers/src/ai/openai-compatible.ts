@@ -1,4 +1,5 @@
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
+import { flatPrompt } from './types'
 import type { ProviderInfo } from '../types'
 
 type Usage = { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } }
@@ -87,7 +88,11 @@ export class OpenAICompatibleProvider implements AIProvider {
         // 11/16 OpenRouter 의 Claude 도 지시문 앞부분을 캐시한다(직결 Anthropic 과 같은 자리) — 안 하면 턴마다 2만 토큰을 새로 읽어 첫 글자가 늦고 입력 값을 전부 낸다.
         messages: [{ role: 'system', content: anthropicViaRouter && req.cacheSystemPrefix && req.cacheSystemPrefix > 0 && req.cacheSystemPrefix <= req.system.length
           ? [{ type: 'text', text: req.system.slice(0, req.cacheSystemPrefix), cache_control: { type: 'ephemeral' } }, { type: 'text', text: req.system.slice(req.cacheSystemPrefix) + (req.json ? '\nReturn only a JSON object.' : '') }]
-          : req.system + (req.json ? '\nReturn only a JSON object.' : '') }, { role: 'user', content: req.prompt }],
+          : req.system + (req.json ? '\nReturn only a JSON object.' : '') },
+          // 11/16 최근 대화 덩이 — OpenRouter 의 Claude 는 끝 덩이에 캐시 표시, 나머지는 한 글로(앞부분이 같으면 공급자가 자동 캐시).
+          { role: 'user', content: anthropicViaRouter && req.promptPrefix?.length
+            ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text', text, ...(i === all.length - 1 ? { cache_control: { type: 'ephemeral' } } : {}) })), { type: 'text', text: req.prompt }]
+            : flatPrompt(req) }],
         ...(modernGPT ? { max_completion_tokens: completionCap, reasoning_effort: (req.thinking === 'max' ? 'xhigh' : req.thinking) ?? (requiresReasoning ? 'low' : 'none') }
           : { max_tokens: req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }),
         // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).

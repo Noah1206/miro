@@ -81,6 +81,8 @@ export type BuiltContext = {
   dropped: string[]
   /** 11/10 system 의 처음 이 글자 수까지는 같은 방의 턴마다 그대로다(공급자 캐시용). 뒤는 이번 턴 지시. */
   cachePrefix: number
+  /** 11/16 캐시 배치(cacheLayout)일 때만 — 최근 대화를 메시지 하나씩 나눈 덩이. prompt 앞에 그대로 이어 붙는 글이고, 턴이 지나도 앞부분이 같아 공급자가 캐시한다. */
+  history?: string[]
 }
 
 /**
@@ -253,7 +255,25 @@ export type ReplyStyle = 'short' | 'scene' | 'plus' | 'long' | 'saga' | 'brief'
  * 전체 대화 원문을 매번 보내지 않는다. 최근 메시지 일부 + 요약된 장기 기억만 사용한다.
  * 예산을 넘으면 중요도가 낮은 항목부터 제외하고, 무엇을 뺐는지 기록한다.
  */
-export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = false, style: ReplyStyle = 'scene'): BuiltContext {
+/**
+ * 11/16 캐시: 최근 대화의 시작점을 이 턴 수마다 한 번만 옮긴다 — 턴마다 맨 앞 메시지가 하나씩 빠지면 앞부분이 매번 달라져 공급자 캐시가 걸리지 않는다.
+ * 기준 개수(count)보다 짧아지지 않게 기준점 앞의 가장 가까운 닻(사용자 메시지, 방의 몇 번째 턴인지로 고름)에서 시작한다. 다 들어가는 방은 그대로.
+ */
+const CACHE_ANCHOR_TURNS = 5
+export function anchoredRecent(all: RecentMessage[], count: number, turnCount: number): RecentMessage[] {
+  const minStart = Math.max(0, all.length - count)
+  if (minStart === 0) return all
+  let seen = 0
+  for (let i = all.length - 1; i >= 0; i--) {
+    if (all[i]!.role !== 'user') continue
+    seen++
+    if (i <= minStart && (((turnCount - seen) % CACHE_ANCHOR_TURNS) + CACHE_ANCHOR_TURNS) % CACHE_ANCHOR_TURNS === 0) return all.slice(i)
+  }
+  return all.slice(minStart)
+}
+
+/** cacheLayout(11/16): 바뀌지 않는 것(지시문 → 최근 대화)을 앞에, 턴마다 바뀌는 것(세계·기분·기억·이번 턴 지시)을 뒤에 둔다 — system 은 턴 지시 없이 그대로, 최근 대화는 history 로 따로 준다. */
+export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = false, style: ReplyStyle = 'scene', cacheLayout = false): BuiltContext {
   const template = prompts.select('dialogue', s.relationship.sessionId)
   // spoken: 실시간 음성 통화. 소리로 나가므로 JSON 계약·상태 변화 제안을 싣지 않는다.
   // 11/10: 장면 답은 분량 지시(replyLengthRule)를 따른다 — '짧게 끝낼 수 있다'는 말투 규칙이 답을 500자 안팎에 묶었다(짧은 답·통화는 그대로).
@@ -266,7 +286,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
     s.character.worldRole.endings?.length ? `이번 턴: 지금 ${s.turnCount}턴째(엔딩 최소 턴 판단 기준).` : null,
   ].filter(Boolean).join('\n')
   const cachePrefix = system.length
-  const full = tail ? `${system}\n\n## 이번 턴 지시\n${tail}` : system
+  const full = !cacheLayout && tail ? `${system}\n\n## 이번 턴 지시\n${tail}` : system
   const systemTokens = estimateTokens(full)
 
   // ECHO 는 같은 모델에 맥락을 더 넣는다. 늘어난 양도 아래 예산 검사를 똑같이 통과해야 한다.
@@ -291,13 +311,15 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
       ...retrieveMemories(s.memories.filter(m => m.type !== 'short_term_summary'), s.relationship.sessionId,
         plan.memories - (latestSummary ? 1 : 0), s.userInput ?? '') ]
     if (s.memories.length > memories.length) dropped.push(`memories(${s.memories.length - memories.length})`)
-    const recent = s.recentMessages.slice(-plan.messages)
+    const recent = cacheLayout ? anchoredRecent(s.recentMessages, plan.messages, s.turnCount) : s.recentMessages.slice(-plan.messages)
     if (s.recentMessages.length > recent.length) dropped.push(`messages(${s.recentMessages.length - recent.length})`)
 
-    const prompt = buildPrompt(s, memories, recent, spoken, !spoken && style !== 'brief' && (!s.mode || s.mode === 'chat'))
+    const history: string[] = []
+    const body = buildPrompt(s, memories, recent, spoken, !spoken && style !== 'brief' && (!s.mode || s.mode === 'chat'), cacheLayout ? history : undefined)
+    const prompt = cacheLayout ? `${body}\n\n## 이번 턴 지시${tail ? '\n' + tail : ''}` : body
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system: full, cachePrefix, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
-      approxTokens: systemTokens + estimateTokens(prompt), dropped }
+    last = { system: full, cachePrefix, prompt, ...(cacheLayout ? { history } : {}), promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
+      approxTokens: systemTokens + estimateTokens(history.join('') + prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
   throw new Error('context_budget_exceeded')
@@ -590,6 +612,8 @@ function buildPrompt(
   recent: RecentMessage[],
   spoken = false,
   novel = false,
+  /** 주면 최근 대화를 parts 대신 여기에 메시지 하나씩 담는다(캐시 배치) — 부른 쪽이 이 글 앞에 붙인다. */
+  historyOut?: string[],
 ): string {
   const parts: string[] = []
 
@@ -691,7 +715,7 @@ function buildPrompt(
   }
 
   if (recent.length > 0) {
-    parts.push('', '## 최근 대화')
+    if (!historyOut) parts.push('', '## 최근 대화')
     // 여러 인물 카드(11/6): 히로인의 대사·행동·속마음은 NPC 가 아니라 이 카드가 연기한 그 히로인의 것이다.
     const cast = new Set(castNames(s.character))
     for (const m of recent) {
@@ -699,6 +723,7 @@ function buildPrompt(
         : m.role === 'narrator' ? '내레이터 (장면 서술 · 캐릭터 지식 아님)'
         : m.role === 'npc' ? `NPC (${m.npcName ?? '이름 미상'})` : s.character.identity.name
       const source = { id: m.id, kind: m.kind, at: m.at, knowledgeScope: m.knowledgeScope }
+      const own: string[] = []
       if (m.blocks?.length) {
         for (const block of m.blocks) {
           const speaker = block.type === 'narrative' || block.type === 'world'
@@ -708,10 +733,12 @@ function buildPrompt(
             : block.type === 'thought' ? `속마음 (${block.speaker && cast.has(block.speaker) ? block.speaker : s.character.identity.name}, 소리 내어 말하지 않음)`
             : m.role !== 'user' && block.speaker && block.speaker !== s.character.identity.name
               ? (cast.has(block.speaker) ? block.speaker : `NPC (${block.speaker})`) : label
-          parts.push(`${speaker}: ${block.text}`)
+          own.push(`${speaker}: ${block.text}`)
         }
-      } else parts.push(`${label}: ${m.content}`)
-      if (Object.values(source).some(v => v !== undefined)) parts.push(`출처: ${JSON.stringify(source)}`)
+      } else own.push(`${label}: ${m.content}`)
+      if (Object.values(source).some(v => v !== undefined)) own.push(`출처: ${JSON.stringify(source)}`)
+      if (historyOut) historyOut.push((historyOut.length ? '' : '## 최근 대화\n') + own.join('\n') + '\n')
+      else parts.push(...own)
     }
     // 11/11 운영: 예전 1인칭('내 손목')으로 쌓인 방은 새 문체 지시보다 앞 턴을 따라 했다 — 문체는 지시문을 따르게 한다.
     if (novel) parts.push('(위 최근 대화의 서술이 1인칭(\'나\'·\'내\')이나 현재형이었더라도 따라 하지 않습니다. 이번 응답의 서술은 지시문대로 3인칭 과거형 소설체로 씁니다. 내용·흐름만 잇습니다.)')

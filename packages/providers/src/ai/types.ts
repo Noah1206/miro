@@ -47,6 +47,15 @@ export type GenerationRequest = {
    * 나머지(이번 턴 지시)는 그 뒤에 붙는다. 없거나 범위 밖이면 캐시하지 않는다.
    */
   cacheSystemPrefix?: number
+  /**
+   * 11/16 prompt 앞에 그대로 이어 붙는 글 덩이들(최근 대화, 메시지 하나씩). 턴이 지나도 앞쪽 덩이가 같다 —
+   * Claude 는 마지막 덩이에 캐시 표시를 달고, 나머지 공급자는 flatPrompt 로 한 글로 보낸다(앞부분이 같으면 자동 캐시).
+   */
+  promptPrefix?: string[]
+}
+/** promptPrefix 를 prompt 앞에 붙인 한 덩이 글. */
+export function flatPrompt(req: Pick<GenerationRequest, 'prompt' | 'promptPrefix'>): string {
+  return (req.promptPrefix?.join('') ?? '') + req.prompt
 }
 
 export type GenerationResult = {

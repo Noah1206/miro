@@ -1,4 +1,5 @@
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
+import { flatPrompt } from './types'
 import type { ProviderInfo } from '../types'
 
 /** Cloudflare Workers AI. 무료 할당량이 있는 fallback 후보. */
@@ -17,7 +18,7 @@ export class CloudflareProvider implements AIProvider {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` },
       signal: req.signal,
       body: JSON.stringify({
-        messages: [{ role: 'system', content: req.system }, { role: 'user', content: req.prompt }],
+        messages: [{ role: 'system', content: req.system }, { role: 'user', content: flatPrompt(req) }],
         max_tokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9,
         ...(req.json ? { response_format: { type: 'json_object' } } : {}),
       }),

@@ -56,7 +56,10 @@ export class AnthropicProvider implements AIProvider {
         model: this.model,
         max_tokens: req.maxTokens ?? 1024,
         system: systemBlocks(req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''), req.cacheSystemPrefix),
-        messages: [{ role: 'user', content: req.prompt }],
+        // 11/16 최근 대화 덩이의 끝에 캐시 표시 — 다음 턴은 이 자리까지를 캐시에서 읽고(정가의 10%) 새로 붙은 메시지만 새로 쓴다.
+        messages: [{ role: 'user', content: req.promptPrefix?.length
+          ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text' as const, text, ...(i === all.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}) })), { type: 'text' as const, text: req.prompt }]
+          : req.prompt }],
         output_config: { effort: req.thinking ?? 'low' },
         ...(schema ? { tools: [{ name: 'submit', description: 'Submit the complete result.', input_schema: schema }], tool_choice: { type: 'auto' as const } } : {}),
         ...(req.disableProviderFallback ? {} : { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }),

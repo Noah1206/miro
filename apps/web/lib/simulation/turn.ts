@@ -173,7 +173,9 @@ async function executeTurn(opts: {
       llm = directive || firstMeeting || commandDirective || thinking ? new Proxy(provider, { get(target, key) {
         if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request,
           ...(thinking && (request.task === 'dialogue' || request.task === 'agency_plan') ? { thinking: request.thinking ?? thinking, ...(request.maxTokens ? { maxTokens: request.maxTokens * thinkScale } : {}) } : {}),
-          system: request.system + (directive ? '\n' + directive : '') + (firstMeeting && request.task === 'dialogue' ? '\n' + firstMeeting : '') + (commandDirective && request.task === 'dialogue' ? '\n' + commandDirective : '') })
+          // 11/16 캐시 배치(promptPrefix)인 요청은 이 턴 지시를 지시문이 아니라 입력 끝에 붙인다 — 지시문이 턴마다 달라지면 그 뒤의 최근 대화 캐시가 통째로 깨진다.
+          ...((extra => request.promptPrefix ? { prompt: request.prompt + (extra ? '\n\n## 서버가 확인한 이번 턴 지시' + extra : '') } : { system: request.system + extra })(
+            (directive ? '\n' + directive : '') + (firstMeeting && request.task === 'dialogue' ? '\n' + firstMeeting : '') + (commandDirective && request.task === 'dialogue' ? '\n' + commandDirective : ''))) })
         const value = Reflect.get(target, key)
         return typeof value === 'function' ? value.bind(target) : value
       } }) : provider

@@ -23,6 +23,8 @@ export interface LLMProvider {
     prompt: string
     /** 11/10 system 의 처음 이 글자 수까지는 턴마다 같다 — 공급자 캐시(GenerationRequest.cacheSystemPrefix). */
     cacheSystemPrefix?: number
+    /** 11/16 prompt 앞에 이어 붙는 글 덩이(최근 대화) — GenerationRequest.promptPrefix. */
+    promptPrefix?: string[]
     /** 스키마 위반 시 재시도 횟수. 무한 재시도 금지. */
     maxRetries?: number
     /** Optional JSON Schema for providers that can constrain decoding. The zod schema remains the validator. */

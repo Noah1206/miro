@@ -122,7 +122,7 @@ export class AIOrchestrator implements LLMProvider {
     schema: ZodType<Out, ZodTypeDef, In>; system: string; prompt: string; maxRetries?: number
     task?: string; maxTokens?: number; temperature?: number; promptVersion?: string
     responseSchema?: GenerationRequest['responseSchema']; thinking?: GenerationRequest['thinking']; safety?: GenerationRequest['safety']
-    onText?: GenerationRequest['onText']; onAttempt?: () => void; cacheSystemPrefix?: number
+    onText?: GenerationRequest['onText']; onAttempt?: () => void; cacheSystemPrefix?: number; promptPrefix?: string[]
   }): Promise<Out> { return this.execute({ ...opts, task: taskOf(opts.task) }) }
   async generateText(opts: { system: string; prompt: string; task?: string; maxTokens?: number; temperature?: number; promptVersion?: string }): Promise<string> {
     return this.run({ ...opts, task: taskOf(opts.task) }, text => {
@@ -162,7 +162,7 @@ export class AIOrchestrator implements LLMProvider {
   private async run<T>(req: GenerationRequest, validate: (text: string, truncated?: boolean) => T, overrideRetries?: number, onAttempt?: () => void): Promise<T> {
     if (req.signal?.aborted) throw new AIUnavailableError(0, 'cancelled')
     // 실측 도구(11/3): MIRO_PROMPT_DUMP=<파일> 이면 모델에 실제로 보낸 지시·입력을 한 줄씩 남긴다. 운영에서는 꺼져 있다.
-    if (process.env.MIRO_PROMPT_DUMP && !productionRuntime()) appendFileSync(process.env.MIRO_PROMPT_DUMP, JSON.stringify({ task: req.task, promptVersion: req.promptVersion, system: req.system, prompt: req.prompt }) + '\n')
+    if (process.env.MIRO_PROMPT_DUMP && !productionRuntime()) appendFileSync(process.env.MIRO_PROMPT_DUMP, JSON.stringify({ task: req.task, promptVersion: req.promptVersion, system: req.system, promptPrefix: req.promptPrefix, prompt: req.prompt }) + '\n')
     let attempts = 0, last = 'unavailable', denied: string | null = null
     const selections = this.selections(req)
     for (let index = 0; index < selections.length; index++) {

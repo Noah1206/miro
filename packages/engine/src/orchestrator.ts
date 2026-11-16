@@ -134,7 +134,9 @@ export async function runTurn(opts: {
   // ponytail: 분석만 잡아낸 사건은 이번 대사엔 안 보이고 다음 턴부터 보인다. 대사가 즉시 반응해야 하면 다시 기다리게 한다.
   const early = turnFor(semanticEvents)
   const communicationPreferences = snapshotCommunicationPreferences(snapshot, opts.userInput)
-  const context = buildContext({ ...snapshot, relationship: early.relationship, characterState: early.characterState, semanticEvents, userInput: opts.userInput, communicationPreferences }, opts.contextScale, false, opts.replyLength ?? 'scene')
+  const context = buildContext({ ...snapshot, relationship: early.relationship, characterState: early.characterState, semanticEvents, userInput: opts.userInput, communicationPreferences }, opts.contextScale, false, opts.replyLength ?? 'scene', true)
+  // 11/16 캐시 배치: 지시문(+근거 규칙)과 최근 대화는 턴마다 그대로라 앞에, 반복 금지 자료·이번 턴 지시·입력은 뒤에 — 앞부분을 공급자가 캐시한다.
+  const stableSystem = context.system + '\n' + USER_GROUNDING_RULE
 
   const draftStream = opts.stream && !communicationPreferences.length && !feature('strictConversationReview') ? blockStream(snapshot, opts.stream) : undefined
   const generated = opts.spokenReply !== undefined ? null : (async () => {
@@ -142,8 +144,8 @@ export async function runTurn(opts: {
     for (let attempt = 0; attempt <= 2; attempt++) {
       const proposal = await opts.llm.generateStructured({
         schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens, ...draftStream,
-        system: context.system + '\n' + USER_GROUNDING_RULE + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name), cacheSystemPrefix: context.cachePrefix,
-        prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
+        system: stableSystem, cacheSystemPrefix: stableSystem.length, promptPrefix: context.history,
+        prompt: `${context.prompt}${conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name)}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
       })
       const blocks = validateProposal(proposal, snapshot).blocks
       const repeated = repeatedConversationBlock(blocks, snapshot.recentMessages, opts.userInput, snapshot.character.identity.name)
