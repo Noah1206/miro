@@ -72,7 +72,12 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const tiles: Panel[] = ['persona', 'model', 'theme', 'memory']
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
+  const voiceToggle = () => { if (!on) toast(t('음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요')); toggle() }
   return <>
+    {/* 11/16 사용자: 헤더에서도 음성 모드를 켠다 — 메뉴 버튼과 같은 크기의 스피커 아이콘, 켜면 라벤더색에 소리 물결. */}
+    {available && <button type="button" role="switch" aria-checked={on} aria-label={t('음성 모드')} title={t('음성 모드')} className={`${styles.trigger} ${styles.voiceIcon}`} onClick={voiceToggle}>
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><g className={styles.voiceWaves}><path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18 6.8a7.5 7.5 0 0 1 0 10.4"/></g></svg>
+    </button>}
     <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -88,7 +93,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       <section className={styles.section} aria-label={t('내 설정')}>
         <h3>{t('내 설정')}</h3>
         {/* 음성 모드(11/9 사용자: 헤더 대신 메뉴 안) — 켜면 캐릭터 답장을 목소리로 듣는다. 이 탭이 아이폰 소리 잠금도 푼다. */}
-        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={() => { if (!on) toast(t('음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요')); toggle() }}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
+        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={voiceToggle}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
         {/* 11/12 음성 서버가 멈춘 동안: 켤 수 없는 줄로 '곧 열림' 만 알린다. */}
         {!available && soon && <button type="button" disabled className={styles.voiceRow}><span>{t('음성 모드')}</span><em>{t('곧 열림')}</em></button>}
         {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}

@@ -56,6 +56,12 @@
 .voiceRow:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
 @media (prefers-reduced-motion: reduce) { .voiceRow i, .voiceRow i::after { transition:none; } }
 .trigger:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+/* 헤더 음성 모드(11/16) — 꺼져 있으면 흐린 스피커, 켜면 라벤더색에 물결이 나타난다. */
+.voiceIcon { color:var(--color-text-secondary, #8f8f99); transition:color .18s; }
+.voiceIcon[aria-checked='true'] { color:var(--color-lavender-500); }
+.voiceWaves { opacity:0; transform:translateX(-2px); transition:opacity .18s, transform .18s; }
+.voiceIcon[aria-checked='true'] .voiceWaves { opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce) { .voiceIcon, .voiceWaves { transition:none; } }
 /* 갤러리(11/8) — 메뉴 맨 위 가로 줄 */
 .gallery { margin-bottom:16px; min-width:0; }
 .gallery h3 { display:flex; gap:6px; margin:0 2px 8px; color:#b5b5bc; font-size:12px; line-height:1.5; font-weight:500; }
