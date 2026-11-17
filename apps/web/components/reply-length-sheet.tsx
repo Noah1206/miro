@@ -63,7 +63,7 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
             <span style={{ fontSize: 14, fontWeight: 700 }}>{t(o.chars)}</span>
             <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t(o.hint)}</span>
           </span>
-          {choice ? <span style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--color-text-tertiary)' }}><img src="/miro-token.svg" alt="" aria-hidden width={11} height={11} />{t('보통 {typical} · 최대 {count}', { typical: choice.typicalTokens.toLocaleString(locale), count: choice.maximumTokens.toLocaleString(locale) })}</span>
+          {choice ? <span style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--color-text-tertiary)' }}><img src="/miro-token.svg" alt="" aria-hidden width={11} height={11} />{t('보통 {typical}', { typical: choice.typicalTokens.toLocaleString(locale) })}</span>
             : <span style={{ flex: 'none', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{t('이 모델은 고를 수 없어요')}</span>}
         </div> })()}
       {/* 생각 강도 — 높일수록 답을 더 깊게 다듬지만 느려지고 토큰을 더 쓴다(턴당 최대 토큰이 강도만큼 늘어난다). */}

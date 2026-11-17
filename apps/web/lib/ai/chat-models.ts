@@ -10,6 +10,10 @@ export type ChatModel = string
 export const MIN_TURN_SHARE = 0.16
 /** 보통 한 턴에 빠지는 양(안내용) = 자기 견적 × 이 비율 — 운영 10일 Sonnet 평균 27/142. */
 const TYPICAL_TURN_SHARE = 0.19
+/** 11/18 사용자: 한 자리 수로 보이던 싼 모델(Haiku·Luna·Gemma·DeepSeek·Gemini Flash)도 한 턴 20토큰 부근 — 최소 차감과 '보통' 안내 둘 다 이 아래로 내려가지 않는다. */
+export const MIN_TURN_TOKENS = 20
+/** 11/18 사용자: 고르는 목록에서 뺀 모델(예비 역할 gpt-5.4-mini 는 그대로 — 목록에만 안 뜬다). */
+const HIDDEN_CHAT_MODELS = /(^|\/)gpt-(5\.4-(mini|nano)|5\.6-luna)$/
 export type ChatTier = (typeof POLICY.chatTier)[keyof typeof POLICY.chatTier]
 export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
@@ -22,7 +26,7 @@ function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
   // 11/7 사용자: GPT 도 고르는 목록에 다시 연다(11/3 '목록에서 뺀다'를 뒤집음 — 예비 역할은 그대로).
   const candidates = registry?.models.filter(m => m.enabled && m.chatSelectable !== false && m.capabilities.includes('dialogue')
-    && m.inputCost !== undefined && m.outputCost !== undefined
+    && m.inputCost !== undefined && m.outputCost !== undefined && !HIDDEN_CHAT_MODELS.test(m.providerModelId)
     && (!productionRuntime() || !!providerFromEnv(m.provider, m.providerModelId))) ?? []
   // A ready backup remains selectable when no primary is available.
   // Otherwise backups keep their existing role and never displace a primary model.
@@ -106,7 +110,7 @@ export async function chatModelOptions(_userId: string, adult = false) {
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
       return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
-        maximumTokens: quote.maximumTokens, typicalTokens: Math.max(1, Math.ceil(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE)), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId) }
+        maximumTokens: quote.maximumTokens, typicalTokens: Math.max(MIN_TURN_TOKENS, Math.ceil(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE)), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId) }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
   } catch { return { freeReady: false, proReady: false, choices: [] as ChatModelChoice[] } }
@@ -120,8 +124,10 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   let model = firstEntry?.model, key = firstEntry?.key, length: ChatLength = choice === 'pro' ? 'long' : 'scene'
   if (choice !== 'miro' && choice !== 'pro') {
     const match = models.flatMap(m => LENGTHS.map(l => ({ m: m.model, k: m.key, l, id: choiceId(m.key, l) }))).find(c => c.id === choice)
-    if (!match) throw new Error('invalid chat model')
-    model = match.m; key = match.k; length = match.l
+    // 11/18 목록에서 뺀 모델을 전에 골라 둔 방은 기본 모델로(같은 길이) — 실패시키지 않는다.
+    const staleLength = LENGTHS.find(l => choice.endsWith(`:${l}`))
+    if (!match && !(choice.startsWith('model:') && staleLength)) throw new Error('invalid chat model')
+    if (match) { model = match.m; key = match.k; length = match.l } else length = staleLength!
   }
   if (!model) throw new Error('chat model unavailable')
   const tierName = TIER_OF[length]
@@ -130,7 +136,7 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
   // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
   const main = adult ? availableModels(false).find(m => m.id === key) : model
-  const floorTokens = Math.ceil(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE)
+  const floorTokens = Math.max(MIN_TURN_TOKENS, Math.ceil(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE))
   // thinking 은 선택 칸으로 — 이 반환형을 흉내 내는 시험 자료를 깨지 않는다.
   return Object.assign({ modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }, { thinking: modelThinks(model.providerModelId) } as { thinking?: boolean })
 }
