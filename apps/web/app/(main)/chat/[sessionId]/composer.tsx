@@ -3,8 +3,8 @@ import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-
 import { useEffect, useRef, useState, useTransition, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
-import { ATTENDANCE_GRANT } from '@miro/config'
+import { Pressable, StatusIcon, TransitionLink, useToast } from '@/components/ui'
+import { ATTENDANCE_GRANT, MIN_TURN_BALANCE } from '@miro/config'
 import styles from './chat.module.css'
 import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
@@ -70,6 +70,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) })
       if (result.undone?.length) { undone = true; remove(result.undone) }
       setState(result)
+      if (result.limit) lowBalanceToast()
       if (result.limit && !result.limit.attend) openRecharge()
       if (reroll) { if (!result.succeeded && undone) restore(false) }
       else if (result.succeeded) { setCommand(null); if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
@@ -91,6 +92,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const router = useRouter()
   const voice = useImmersive()
   const { refreshBalance, wallet, openRecharge } = useWallet()
+  // 11/18 사용자: 잔액이 최소(500)보다 적으면 보내지 않고 위에서 내려오는 빨간 토스트로 알린다. 서버도 같은 기준으로 막는다(turn.ts).
+  const toast = useToast()
+  const lowBalanceToast = () => toast(t('토큰이 {amount}개 이상 있어야 보낼 수 있어요', { amount: MIN_TURN_BALANCE.toLocaleString() }), 'error')
+  const lowBalance = wallet ? wallet.available < MIN_TURN_BALANCE : false
   const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   // 11/10 생각 강도 — 서버가 강도만큼 턴 한도를 늘리므로(turn.ts thinkScale) 보내는 상한도 같이 늘린다.
   // 11/10: 고른 적이 없으면 보내지 않는다 — 전엔 화면 기본값(high)이 매 턴 실려 모든 턴이 깊은 생각(느림·비용)으로 돌았다.
@@ -282,7 +287,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         if (send) setTimeout(() => ref.current?.requestSubmit(), 0); else ta.current?.focus()
       }} />}
       {suggestError && <p role="alert" className="t-caption" style={{ marginBottom: 8, color: 'var(--color-danger)' }}>{t(suggestError)}</p>}
-      <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
+      <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) { if (lowBalance) lowBalanceToast(); else void action(new FormData(event.currentTarget)) } }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
         {/* 11/11 음성 모드가 켜져 있으면 늘 — 'live'(무료 합성 조건까지)일 때만 보내 서버가 음성 꺼짐으로 보고 신음 태그(speech)를 빼고 썼다. */}

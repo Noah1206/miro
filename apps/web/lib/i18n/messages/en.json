@@ -2332,6 +2332,7 @@
   "기억에 넣지 못했어요.": "Couldn't save to memory.",
   "보통 {typical} 토큰/턴": "Usually {typical} tokens/turn",
   "보통 {typical}": "Usually {typical}",
+  "토큰이 {amount}개 이상 있어야 보낼 수 있어요": "You need at least {amount} tokens to send",
   "{me}에 대해 아는 것": "What I know about {me}",
   "{name}의 기억": "{name}'s memories",
   "{n}번째 이야기": "Story {n}",
