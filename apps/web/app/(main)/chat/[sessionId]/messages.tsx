@@ -300,32 +300,22 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
           </div>
         </div>
       )
-      const own = seg.speaker === name
-      // 11/8 여러 인물 카드에서 화자를 모르는 줄(인트로 등)은 카드 이름(작품명)·대표 사진을 붙이지 않는다 — 미로 테마는 같은 줄에 이름·사진 없이 말풍선만.
-      const anonymous = own && !!cast?.length
-      if (anonymous && theme !== 'miro') return (
-        <div key={i} className={styles.loose} hidden={hidden}>
-          {seg.paragraphs.map((p) => (
-            <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
-              hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
-              {p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}
-              {line(p)}
-            </p>
-          ))}
-        </div>
-      )
+      // 11/17 사용자: 여러 인물 카드에서 화자를 모르는 줄(카드 이름으로 온 줄)도 프로필 사진이 보이게 — 첫 장면을 이끄는 첫 인물(cast[0])로 보인다.
+      const lead = seg.speaker === name && cast?.length ? cast[0]! : null
+      const speaker = lead ?? seg.speaker
+      const own = speaker === name
       return (
         <div key={i} className={styles.characterRow} hidden={hidden}>
           {(() => {
             // 11/6: 여러 인물 — 이름이 같거나 줄임("연화" ↔ "백리연화")이면 그 인물 사진.
-            const photoOf = own ? portrait : castPhotos[seg.speaker] ?? Object.entries(castPhotos).find(([n]) => n.endsWith(seg.speaker) || seg.speaker.endsWith(n))?.[1]
-            const face = theme !== 'miro' ? <DefaultChatAvatar /> : anonymous ? null : photoOf
+            const photoOf = own ? portrait : castPhotos[speaker] ?? Object.entries(castPhotos).find(([n]) => n.endsWith(speaker) || speaker.endsWith(n))?.[1] ?? (lead ? portrait : undefined)
+            const face = theme !== 'miro' ? <DefaultChatAvatar /> : photoOf
               ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="28px" width={28} height={28} />
-              : seg.speaker.slice(0, 1)
-            return <span className={`${styles.avatar}${anonymous ? ` ${styles.avatarBlank}` : ''}`} aria-hidden>{face}</span>
+              : speaker.slice(0, 1)
+            return <span className={styles.avatar} aria-hidden>{face}</span>
           })()}
           <div className={styles.characterContent}>
-            {!anonymous && <p className={styles.speaker}>{seg.speaker}</p>}
+            <p className={styles.speaker}>{speaker}</p>
             <div className={styles.timedBubble}><div {...replayProps(seg.paragraphs.filter(p => p.kind === 'dialogue').map(p => p.text))}>
               {seg.paragraphs.map((p) => (
                 <p key={p.index} className={paragraphClass(p)}
