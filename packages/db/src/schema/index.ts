@@ -448,6 +448,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   userNote: text('user_note').notNull().default(''),
   /** 11/17 기억 페이지의 '나에 대한 생각' — 캐릭터가 기억을 보고 쓴 글. key 가 지금 기억과 같으면 다시 쓰지 않는다. */
   memoryReflection: jsonb('memory_reflection').$type<{ key: string; oneLine: string; thought: string; wonder: string[]; at: string }>(),
+  /** 11/18 기억 노트 '떠올린 기억' — 턴마다 이번 입력과 맞아 떠올린 기억 id(최근 30턴, 새것이 앞). 다시 받기로 없어진 턴은 화면에서 turn > turnCount 로 거른다. */
+  memoryRecalls: jsonb('memory_recalls').$type<Array<{ turn: number; at: string; input: string; ids: string[] }>>().notNull().default([]),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

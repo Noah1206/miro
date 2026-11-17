@@ -1,9 +1,9 @@
-import { DEFAULT_CHARACTER_STATE, visibleStatValues } from '@miro/domain'
+import { DEFAULT_CHARACTER_STATE, recalledFor, visibleStatValues } from '@miro/domain'
 import { receiveMessenger, MessengerError } from '@/lib/messenger/inbox'
 import { resolveChatModel } from '@/lib/ai/chat-models'
 import { rankSituationImages } from '@/lib/situation-ranking'
 import { eq, and, sql } from 'drizzle-orm'
-import { db, conversationRequests, characters, messages, memories } from '@miro/db'
+import { db, conversationRequests, characters, messages, memories, roleplaySessions } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
@@ -317,6 +317,14 @@ async function executeTurn(opts: {
       observe('state.commit_failed', { sessionId, turn: turnIndex, error: (e as Error).message })
       return { ok: false, reason: 'conflict' }
     }
+
+    // 11/18 기억 노트 '떠올린 기억' — 지시문에 실린 기억 중 이번 입력과 실제로 맞은 것(최근 30턴, 새것이 앞).
+    const recalled = recalledFor(loaded.snapshot.memories.filter(m => m.type !== 'short_term_summary'), sessionId, POLICY.context.relevantMemoryCount, input).map(m => m.id)
+    if (recalled.length) void afterResponse(async () => {
+      const entry = JSON.stringify([{ turn: turnIndex, at: new Date().toISOString(), input: input.slice(0, 80), ids: recalled }])
+      await db.update(roleplaySessions).set({ memoryRecalls: sql`(select coalesce(jsonb_agg(e order by n), '[]'::jsonb) from jsonb_array_elements(${entry}::jsonb || ${roleplaySessions.memoryRecalls}) with ordinality t(e, n) where n <= 30)` })
+        .where(eq(roleplaySessions.id, sessionId))
+    })
 
     void track(userId, 'rp_message_sent', {
       sessionId, turn: turnIndex, mood: result.characterState.mood, provider: result.providerMode,

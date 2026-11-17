@@ -2393,5 +2393,8 @@
   "링크로만 공유": "Share by link only",
   "홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.": "Hidden from home and search — only people with the character link can start a chat.",
   "여러 장 한 번에 올리기": "Upload several at once",
-  "파일 이름이 상황 설명으로 미리 들어가요. 예) \"비 맞고 돌아온 장면.png\"": "File names are pre-filled as the situation. e.g. \"back home soaked in rain.png\""
+  "파일 이름이 상황 설명으로 미리 들어가요. 예) \"비 맞고 돌아온 장면.png\"": "File names are pre-filled as the situation. e.g. \"back home soaked in rain.png\"",
+  "{n}턴째": "Turn {n}",
+  "대화하면서 그 말에 떠올린 기억이에요. 최근 대화부터 보여요.": "Memories that came to mind during your conversation. Most recent first.",
+  "떠올린 기억": "Recalled memories"
 }

@@ -17,7 +17,7 @@ import styles from './memory.module.css'
 export async function MemoryNote({ sessionId, userId }: { sessionId: string; userId: string }) {
   const user = { id: userId }
   const t = await getT()
-  const [room] = await db.select({ name: characters.name, secret: characters.secret, intro: characters.personality, cast: characters.ensembleCast, persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, stored: roleplaySessions.memoryReflection })
+  const [room] = await db.select({ name: characters.name, secret: characters.secret, intro: characters.personality, cast: characters.ensembleCast, persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, stored: roleplaySessions.memoryReflection, recalls: roleplaySessions.memoryRecalls })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!room) notFound()
@@ -42,6 +42,11 @@ export async function MemoryNote({ sessionId, userId }: { sessionId: string; use
   ) : null
   const story = (text: string) => human(text).split(/\[([^\]]{1,20})\]/).map((part, i) => i % 2 ? <h4 key={i}>{part}</h4> : part.trim() && <p key={i}>{part.trim()}</p>)
   const longTerm = promises.length + facts.length + together.length + chapters.length + world.length
+  // 11/18 떠올린 기억 — 턴마다 이번 말과 맞아 떠올린 기억. 지난 이야기는 길어서 첫 줄만, 다시 받기로 없어진 턴·지워진 기억은 뺀다.
+  const byId = new Map(rows.map(r => [r.id, r]))
+  const recalls = (room.recalls ?? []).filter(r => r.turn <= room.turns)
+    .map(r => ({ ...r, items: r.ids.map(id => byId.get(id)).filter((m): m is (typeof rows)[number] => !!m) })).filter(r => r.items.length).slice(0, 10)
+  const line = (m: (typeof rows)[number]) => m.type === 'chapter' ? `${t('지난 이야기')} · ${human(m.content).replace(/\[[^\]]*\]/g, '').trim().slice(0, 60)}…` : human(m.content)
 
   return (
       <div className={`create-page ${styles.memoryPage}`}>
@@ -72,6 +77,14 @@ export async function MemoryNote({ sessionId, userId }: { sessionId: string; use
                 <div className={styles.story}>{story(c.content)}</div>
               </details>)}
             </div>}
+          </section>}
+          {recalls.length > 0 && <section className={styles.block}>
+            <h2 className={styles.label}>{t('떠올린 기억')}</h2>
+            <p className={styles.hint}>{t('대화하면서 그 말에 떠올린 기억이에요. 최근 대화부터 보여요.')}</p>
+            {recalls.map(r => <div key={`${r.turn}:${r.at}`} className={styles.card}>
+              <p className={styles.small}>{t('{n}턴째', { n: r.turn })} · “{r.input}{r.input.length >= 80 ? '…' : ''}”</p>
+              <ul className={styles.list}>{r.items.map(m => <li key={m.id}>{line(m)}</li>)}</ul>
+            </div>)}
           </section>}
         </>}
       </div>

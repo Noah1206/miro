@@ -101,6 +101,18 @@ export function retrieveMemories<T extends SearchableMemory>(
   return scored.filter(({ m }) => selected.has(m)).map(({ m }) => m)
 }
 
+/**
+ * 11/18 기억 노트의 '떠올린 기억' — retrieveMemories 가 이번 턴에 실은 기억 중 이번 입력과 낱말·뜻이 실제로 맞은 것만.
+ * 고정·약속처럼 늘 싣는 자리는 빼고, 맞은 정도가 큰 순서로 최대 5개.
+ */
+export function recalledFor<T extends SearchableMemory>(memories: T[], sessionId: string, limit: number, query: string): T[] {
+  const q = terms(query).slice(0, 64)
+  if (!q.length) return []
+  const hit = (m: T) => relevance(m, q) + Math.max(0, (m.similarity ?? 0) - 0.70) * 5
+  return retrieveMemories(memories, sessionId, limit, query).filter(m => relevance(m, q) >= 0.35 || (m.similarity ?? 0) > 0.70)
+    .sort((a, b) => hit(b) - hit(a)).slice(0, 5)
+}
+
 /** 프롬프트에 계층별로 나눠 싣는다 — 어떤 기억이 어떤 종류인지 모델이 구분한다. */
 export function groupByLayer<T extends Pick<Memory, 'type'>>(memories: T[]): Record<MemoryLayer, T[]> {
   const out: Record<MemoryLayer, T[]> = { long_term: [], relationship: [], short_term: [], world: [], story: [] }
