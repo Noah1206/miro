@@ -181,7 +181,6 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
         ? <MemoryEditor key={active.id} sessionId={sessionId} item={active} onDone={() => { setSelected(null); reload() }} />
         : <p className="t-caption">{items.length ? t('기억 {n}개 · 점이나 아래 목록을 누르면 보고 고칠 수 있어요.', { n: items.length }) : t('아직 기억이 쌓이지 않았어요. 대화를 나누면 여기에 남아요.')}</p>}
 
-      <UserNote key={graph.note} sessionId={sessionId} initial={graph.note} onDone={reload} />
       <MemoryAdd sessionId={sessionId} onDone={reload} />
 
       {/* 기억 노트 — 누르면 위 편집기가 열린다. 지금 이야기·지난 이야기는 그래프엔 없고 여기에만 있다. */}
@@ -249,7 +248,21 @@ function MemoryEditor({ sessionId, item, onDone }: { sessionId: string; item: Me
 }
 
 /** 11/10 유저노트(크랙 대비) — 이 방에서 캐릭터가 반드시 기억할 설정. 매 턴 최근 대화 뒤에 실려 긴 대화에서도 흐려지지 않는다. */
-function UserNote({ sessionId, initial, onDone }: { sessionId: string; initial: string; onDone: () => void }) {
+/** 11/17 유저노트는 기억 노트와 따로 — 채팅방 메뉴의 제 칸. 지금 값을 불러와 편집기를 띄운다. */
+export function RoomUserNote({ sessionId }: { sessionId: string }) {
+  const t = useT()
+  const [note, setNote] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    let live = true
+    fetch(`/api/memory-graph/${sessionId}`).then(r => r.ok ? r.json() as Promise<MemoryNotes> : Promise.reject()).then(g => { if (live) setNote(g.note) }).catch(() => { if (live) setFailed(true) })
+    return () => { live = false }
+  }, [sessionId])
+  if (failed) return <p className="t-caption" role="alert">{t('불러오지 못했어요. 다시 시도해 주세요.')}</p>
+  return note === null ? <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('불러오는 중…')}</p> : <UserNote sessionId={sessionId} initial={note} onDone={() => undefined} />
+}
+
+function UserNote({ sessionId, initial, onDone }: { sessionId: string; initial: string; onDone?: () => void }) {
   const t = useT()
   const [text, setText] = useState(initial)
   const [busy, setBusy] = useState(false)
@@ -259,12 +272,12 @@ function UserNote({ sessionId, initial, onDone }: { sessionId: string; initial: 
     setBusy(true); setState('idle')
     const e = await call(sessionId, 'POST', { action: 'note', content: text })
     setBusy(false)
-    if (e) setState('error'); else { setState('saved'); onDone() }
+    if (e) setState('error'); else { setState('saved'); onDone?.() }
   }
   return (
     <div className="stack" style={{ gap: 6 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-        <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{t('유저노트')}</p>
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('매 답변에 반영돼요.')}</p>
         <span className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{text.length}/{USER_NOTE_MAX}</span>
       </div>
       <textarea value={text} maxLength={USER_NOTE_MAX} rows={4} aria-label={t('유저노트')} placeholder={t('캐릭터가 이 이야기에서 꼭 기억했으면 하는 설정을 적어 주세요. 매 답변에 반영돼요.')}

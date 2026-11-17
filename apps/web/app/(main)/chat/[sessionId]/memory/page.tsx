@@ -14,7 +14,7 @@ import styles from './memory.module.css'
 
 /**
  * 11/17 대화 기억 페이지 — 캐릭터가 대화에서 정리해 둔 기억을 사람의 수첩처럼 본다.
- * 나에 대한 생각(캐릭터가 쓴 글) · 요즘 우리 · 약속 · 너에 대해 아는 것 · 함께한 일 · 지난 이야기 · 이 세계. 맨 아래 기억 관리(고치기·고정·유저노트)는 예전 화면 그대로.
+ * 나에 대한 생각(캐릭터가 쓴 글) · 요즘 우리 · 약속 · 너에 대해 아는 것 · 함께한 일 · 지난 이야기 · 이 세계. 맨 아래 기억 관리는 예전 화면 그대로. 유저노트(사용자가 적는 설정)는 여기 없다 — 채팅방 메뉴의 제 칸.
  */
 export default async function MemoryPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
@@ -49,7 +49,7 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
 
   return (
     <Page style={{ maxWidth: 640 }}>
-      <PageHeader back={`/chat/${sessionId}`} title={t('{name}의 기억', { name: room.name })} lead={t('대화하면서 {name}의 기억에 남은 것들이에요.', { name: room.name })} />
+      <PageHeader back={`/chat/${sessionId}`} title={t('{name}의 기억 노트', { name: room.name })} lead={t('대화하면서 {name}의 기억에 남은 것들이에요.', { name: room.name })} />
       <div className={styles.profile}>
         {photo && <span className={styles.avatar}><CharacterPhoto src={photo} alt="" size="avatar" width={56} height={56} sizes="56px" /></span>}
         <div>
@@ -80,8 +80,8 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
       </>}
 
       <details className={styles.manage}>
-        <summary className="t-body">{t('기억 관리 · 유저노트')}</summary>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('기억을 고정하거나 지우고, 유저노트를 적을 수 있어요.')}</p>
+        <summary className="t-body">{t('기억 관리')}</summary>
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('기억을 고정하거나 고치고, 지우거나 직접 적을 수 있어요.')}</p>
         <MemoryGraphView sessionId={sessionId} refreshKey={room.turns} />
       </details>
     </Page>
