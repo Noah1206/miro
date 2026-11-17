@@ -67,7 +67,7 @@ export function NoteEditor({ sessionId, initial, initialPresets }: { sessionId: 
 
       <LabeledField label={t('내용')} hint={t('매 답변 바로 앞에 실려서, 대화가 길어져도 잊지 않아요.')}>
         <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(focus === 'text') }}>
-          <textarea value={text} maxLength={MAX} rows={7} aria-label={t('유저노트')}
+          <textarea value={text} maxLength={MAX} rows={5} aria-label={t('유저노트')}
             placeholder={t('예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.')}
             onFocus={() => setFocus('text')} onBlur={() => setFocus(null)} onChange={(e) => { setText(e.target.value); setStatus(null) }}
             style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
