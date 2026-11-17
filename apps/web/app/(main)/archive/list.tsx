@@ -11,6 +11,7 @@ import { preview } from '@/lib/archive-format'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import emptyStyles from './empty.module.css'
 import styles from './list.module.css'
+import { coverTitle } from '@/lib/editorial/cover-title'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -105,12 +106,12 @@ export function ArchiveList({ initialPage, channel='chat' }: {
                 {portrait
                   ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="44px" width={44} height={44}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span className="t-name" style={{ fontSize: 22, color: s.accentA ?? 'var(--color-text-tertiary)', opacity: 0.8 }}>{s.characterName.slice(0, 1)}</span>}
+                  : <span className="t-name" style={{ fontSize: 22, color: s.accentA ?? 'var(--color-text-tertiary)', opacity: 0.8 }}>{coverTitle({ slug: s.characterSlug, name: s.characterName }).slice(0, 1)}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                   <h2 className="t-name" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 16, lineHeight: 1.35 }}>
-                    {s.characterName}
+                    {coverTitle({ slug: s.characterSlug, name: s.characterName })}
                   </h2>
                 </div>
                 {s.storyTitle && <p className="t-micro" style={{ marginTop: 3, color: 'var(--color-text-tertiary)' }}>{s.storyTitle} · {t('{n}회차', { n: s.runNo! })}</p>}
@@ -120,7 +121,7 @@ export function ArchiveList({ initialPage, channel='chat' }: {
             </TransitionLink>
             {managing && !s.storyTitle && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
-                <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={t('{name}의 역할극 삭제', { name: language === 'ko' ? withParticle(s.characterName, '과', '와', '와') : s.characterName })}>{t('삭제')}</ButtonLink>
+                <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={t('{name}의 역할극 삭제', { name: language === 'ko' ? withParticle(coverTitle({ slug: s.characterSlug, name: s.characterName }), '과', '와', '와') : coverTitle({ slug: s.characterSlug, name: s.characterName }) })}>{t('삭제')}</ButtonLink>
               </div>
             )}
           </motion.li>

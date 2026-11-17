@@ -16,6 +16,7 @@ import styles from './messages.module.css'
 import { MessengerThread } from './thread'
 import { MessengerComposer } from './composer'
 import { getT } from '@/lib/i18n/server'
+import { coverTitle } from '@/lib/editorial/cover-title'
 
 /**
  * 문자(카톡형) 페이지 — 미로 캐릭터가 먼저 보낸 연락, 내가 보낸 문자, 통화 기록이 여기 모인다.
@@ -48,7 +49,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         <header className={styles.header}>
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
-          <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1><CurrentChatModel choices={modelOptions.choices} className={styles.currentModel}/></div>
+          <div className={styles.headerIdentity}><h1 className={styles.title}>{coverTitle({ slug: loaded.characterSlug, name: loaded.characterName })}</h1><CurrentChatModel choices={modelOptions.choices} className={styles.currentModel}/></div>
           <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} choices={modelOptions.choices} />
         </header>
         {call && (

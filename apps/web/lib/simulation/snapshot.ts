@@ -31,6 +31,8 @@ export type LoadedSession = {
   sessionId: string
   characterId: string
   characterName: string
+  /** 11/17 화면 제목(작품명)용 — coverTitle({ slug, name }). */
+  characterSlug?: string | null
   characterPhoto?: string | null
   /** 11/6: 갤러리 순서 = 여러 인물 카드의 인물 순서(01 첫 히로인, 02 둘째 …) — 채팅 아바타용. */
   characterImages?: string[]
@@ -195,6 +197,7 @@ export async function loadSession(
     sessionId,
     characterId: c.id,
     characterName: c.name,
+    characterSlug: c.slug,
     characterPhoto: c.images[0] ?? null,
     characterImages: c.images,
     characterStatus: row.session.characterStatus,
