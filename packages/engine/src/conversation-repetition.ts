@@ -118,6 +118,18 @@ export function trimPenalizedSentences<T extends Block>(blocks: readonly T[], re
   return out.length && (hasTalk(out) || !hasTalk(blocks)) ? out : [...blocks]
 }
 
+/**
+ * 11/17 사용자: 인물들 말투가 비슷해지고 '……' 같은 말버릇이 번진다(시험 DB: 한 인물 대사의 83%가 '……'로 시작).
+ * 대사(dialogue) 맨 앞의 말줄임표를 지우고, 길게 늘인 말줄임표('……', '......')는 한 개로 줄인다. 설정 말투에 말줄임표가 있는 인물(keep)은 건드리지 않는다.
+ */
+export function trimEllipsisHabit<T extends Block>(blocks: readonly T[], keep: (speaker: string | null | undefined) => boolean): T[] {
+  return blocks.map(b => {
+    if ((b.type ?? 'dialogue') !== 'dialogue' || keep(b.speaker)) return b
+    const text = b.text.replace(/^(\s*["“'‘]?)\s*(?:…|\.{2,})+\s*/, '$1').replace(/(?:…|\.{3}){2,}|\.{4,}/g, '…')
+    return text.trim() && text !== b.text ? { ...b, text } : b
+  })
+}
+
 export function conversationVariationDirective(recent: readonly Previous[], characterName?: string): string {
   const turns = recent.filter(m => m.role === 'character').slice(-3)
   if (!turns.length) return ''

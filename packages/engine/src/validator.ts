@@ -1,5 +1,5 @@
 import { castNames } from './context'
-import { trimPenalizedSentences } from './conversation-repetition'
+import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
@@ -82,7 +82,12 @@ function validateBlocks(
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 
   // 11/4 벌점 방식: 상투 표현·턴마다 되풀이된 몸짓·소품 문장을 서술·행동에서 지운다(대사는 그대로). 스트리밍과 저장이 같은 결과를 낸다.
-  return trimPenalizedSentences(p.rp.blocks.filter((b) => {
+  // 11/17 말줄임표 말버릇 — 설정 말투(말투·성격·인물 소개)에 말줄임표가 없는 인물의 대사만 다듬는다.
+  const ellipsis = /…|\.{3}/
+  const castIntro = new Map((s.character.worldRole.cast ?? []).map(p => [p.name, p.intro]))
+  const ownVoice = `${s.character.personality.speechStyle ?? ''} ${s.character.personality.personality}`
+  const keepEllipsis = (speaker: string | null | undefined) => ellipsis.test(speaker && castIntro.has(speaker) ? castIntro.get(speaker)! : ownVoice)
+  return trimEllipsisHabit(trimPenalizedSentences(p.rp.blocks.filter((b) => {
     // 전화 중에는 서술할 화면이 없다. 모드에 맞지 않는 블록은 버린다.
     if (!allowed.has(b.type)) {
       issues.push({ field: 'rp.blocks', reason: `${b.type} not allowed in ${s.mode ?? 'chat'}` })
@@ -110,7 +115,7 @@ function validateBlocks(
       }
     }
     return true
-  }), s.recentMessages ?? [], s.character.identity.name)
+  }), s.recentMessages ?? [], s.character.identity.name), keepEllipsis)
 }
 
 function validateWorldDelta(
