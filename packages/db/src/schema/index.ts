@@ -1220,6 +1220,15 @@ export const creatorFollows = pgTable('creator_follows', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.followerId, t.creatorKey] }), byCreator: index('creator_follows_creator_idx').on(t.creatorKey) }))
 
+/** 11/17 유저노트 보관함 — 회원이 저장해 둔 노트들. 대화방에 적용하면 roleplay_sessions.user_note 로 복사된다. */
+export const userNotePresets = pgTable('user_note_presets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ byUser: index('user_note_presets_user_idx').on(t.userId, t.updatedAt) }))
+
 /** Server-only durable Web Push work, created in the message transaction. */
 export const realityPushJobs = pgTable('reality_push_jobs', {
   id: uuid('id').primaryKey().defaultRandom(),

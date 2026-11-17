@@ -12,11 +12,21 @@
 .list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .list li { position: relative; padding-left: 14px; font-size: var(--font-body-size); line-height: 1.6; color: var(--color-text-primary); }
 .list li::before { content: ''; position: absolute; left: 0; top: 0.7em; width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent); }
-.pin { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: var(--radius-sm); font-size: var(--font-micro); color: var(--color-accent-text); background: var(--color-accent-soft); vertical-align: 1px; }
 .story { display: flex; flex-direction: column; gap: 6px; }
-.story h3 { margin-top: 6px; }
+.story h4 { margin-top: 6px; color: var(--color-accent-text); }
 .story p { color: var(--color-text-secondary); }
 .chapter summary { cursor: pointer; padding: 8px 0; color: var(--color-text-secondary); }
 .empty { padding: var(--space-5) 0; color: var(--color-text-secondary); }
-.manage { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
-.manage summary { cursor: pointer; padding: 8px 0; color: var(--color-text-secondary); }
+.group { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.group h3 { font-weight: var(--weight-semibold); }
+.noteCard { display: flex; flex-direction: column; gap: 10px; padding: var(--space-4); border-radius: var(--radius-xl); background: var(--color-surface-1); }
+.noteHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.noteField { width: 100%; resize: vertical; padding: 12px; border-radius: var(--radius-lg); border: 1px solid var(--color-border-input); background: var(--color-surface-2); color: var(--color-text-primary); font: inherit; font-size: var(--font-body-size); line-height: 1.6; }
+.noteActions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+.primary, .ghost { min-height: 40px; padding: 0 16px; border-radius: var(--radius-button); border: 0; font: inherit; font-size: var(--font-caption); cursor: pointer; }
+.primary { background: var(--color-accent); color: var(--color-accent-on); }
+.primary:disabled { background: var(--color-surface-3); color: var(--color-text-tertiary); cursor: default; }
+.ghost { background: none; color: var(--color-text-secondary); }
+.preset { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--radius-xl); border: 1px solid var(--color-border); }
+.preset p { color: var(--color-text-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+.emptyBox { padding: 16px; border-radius: var(--radius-xl); border: 1px dashed var(--color-border); color: var(--color-text-tertiary); text-align: center; }

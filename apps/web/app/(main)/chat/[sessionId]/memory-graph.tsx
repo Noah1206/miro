@@ -2,8 +2,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MemoryGraph, MemoryLayer, MemoryNode } from '@miro/domain'
 import type { MemoryNotes } from '@/app/api/memory-graph/[sessionId]/route'
-/** 서버 한도(route USER_NOTE_MAX)와 같다 — 라우트 파일은 DB 를 불러오므로 값은 가져오지 않는다. */
-const USER_NOTE_MAX = 2000
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -70,13 +68,6 @@ function layout(g: MemoryGraph, width: number, height: number): Placed[] {
 }
 
 const W = 320, H = 300
-
-async function call(sessionId: string, method: 'POST' | 'PATCH' | 'DELETE', body: object): Promise<string | null> {
-  const r = await fetch(`/api/memory-graph/${sessionId}`, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => null)
-  if (r?.ok) return null
-  const e = await r?.json().catch(() => null) as { error?: string } | null
-  return e?.error ?? 'failed'
-}
 
 /**
  * 기억 노트 — 캐릭터가 기억하는 것들을 그래프와 글로 본다. 11/17 사용자 결정: 캐릭터의 독립적인 기억이라 보기만(고치기·고정·지우기·직접 적기·정리하기 없음).
@@ -194,36 +185,3 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
   )
 }
 
-const buttonBase = { minHeight: 36, padding: '0 14px', borderRadius: 8, border: 0, cursor: 'pointer' } as const
-const fieldStyle = { width: '100%', resize: 'vertical', padding: 10, borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' } as const
-
-/** 11/17 유저노트(사용자가 적는 설정) — 기억 노트와 따로 /chat/[방]/note 페이지에서 쓴다. */
-export function UserNote({ sessionId, initial, onDone }: { sessionId: string; initial: string; onDone?: () => void }) {
-  const t = useT()
-  const [text, setText] = useState(initial)
-  const [busy, setBusy] = useState(false)
-  const [state, setState] = useState<'idle' | 'saved' | 'error'>('idle')
-  const changed = text.trim() !== initial
-  const save = async () => {
-    setBusy(true); setState('idle')
-    const e = await call(sessionId, 'POST', { action: 'note', content: text })
-    setBusy(false)
-    if (e) setState('error'); else { setState('saved'); onDone?.() }
-  }
-  return (
-    <div className="stack" style={{ gap: 6 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('매 답변에 반영돼요.')}</p>
-        <span className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{text.length}/{USER_NOTE_MAX}</span>
-      </div>
-      <textarea value={text} maxLength={USER_NOTE_MAX} rows={10} aria-label={t('유저노트')} placeholder={t('캐릭터가 이 이야기에서 꼭 기억했으면 하는 설정을 적어 주세요. 매 답변에 반영돼요.')}
-        onChange={(e) => { setText(e.target.value); setState('idle') }} className="t-body" style={fieldStyle} />
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
-        {state === 'saved' && !changed && <span className="t-caption" role="status" style={{ color: 'var(--color-text-tertiary)' }}>{t('저장했어요')}</span>}
-        {state === 'error' && <span className="t-caption" role="alert">{t('저장하지 못했어요. 다시 시도해 주세요.')}</span>}
-        <button type="button" disabled={busy || !changed} onClick={save} className="t-caption"
-          style={{ ...buttonBase, background: changed ? 'var(--color-accent)' : 'var(--color-surface-3)', color: changed ? 'var(--color-white)' : 'var(--color-text-tertiary)' }}>{t('저장')}</button>
-      </div>
-    </div>
-  )
-}

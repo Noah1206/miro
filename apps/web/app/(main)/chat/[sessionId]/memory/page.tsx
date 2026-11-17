@@ -8,13 +8,12 @@ import { reflectionKey } from '@/lib/memory-reflection'
 import { Page } from '@/components/ui'
 import { NotesHeader } from './notes-header'
 import { getT } from '@/lib/i18n/server'
-import { MemoryGraphView } from '../memory-graph'
 import { Reflection } from './reflection'
 import styles from './memory.module.css'
 
 /**
  * 11/17 대화 기억 페이지 — 캐릭터가 대화에서 정리해 둔 기억을 사람의 수첩처럼 본다.
- * 나에 대한 생각(캐릭터가 쓴 글) · 요즘 우리 · 약속 · 너에 대해 아는 것 · 함께한 일 · 지난 이야기 · 이 세계. 맨 아래 기억 관리는 예전 화면 그대로. 유저노트(사용자가 적는 설정)는 여기 없다 — 채팅방 메뉴의 제 칸.
+ * 나에 대한 생각(캐릭터가 쓴 글) · 단기 기억(요약) · 장기 기억(약속·아는 것·함께한 일·세계·지난 이야기). 캐릭터의 독립적인 기억이라 보기만(11/17). 유저노트는 /note.
  */
 export default async function MemoryPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
@@ -39,13 +38,14 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
   const fresh = room.stored && room.stored.key === reflectionKey(rows) ? room.stored : null
   const photo = room.images?.[0]
 
-  const List = ({ title, items, hint }: { title: string; items: typeof rows; hint?: string }) => items.length ? (
-    <section className={styles.section}>
-      <h2 className="t-title-3">{title}</h2>
-      {hint && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</p>}
-      <ul className={styles.list}>{items.map(m => <li key={m.id}>{m.pinned && <span className={styles.pin}>{t('꼭 기억')}</span>}{human(m.content)}</li>)}</ul>
-    </section>
+  const List = ({ title, items }: { title: string; items: typeof rows }) => items.length ? (
+    <div className={styles.group}>
+      <h3 className="t-body">{title}</h3>
+      <ul className={styles.list}>{items.map(m => <li key={m.id}>{human(m.content)}</li>)}</ul>
+    </div>
   ) : null
+  const story = (text: string) => human(text).split(/\[([^\]]{1,20})\]/).map((part, i) => i % 2 ? <h4 key={i} className="t-micro">{part}</h4> : part.trim() && <p key={i} className="t-body">{part.trim()}</p>)
+  const longTerm = promises.length + facts.length + together.length + chapters.length + world.length
 
   return (
     <Page style={{ maxWidth: 640 }}>
@@ -54,28 +54,29 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
 
       {rows.length === 0 ? <p className={`t-body ${styles.empty}`}>{t('아직 기억이 없어요. 조금 더 이야기를 나누면 하나씩 쌓여요.')}</p> : <>
         <Reflection sessionId={sessionId} name={room.name} initial={fresh} />
+        {/* 11/17 크랙 요약 메모리처럼 단기 기억(지금 흐름)과 장기 기억(쌓인 것)을 나눈다. 캐릭터의 기억이라 보기만. */}
         {summary && <section className={styles.section}>
-          <h2 className="t-title-3">{t('요즘 우리')}</h2>
-          <div className={styles.story}>{human(summary.content).split(/\[([^\]]{1,20})\]/).map((part, i) => i % 2 ? <h3 key={i} className="t-micro">{part}</h3> : part.trim() && <p key={i} className="t-body">{part.trim()}</p>)}</div>
+          <h2 className="t-title-3">{t('단기 기억')}</h2>
+          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('최근 대화의 흐름이에요. 5턴마다 새로 정리돼요.')}</p>
+          <div className={styles.story}>{story(summary.content)}</div>
         </section>}
-        <List title={t('약속한 것')} items={promises} />
-        <List title={t('{me}에 대해 아는 것', { me })} items={facts} />
-        <List title={t('함께한 일')} items={together} />
-        {chapters.length > 0 && <section className={styles.section}>
-          <h2 className="t-title-3">{t('지난 이야기')}</h2>
-          {chapters.map((c, i) => <details key={c.id} className={styles.chapter} open={i === 0}>
-            <summary className="t-caption">{t('{n}번째 이야기', { n: chapters.length - i })}</summary>
-            <div className={styles.story}>{human(c.content).split(/\[([^\]]{1,20})\]/).map((part, j) => j % 2 ? <h3 key={j} className="t-micro">{part}</h3> : part.trim() && <p key={j} className="t-body">{part.trim()}</p>)}</div>
-          </details>)}
+        {longTerm > 0 && <section className={styles.section}>
+          <h2 className="t-title-3">{t('장기 기억')}</h2>
+          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('대화가 쌓이며 오래 남은 기억이에요.')}</p>
+          <List title={t('약속한 것')} items={promises} />
+          <List title={t('{me}에 대해 아는 것', { me })} items={facts} />
+          <List title={t('함께한 일')} items={together} />
+          <List title={t('이 세계에 대해')} items={world} />
+          {chapters.length > 0 && <div className={styles.group}>
+            <h3 className="t-body">{t('지난 이야기')}</h3>
+            {chapters.map((c, i) => <details key={c.id} className={styles.chapter}>
+              <summary className="t-caption">{t('{n}번째 이야기', { n: chapters.length - i })}</summary>
+              <div className={styles.story}>{story(c.content)}</div>
+            </details>)}
+          </div>}
         </section>}
-        <List title={t('이 세계에 대해')} items={world} />
       </>}
 
-      <details className={styles.manage}>
-        <summary className="t-body">{t('기억 관리')}</summary>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('캐릭터가 대화에서 쌓은 기억이에요. 보기만 할 수 있어요.')}</p>
-        <MemoryGraphView sessionId={sessionId} refreshKey={room.turns} />
-      </details>
     </Page>
   )
 }
