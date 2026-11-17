@@ -3,6 +3,7 @@ import { and, asc, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { characters, db, memories, relationships, roleplaySessions } from '@miro/db'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
+import { leadName } from '@/lib/editorial/heroine-name'
 
 /**
  * 11/17 기억 페이지의 '나에 대한 생각' — 캐릭터가 이 방의 기억을 보고 사용자에 대해 자기 말투로 쓴 글.
@@ -26,7 +27,7 @@ export const reflectionKey = (rows: Array<{ createdAt: Date }>) => `${rows.lengt
 
 /** 저장된 생각이 지금 기억과 맞으면 그대로, 아니면 새로 써서 저장한다. 기억이 없으면 null. */
 export async function reflectOnUser(sessionId: string, userId: string): Promise<MemoryReflection | null> {
-  const [room] = await db.select({ name: characters.name, personality: characters.personality, speechStyle: characters.speechStyle, values: characters.values,
+  const [room] = await db.select({ name: characters.name, secret: characters.secret, cast: characters.ensembleCast, personality: characters.personality, speechStyle: characters.speechStyle, values: characters.values,
     persona: roleplaySessions.userPersona, adultSince: roleplaySessions.adultSince, stored: roleplaySessions.memoryReflection })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).where(roomScope(sessionId, userId)).limit(1)
   if (!room) return null
@@ -40,7 +41,8 @@ export async function reflectOnUser(sessionId: string, userId: string): Promise<
   const llm = auxiliaryLLM(room.name, { userId, sessionId, requestId: randomUUID(), workload: 'background', origin: 'memory:reflection', adult: room.adultSince !== null })
   const out = await llm.generateStructured({ schema: Reflection, task: 'memory_summary', promptVersion: 'memory-reflection:v1', maxTokens: 2048, system: SYSTEM,
     prompt: JSON.stringify({
-      character: { name: room.name, personality: room.personality, speechStyle: room.speechStyle, values: room.values },
+      // 11/17 작품명 대신 대표 인물로 쓴다(다인 작품은 첫 인물, 공식 작품은 설정 글의 히로인).
+      character: { name: leadName({ name: room.name, secret: room.secret, personality: room.personality, cast: room.cast }), personality: room.personality, speechStyle: room.speechStyle, values: room.values },
       user: room.persona ? { name: room.persona.name, about: room.persona.description } : null,
       // 수치는 말투의 온도만 맞추는 데 쓴다 — 글에 숫자를 쓰지 않는다.
       relationship: rel ?? null,

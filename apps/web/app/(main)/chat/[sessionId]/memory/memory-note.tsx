@@ -4,6 +4,7 @@ import { characters, db, memories, relationships, roleplaySessions } from '@miro
 import { stageLabel } from '@miro/domain'
 import { getConversationPersona } from '@/lib/persona'
 import { reflectionKey } from '@/lib/memory-reflection'
+import { leadName } from '@/lib/editorial/heroine-name'
 import { getT } from '@/lib/i18n/server'
 import { Reflection } from './reflection'
 import styles from './memory.module.css'
@@ -16,7 +17,7 @@ import styles from './memory.module.css'
 export async function MemoryNote({ sessionId, userId }: { sessionId: string; userId: string }) {
   const user = { id: userId }
   const t = await getT()
-  const [room] = await db.select({ name: characters.name, persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, stored: roleplaySessions.memoryReflection })
+  const [room] = await db.select({ name: characters.name, secret: characters.secret, intro: characters.personality, cast: characters.ensembleCast, persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, stored: roleplaySessions.memoryReflection })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!room) notFound()
@@ -50,7 +51,7 @@ export async function MemoryNote({ sessionId, userId }: { sessionId: string; use
         </div>
 
         {rows.length === 0 ? <p className={styles.empty}>{t('아직 기억이 없어요. 조금 더 이야기를 나누면 하나씩 쌓여요.')}</p> : <>
-          <Reflection sessionId={sessionId} name={room.name} initial={fresh} />
+          <Reflection sessionId={sessionId} name={leadName({ name: room.name, secret: room.secret, personality: room.intro, cast: room.cast })} initial={fresh} />
           {/* 11/17 크랙 요약 메모리처럼 단기 기억(지금 흐름)과 장기 기억(쌓인 것)을 나눈다. 캐릭터의 기억이라 보기만. */}
           {summary && <section className={styles.block}>
             <h2 className={styles.label}>{t('단기 기억')}</h2>

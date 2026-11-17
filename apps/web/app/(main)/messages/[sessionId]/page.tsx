@@ -17,6 +17,7 @@ import { MessengerThread } from './thread'
 import { MessengerComposer } from './composer'
 import { getT } from '@/lib/i18n/server'
 import { coverTitle } from '@/lib/editorial/cover-title'
+import { leadName } from '@/lib/editorial/heroine-name'
 
 /**
  * 문자(카톡형) 페이지 — 미로 캐릭터가 먼저 보낸 연락, 내가 보낸 문자, 통화 기록이 여기 모인다.
@@ -57,7 +58,8 @@ export default async function MessagesPage({ params, searchParams }: { params: P
             {call === 'usage' ? t('이번 달 통화 제공량을 다 썼어요.') : call === 'off' ? t('지금은 통화를 쓸 수 없어요.') : t('통화를 시작하지 못했어요.')}
           </Notice>
         )}
-        <MessengerThread characterName={loaded.characterName} portrait={loaded.characterPhoto} />
+        {/* 11/17 문자 말풍선의 보낸 사람은 작품명 대신 대표 인물(공식 히로인·다인 작품 첫 인물, 1:1 사용자 작품은 그 캐릭터) */}
+        <MessengerThread characterName={leadName({ name: loaded.characterName, secret: loaded.snapshot.character.personality.secret, personality: loaded.snapshot.character.personality.personality, cast: loaded.snapshot.character.worldRole.cast })} portrait={loaded.characterPhoto} />
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 문자 페이지에서 알림 권한을 묻는다. */}
         <MessengerComposer modelOptions={modelOptions}/>
       </section>
