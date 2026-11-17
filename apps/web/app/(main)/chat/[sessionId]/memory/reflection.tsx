@@ -19,16 +19,18 @@ export function Reflection({ sessionId, name, initial }: { sessionId: string; na
   }, [sessionId, initial])
   if (failed) return null
   return (
-    <section className={`${styles.section} ${styles.thought}`} aria-busy={!r}>
-      <h2 className="t-micro">{t('나에 대한 {name}의 생각', { name })}</h2>
-      {!r ? <div className="stack" style={{ gap: 8 }} aria-label={t('생각을 정리하는 중…')}><Skeleton h={22} w="80%" /><Skeleton h={14} /><Skeleton h={14} /><Skeleton h={14} w="60%" /></div> : <>
-        <p className="t-quote">“{r.oneLine}”</p>
-        <p className="t-body" style={{ whiteSpace: 'pre-line' }}>{r.thought}</p>
-        {r.wonder.length > 0 && <div className="stack" style={{ gap: 4 }}>
-          <h3 className="t-micro">{t('더 알고 싶은 것')}</h3>
-          <ul className={styles.list}>{r.wonder.map((w, i) => <li key={i}>{w}</li>)}</ul>
-        </div>}
-      </>}
+    <section className={styles.block} aria-busy={!r}>
+      <h2 className={styles.label}>{t('나에 대한 {name}의 생각', { name })}</h2>
+      <div className={styles.card}>
+        {!r ? <div className="stack" style={{ gap: 8 }} aria-label={t('생각을 정리하는 중…')}><Skeleton h={20} w="80%" /><Skeleton h={14} /><Skeleton h={14} /><Skeleton h={14} w="60%" /></div> : <>
+          <p className={styles.quote}>“{r.oneLine}”</p>
+          <p className={styles.text}>{r.thought}</p>
+        </>}
+      </div>
+      {r && r.wonder.length > 0 && <div className={styles.card}>
+        <p className={styles.small}>{t('더 알고 싶은 것')}</p>
+        <ul className={styles.list}>{r.wonder.map((w, i) => <li key={i}>{w}</li>)}</ul>
+      </div>}
     </section>
   )
 }
