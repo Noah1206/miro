@@ -17,6 +17,8 @@ export const WELCOME_GRANT = { units: 1500, validDays: 7 } as const
 /** 11/10 사용자: 출석 체크(프로필 버튼)로 하루 1,500토큰(그날 KST 자정에 소멸), 7일 연속 출석마다 1,500 추가(7일 유효).
  *  11/14 사용자: 둘 다 1,500→500(쌀먹 비용) — 최소 잔액 MIN_TURN_BALANCE 와 같아 출석만으로도 대화를 시작할 수 있다. */
 export const ATTENDANCE_GRANT = { daily: 500, weeklyBonus: 500, streakDays: 7, dailyValidDays: 7, bonusValidDays: 7 } as const
+/** 11/18 사용자: 추천인 코드 — 친구는 코드를 넣으면 바로 1,000, 추천인은 친구가 대화 3턴을 하면 2,000(상한 없음). 가입 7일 안의 계정만 코드를 넣을 수 있다. */
+export const REFERRAL_GRANT = { referee: 1000, referrer: 2000, afterTurns: 3, validDays: 7, joinWindowDays: 7 } as const
 /** 대화를 시작하려면 잔액이 이만큼 있어야 한다(11/18 사용자: 1,000 으로 올렸다가 같은 날 500 으로 되돌림). */
 export const MIN_TURN_BALANCE = 500
 

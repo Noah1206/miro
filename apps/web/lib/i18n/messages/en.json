@@ -2406,5 +2406,17 @@
   "쿠폰 코드": "Coupon code",
   "쿠폰 코드 입력": "Enter coupon code",
   "쿠폰 코드를 입력해 주세요.": "Please enter a coupon code.",
-  "쿠폰을 받지 못했어요. 다시 시도해 주세요.": "Couldn't redeem the coupon. Please try again."
+  "쿠폰을 받지 못했어요. 다시 시도해 주세요.": "Couldn't redeem the coupon. Please try again.",
+  "내 추천인 코드": "My referral code",
+  "내 추천인 코드는 넣을 수 없어요.": "You can't use your own referral code.",
+  "복사": "Copy",
+  "복사됨": "Copied",
+  "이미 추천인 코드를 넣었어요.": "You've already entered a referral code.",
+  "지금까지 친구 {n}명": "{n} friends so far",
+  "추천인 코드는 가입 후 {days}일 안에만 넣을 수 있어요.": "Referral codes can only be entered within {days} days of signing up.",
+  "친구가 내 코드를 넣으면 친구는 {friend}토큰, 친구가 대화를 {turns}턴 하면 나는 {me}토큰을 받아요.": "When a friend enters your code they get {friend} tokens, and when they chat {turns} turns you get {me} tokens.",
+  "쿠폰 또는 추천인 코드 입력": "Enter a coupon or referral code",
+  "쿠폰·추천인 코드": "Coupon · referral code",
+  "추천 가입 선물": "Referral welcome gift",
+  "친구 추천 보상": "Friend referral reward"
 }

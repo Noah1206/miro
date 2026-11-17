@@ -8,6 +8,7 @@ import { uploadCharacterImage } from '@/lib/storage/images'
 import { accountProfile, type AccountProfile } from '@/lib/account-profile'
 import { checkIn } from '@/lib/attendance'
 import { redeemCoupon } from '@/lib/coupon'
+import { applyReferral } from '@/lib/referral'
 
 export type ProfileResult = { ok: true; profile: AccountProfile } | { ok: false; error: string } | null
 
@@ -54,8 +55,12 @@ export async function attend() {
   return checkIn(user.id)
 }
 
-/** 11/18 이벤트 쿠폰 — 프로필의 쿠폰 칸. */
+/** 11/18 이벤트 쿠폰 — 프로필의 쿠폰 칸. 쿠폰이 아니면 친구의 추천인 코드로 본다. */
 export async function claimCoupon(code: string) {
   const user = await requireUser()
-  return redeemCoupon(user.id, String(code ?? ''))
+  const r = await redeemCoupon(user.id, String(code ?? ''))
+  if (r.ok || r.error !== 'unknown') return { ...r, kind: 'coupon' as const }
+  const ref = await applyReferral(user.id, String(code ?? '').trim().toUpperCase().replace(/\s+/g, ''))
+  if (!ref) return { ...r, kind: 'coupon' as const }
+  return ref.ok ? { ok: true as const, units: ref.units, validDays: 7, kind: 'referral' as const } : { ok: false as const, error: ref.error, kind: 'referral' as const }
 }

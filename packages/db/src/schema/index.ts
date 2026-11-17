@@ -852,6 +852,21 @@ export const coupons = pgTable('coupons', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+/** 11/18 추천인 코드 — 회원마다 하나(처음 볼 때 만든다). */
+export const referralCodes = pgTable('referral_codes', {
+  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  code: text('code').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+/** 11/18 누가 누구를 추천했나 — 계정당 한 번(referee 가 키). rewardedAt = 추천인 보상을 준 때(친구가 대화 3턴). */
+export const referrals = pgTable('referrals', {
+  refereeId: uuid('referee_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  referrerId: uuid('referrer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  rewardedAt: timestamp('rewarded_at', { withTimezone: true }),
+}, (t) => ({ referrerIdx: index('referrals_referrer_idx').on(t.referrerId) }))
+
 /** 예약 한 건이 어느 잔액에서 얼마를 썼는지. 한 예약이 여러 잔액에 걸칠 수 있다. */
 export const rechargeLedger = pgTable('recharge_ledger', {
   id: uuid('id').primaryKey().defaultRandom(),
