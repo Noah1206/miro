@@ -2,7 +2,7 @@
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { bindChatComposerFollow } from '@/components/chat-viewport'
 import { AnimatePresence } from 'motion/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
 import { Popover, MenuItem, ButtonLink } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
@@ -51,7 +51,22 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const liveItems: Msg[] = live ? [{ id: `${liveKey}:user`, role: 'user', kind: 'text', content: live.input, blocks: [] },
     // 11/16 음성 모드: 오고 있는 답의 글은 보여 주지 않는다 — 소리가 시작될 때 같이 나온다(그동안은 입력창 위 점).
     ...(live.blocks.length && !voice.live ? [{ id: `${liveKey}:reply`, role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
-  const settled = [...server, ...appended.filter((m) => !known.has(m.id))].filter((m) => !removed.has(m.id))
+  const merged = [...server, ...appended.filter((m) => !known.has(m.id))].filter((m) => !removed.has(m.id))
+  // 11/18 사용자: 상황별 사진은 답 중간 — 자리(anchor.after)가 적힌 사진 행은 목록에서 빼고, 바로 앞 답의 그 블록 뒤에 그린다.
+  const inline = new Map<string, InlinePhoto[]>()
+  const anchored = new Set<string>()
+  merged.forEach((m, i) => {
+    const after = m.kind === 'photo' && m.blocks[0]?.type === 'anchor' ? Number(m.blocks[0].after) : 0
+    if (!after) return
+    let j = i - 1
+    while (j >= 0 && anchored.has(merged[j]!.id)) j--
+    const reply = merged[j]
+    const block = reply?.role === 'character' && reply.kind === 'text' ? reply.blocks[after - 1] : undefined
+    if (!reply || !block) return
+    anchored.add(m.id)
+    inline.set(reply.id, [...(inline.get(reply.id) ?? []), { block, photo: m }])
+  })
+  const settled = merged.filter((m) => !anchored.has(m.id))
   const items = [...settled, ...liveItems]
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
   const displayed = items.filter(m => opening.visible(m) && !voice.held(m.id))
@@ -165,7 +180,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b]) && !endingReady([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
-              typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }} />
+              typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }}
+              inline={inline.get(m.id)} renderPhoto={p => <Message key={p.id} m={p} characterName={characterName} veil={veilPhotos ? sessionId : undefined} onGrow={follow} />} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
             {(m.role === 'character' || m.role === 'narrator') && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open />}
@@ -205,8 +221,12 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 
 /** 11/11 사용자: 상황 서술은 한 줄을 다 채우지 않고 문장마다 줄바꿈(데스크톱·폰 모두) — 문장 끝(. ! ? … 와 닫는 따옴표) 뒤 공백을 줄바꿈으로. */
 
-function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil, cast, castPhotos }: {
+/** 11/18 답 중간 사진 — block 은 답의 저장 블록(같은 객체), 그 블록 뒤에 photo 를 그린다. */
+type InlinePhoto = { block: Record<string, unknown>; photo: Msg }
+
+function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil, cast, castPhotos, inline, renderPhoto }: {
   m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]; castPhotos?: Record<string, string>
+  inline?: InlinePhoto[]; renderPhoto?: (photo: Msg) => React.ReactNode
 }) {
   const t = useT()
   const done = useRef(onDone)
@@ -247,11 +267,12 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       </Reportable>
     )
   }
-  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} castPhotos={castPhotos} /></Reportable>
+  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} castPhotos={castPhotos} inline={inline} renderPhoto={renderPhoto} /></Reportable>
 }
 
-function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast, castPhotos = {} }: {
+function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast, castPhotos = {}, inline = [], renderPhoto }: {
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]; castPhotos?: Record<string, string>
+  inline?: InlinePhoto[]; renderPhoto?: (photo: Msg) => React.ReactNode
 }) {
   // 상황은 말풍선 밖, 행동·속마음은 같은 인물의 말풍선 안에서 대사와 구분한다.
   const t = useT()
@@ -290,8 +311,24 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const paragraphClass = (p: Paragraph) => p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : styles.dialogueLine
   const quoted = (p: Paragraph) => theme === 'miro' && p.kind === 'dialogue' && !/^["“'‘]/.test(p.text) ? { ...p, text: `"${p.text}"` } : p
 
+  // 11/18 답 중간 사진: 그 블록이 든 덩어리 바로 뒤. 치는 중이면 그 덩어리를 다 친 뒤에 보인다. 자리를 못 찾은 사진은 답 끝.
+  const placed = new Set<InlinePhoto>()
+  const photosAfter = (seg: (typeof shown)[number]) => {
+    const here = inline.filter(x => !placed.has(x) && seg.paragraphs.some(p => p.block === x.block))
+    here.forEach(x => placed.add(x))
+    return here.length && renderPhoto
+      ? <div className={styles.inlinePhotos} hidden={typing && seg.paragraphs.at(-1)!.index >= typed} data-inline-photos>{here.map(x => renderPhoto(x.photo))}</div>
+      : null
+  }
+  const segmentEls = shown.map((seg, i) => <Fragment key={i}>{segment(seg, i)}{photosAfter(seg)}</Fragment>)
+  const rest = inline.filter(x => !placed.has(x))
+
   return <div className={styles.reply}>
-    {shown.map((seg, i) => {
+    {segmentEls}
+    {rest.length > 0 && renderPhoto && <div className={styles.inlinePhotos} hidden={typing && typed < count} data-inline-photos>{rest.map(x => renderPhoto(x.photo))}</div>}
+  </div>
+
+  function segment(seg: (typeof shown)[number], i: number) {
       const hidden = typing && seg.paragraphs[0]!.index > typed
       if (seg.kind === 'narration') return (
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
@@ -328,8 +365,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
           </div>
         </div>
       )
-    })}
-  </div>
+  }
 }
 
 function BubbleTime({ m }: { m: Msg }) {

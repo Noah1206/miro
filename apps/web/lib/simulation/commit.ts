@@ -39,7 +39,7 @@ export type CommitInput = {
   sessionId: string
   /** 상황별 사진 URL(10/28) — 키워드가 맞은 턴에만. */
   /** 11/18 이번 답에 띄울 상황별 사진(AI 가 고른 순서대로, 최대 2장). */
-  situationImages?: string[]
+  situationImages?: Array<{ url: string; after: number | null }>
   /** null for unmetered MIRO turns — there is no ledger row to commit. */
   reservationId?: string | null
   actualTokens?: number
@@ -171,10 +171,11 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         content: input.responseText,
         blocks: input.blocks as never, turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
       },
-      // 상황별 사진 — 답 바로 뒤에, AI 가 고른 순서대로(11/18 바베챗식, 최대 2장).
-      ...(input.situationImages ?? []).map(url => ({
+      // 상황별 사진 — 답 바로 뒤 행에, AI 가 고른 순서대로(11/18 바베챗식, 최대 2장).
+      // 11/18 사용자: 화면에선 답 중간 — anchor.after(답 블록 1부터 센 번호) 뒤에 그린다(messages.tsx). 없으면 답 끝.
+      ...(input.situationImages ?? []).map(({ url, after }) => ({
         sessionId: input.sessionId, role: 'character' as const, kind: 'photo' as const,
-        content: url, blocks: [], turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
+        content: url, blocks: after ? [{ type: 'anchor', after }] : [], turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
       })),
     ]
     const inserted = (await tx.insert(messages).values(inWrittenOrder(rows)).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))

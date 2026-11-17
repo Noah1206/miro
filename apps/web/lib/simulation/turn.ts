@@ -284,7 +284,8 @@ async function executeTurn(opts: {
     // 상황별 사진 — 11/18 바베챗식: 답을 쓰는 AI 가 지금 장면의 사진 코드를 직접 고른다(images, 한 답에 최대 2장, 같은 사진 재사용 가능).
     // 예전엔 답 뒤에 분류 AI 를 한 번 더 불러 한 장만, 방에서 한 번 띄운 사진은 다시 안 썼다. 순번·허용(언베일 전용)은 엔진 검증기가 이미 걸렀다.
     const sceneImages = charSettings?.situationImages ?? []
-    const situationImages = (transition.images ?? []).map(i => sceneImages[i]?.image).filter((url): url is string => !!url)
+    // 11/18 사용자: 답 중간, AI 가 고른 블록 바로 뒤에(after = 저장 블록의 1부터 센 번호, null 이면 답 끝).
+    const situationImages = (transition.images ?? []).flatMap((i, k) => { const url = sceneImages[i]?.image; return url ? [{ url, after: transition.imagesAfter?.[k] ?? null }] : [] })
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,
       providerMode: result.providerMode, characterState: result.characterState, firedRules: result.firedRules,

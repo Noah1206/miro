@@ -5,7 +5,8 @@
  */
 import { parseEmphasis } from '@/components/scene/emphasis'
 
-export type Paragraph = { text: string; kind: 'narration' | 'action' | 'thought' | 'dialogue'; index: number }
+/** block: 이 문단이 나온 저장 블록(같은 객체) — 11/18 답 중간 사진을 그 블록 뒤에 붙일 때 쓴다. */
+export type Paragraph = { text: string; kind: 'narration' | 'action' | 'thought' | 'dialogue'; index: number; block?: Record<string, unknown> }
 export type Segment = { kind: 'narration'; paragraphs: Paragraph[] } | { kind: 'bubble'; speaker: string; paragraphs: Paragraph[] }
 
 /** `차유진 |"대사"` — 이름(20자 이하) + | + 따옴표 대사. */
@@ -20,16 +21,17 @@ export function segmentReply(blocks: Array<Record<string, unknown>>, content: st
   // 여러 인물 카드(11/6)의 히로인 속마음은 그 히로인 말풍선에 붙는다(cast = 히로인 이름).
   const heroines = new Set(cast)
   const self = new Set([name, ...kept.filter((b) => b.type === 'thought').map(speakerOf).filter((v): v is string => !!v && !heroines.has(v))])
-  const items = kept.map((b) => {
+  type Item = { text: string; kind: Paragraph['kind']; speaker: string | null; block?: Record<string, unknown> }
+  const items = kept.map((b): Item => {
     const type = String(b.type)
     const speaker = speakerOf(b)
-    if (type === 'narrative' || type === 'world') return { text: String(b.text), kind: 'narration' as const, speaker: null }
-    if (type === 'thought') return { text: String(b.text), kind: 'thought' as const, speaker: speaker && heroines.has(speaker) ? speaker : name }
-    return { text: String(b.text), kind: type === 'action' ? 'action' as const : 'dialogue' as const, speaker: !speaker || self.has(speaker) ? name : speaker }
+    if (type === 'narrative' || type === 'world') return { text: String(b.text), kind: 'narration' as const, speaker: null, block: b }
+    if (type === 'thought') return { text: String(b.text), kind: 'thought' as const, speaker: speaker && heroines.has(speaker) ? speaker : name, block: b }
+    return { text: String(b.text), kind: type === 'action' ? 'action' as const : 'dialogue' as const, speaker: !speaker || self.has(speaker) ? name : speaker, block: b }
   })
   // 블록이 없는 옛 기록: 빈 줄로 나눈 문단, "이름:" 은 대사, 강조 파서가 기울임으로 읽는 별표로 시작하면 행동 —
   // 판정과 렌더가 같은 규칙을 쓴다(`*^^* 안녕` 은 별표째 보이는 대사).
-  const source = items.length ? items : content.split(/\n\s*\n/).filter((t) => t.trim()).map((text) => {
+  const source: Item[] = items.length ? items : content.split(/\n\s*\n/).filter((t) => t.trim()).map((text): Item => {
     const prefix = `${name}:`
     const dialogue = text.startsWith(prefix)
     return { text: dialogue ? text.slice(prefix.length).trimStart() : text, kind: !dialogue && parseEmphasis(text)[0]?.style === 'italic' ? 'action' as const : 'dialogue' as const, speaker: name }
@@ -39,7 +41,7 @@ export function segmentReply(blocks: Array<Record<string, unknown>>, content: st
   // `나 |"…"`(주인공=사용자)는 이름표만 떼고 따옴표 대사로 서술에 남긴다.
   const expanded = source.flatMap((item) => {
     if (item.kind !== 'narration' || !item.text.includes('|')) return [item]
-    const out: typeof source = []
+    const out: Item[] = []
     const prose = (text: string) => {
       const last = out[out.length - 1]
       if (last?.kind === 'narration') last.text += '\n' + text
@@ -52,12 +54,14 @@ export function segmentReply(blocks: Array<Record<string, unknown>>, content: st
       if (who === '나') prose(`"${said}"`)
       else out.push({ text: said, kind: 'dialogue', speaker: self.has(who) ? name : who })
     }
+    // 나뉜 블록의 사진 자리는 그 블록의 마지막 조각 뒤.
+    if (out.length) out[out.length - 1]!.block = item.block
     return out
   })
 
   const segments: Segment[] = []
   expanded.forEach((item, index) => {
-    const paragraph: Paragraph = { text: item.text, kind: item.kind, index }
+    const paragraph: Paragraph = { text: item.text, kind: item.kind, index, ...(item.block ? { block: item.block } : {}) }
     const last = segments[segments.length - 1]
     if (item.kind === 'narration') {
       if (last?.kind === 'narration') last.paragraphs.push(paragraph)

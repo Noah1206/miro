@@ -31,6 +31,8 @@ export type ValidatedTransition = {
   statValues?: Record<string, number> | null
   /** 11/18 이번 장면에 띄울 상황별 사진의 순번(0부터) — 작품 목록에 있고 이 방에서 허용된 것만, 최대 2장. */
   images?: number[]
+  /** 11/18 images 와 같은 자리마다: 검증된 blocks 의 몇 번째 블록(1부터) 뒤에 넣는지. null 이면 답 끝. */
+  imagesAfter?: Array<number | null>
   issues: ValidationIssue[]
 }
 
@@ -46,9 +48,11 @@ export function validateProposal(
   snapshot: SimulationSnapshot,
 ): ValidatedTransition {
   const issues: ValidationIssue[] = []
+  const blocks = validateBlocks(proposal, snapshot, issues)
+  const photos = sceneImages(snapshot, proposal.images)
 
   return {
-    blocks: validateBlocks(proposal, snapshot, issues),
+    blocks,
     worldDelta: validateWorldDelta(proposal, issues),
     relationshipDelta: validateRelationshipDelta(proposal, issues),
     sceneDelta: proposal.sceneDelta,
@@ -62,7 +66,13 @@ export function validateProposal(
     intent: proposal.intent,
     status: snapshot.character.worldRole.statusFormat?.trim() && proposal.status?.trim() ? proposal.status.trim() : null,
     statValues: snapshot.character.worldRole.stats?.length ? clampStatValues(snapshot.character.worldRole.stats, snapshot.statValues ?? {}, proposal.statValues) : null,
-    images: sceneImages(snapshot, proposal.images),
+    images: photos.map(p => p.index),
+    // AI 가 센 블록 번호는 검증 전 블록 기준 — 그 앞까지를 같은 규칙으로 걸러 남은 수가 저장될 자리다. 끝이거나 번호가 없으면 답 끝.
+    imagesAfter: photos.map(p => {
+      if (p.after === null) return null
+      const kept = allowedBlocks(proposal.rp.blocks.slice(0, p.after), snapshot).length
+      return kept >= 1 && kept < blocks.length ? kept : null
+    }),
     issues,
   }
 }
@@ -290,14 +300,15 @@ function validateNpcActions(
 
 export type { SimulationEvent }
 
-/** 11/18 AI 가 고른 사진 코드(p1…) → 순번. 목록 밖·언베일 아닌 방의 언베일 전용 사진·중복은 버리고 최대 2장. */
-function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): number[] {
+/** 11/18 AI 가 고른 사진 코드(p1… 또는 'p3:4' = 4번째 블록 뒤) → 순번·자리. 목록 밖·언베일 아닌 방의 언베일 전용 사진·중복은 버리고 최대 2장. */
+function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null }> {
   const list = s.character.worldRole.situationImages ?? []
-  const out: number[] = []
+  const out: Array<{ index: number; after: number | null }> = []
   for (const code of codes ?? []) {
-    const i = Number(/^p(\d{1,4})$/i.exec(code.trim())?.[1]) - 1
-    if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.includes(i)) continue
-    out.push(i)
+    const m = /^p(\d{1,4})\s*(?:[:@>]\s*(\d{1,3}))?$/i.exec(code.trim())
+    const i = Number(m?.[1]) - 1
+    if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.some(o => o.index === i)) continue
+    out.push({ index: i, after: m?.[2] ? Number(m[2]) : null })
     if (out.length === 2) break
   }
   return out
