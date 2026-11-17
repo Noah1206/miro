@@ -1,6 +1,6 @@
 import { prompts, CHARACTER_VOICE_RULES } from '@miro/providers'
 import { ADULT_SPEECH_PROMPT, POLICY, VOICE_DELIVERY_PROMPT } from '@miro/config'
-import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, loreLimit, storyCalendarDirective, currentStage } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, loreLimit, storyCalendarDirective, currentStage, fillCharacterMacros } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
 } from '@miro/domain'
@@ -323,7 +323,9 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
     const body = buildPrompt(s, memories, recent, spoken, !spoken && style !== 'brief' && (!s.mode || s.mode === 'chat'), cacheLayout ? history : undefined)
     const prompt = cacheLayout ? `${body}\n\n## 이번 턴 지시${tail ? '\n' + tail : ''}` : body
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system: full, cachePrefix, prompt, ...(cacheLayout ? { history } : {}), promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
+    // 11/18 붙여 넣은 바베챗식 설정의 {{char}}·{{user}} 를 이름으로(지시문·캐시 앞부분·최근 대화·이번 턴 모두 같은 규칙).
+    const fill = (t: string) => fillCharacterMacros(t, s.character.identity.name, s.userPersona?.name)
+    last = { system: fill(full), cachePrefix: fill(full.slice(0, cachePrefix)).length, prompt: fill(prompt), ...(cacheLayout ? { history: history.map(fill) } : {}), promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(history.join('') + prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }

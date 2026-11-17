@@ -32,6 +32,7 @@ import { hasActiveRun, reachedEndings } from '@/lib/ending-collection'
 import { CheerButton } from './cheer'
 import { db, users } from '@miro/db'
 import { eq } from 'drizzle-orm'
+import { fillCharacterMacros } from '@miro/domain'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -62,7 +63,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
     creatorKey ? creatorOf(creatorKey, user?.id ?? null) : Promise.resolve(null),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
-  const me = (text: string | null) => text ?? ''
+  // 11/18 붙여 넣은 바베챗식 설정의 {{char}}·{{user}} — 소개 화면에선 캐릭터 이름·'당신'.
+  const me = (text: string | null) => fillCharacterMacros(text ?? '', c.name, '당신')
   // 시작 상황(도입부)이 둘 이상이면 고른다 — 고른 값은 아래 '대화 시작하기' 폼으로 간다(form 속성).
   const scenes = introScenes(c.sampleDialogue)
   // 각 캐릭터의 분위기에 맞는 이름·당신·핵심어 색.
@@ -109,8 +111,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
   // 소개 글 뒤의 '상세정보' 단락(키·몸무게·쓰리사이즈)은 세부정보로 접는다.
   const cut = c.personality?.indexOf('\n\n상세정보') ?? -1
-  const lead = cut >= 0 ? c.personality!.slice(0, cut) : c.personality
-  const details = cut >= 0 ? c.personality!.slice(cut + 2) : ''
+  const lead = me(cut >= 0 ? c.personality!.slice(0, cut) : c.personality)
+  const details = me(cut >= 0 ? c.personality!.slice(cut + 2) : '')
 
   return (
     <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: 'var(--color-bg)' }}>

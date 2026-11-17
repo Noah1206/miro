@@ -35,6 +35,7 @@ import { feature, voicePaused } from '@miro/config'
 import { castNames } from '@miro/engine'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import { heroineName } from '@/lib/editorial/heroine-name'
+import { fillCharacterMacros } from '@miro/domain'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
 import { modalImageReady } from '@/lib/ai/modal-image'
 import { customSceneId } from '@/lib/photo-scenes'
@@ -106,14 +107,17 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 11/10: 만든 사람이 인물마다 올린 사진(ensemble_photos)이 먼저 — 없을 때만 작품 사진 순서로 대신한다.
   const named = rec?.ensemblePhotos ?? {}
   const castPhotos = { ...Object.fromEntries(cast.flatMap((name, i) => castImages[i] ? [[name, castImages[i]!]] : [])), ...named }
+  // 11/18 붙여 넣은 바베챗식 인트로·첫 대사의 {{char}}·{{user}} 를 이름으로(화면도 지시문과 같은 규칙).
+  const fill = (text: string) => fillCharacterMacros(text, loaded.characterName, s.userPersona?.name)
+  const fillBlocks = (blocks: Array<Record<string, unknown>>) => blocks.map(b => typeof b.text === 'string' ? { ...b, text: fill(b.text) } : b)
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
-    content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : !unveilOn && m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content) ? t(VEILED_LINE) : m.content,
-    blocks: !unveilOn && m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content) ? [] : m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
+    content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : !unveilOn && m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content) ? t(VEILED_LINE) : m.kind === 'text' ? fill(m.content) : m.content,
+    blocks: !unveilOn && m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content) ? [] : fillBlocks(m.blocks as Array<Record<string, unknown>>), at: m.createdAt.toISOString(),
     opening: m.turnIndex <= 0 && !m.hiddenAt && (m.kind === 'text' || m.kind === 'photo') && (m.role === 'character' || m.role === 'narrator'),
   }))
   if (history.length === 0 && s.character.worldRole.startingContext) items.push({
-    id: `opening:${sessionId}`, role: 'narrator', kind: 'text', content: !unveilOn && explicitText(s.character.worldRole.startingContext) ? t(VEILED_LINE) : s.character.worldRole.startingContext, blocks: [], opening: true,
+    id: `opening:${sessionId}`, role: 'narrator', kind: 'text', content: !unveilOn && explicitText(s.character.worldRole.startingContext) ? t(VEILED_LINE) : fill(s.character.worldRole.startingContext), blocks: [], opening: true,
   })
 
   return (
@@ -149,7 +153,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         {/* 11/13 사용자: '이 세계에서의 나'는 선택 — 카드가 떠 있어도 입력창을 같이 보여 준다. */}
-        {<ChatComposer sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
+        {<ChatComposer sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies?.map(fill) : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
           persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
           photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />}
       </section>

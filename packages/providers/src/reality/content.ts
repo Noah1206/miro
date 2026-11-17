@@ -145,12 +145,16 @@ export async function generateRealityContent(
     `승인된 연락 이유와 마지막으로 받은 말에 맞는 문자 한 통을 JSON으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent", "lengthReason": "brief"|"requested_detail"|"important_explanation"|"letter"${multi.length ? ', "speaker": 보내는 인물 이름' : ''} }`,
   ].filter(Boolean).join('\n')
 
+  // 11/18 붙여 넣은 바베챗식 설정의 {{char}}·{{user}} 를 이름으로(대화 지시문과 같은 규칙).
+  const userName = input.userPersona?.find(l => l.startsWith('이름: '))?.slice(4)
+  // domain 의 fillCharacterMacros 와 같은 규칙(providers 는 domain 에 의존하지 않아 여기 둔다).
+  const filled = prompt.replace(/\{\{\s*char\s*\}\}|<char>/gi, () => input.characterName).replace(/\{\{\s*user\s*\}\}|<user>/gi, () => userName?.trim() || '사용자')
   const extended = input.replyLength === 'plus' || input.replyLength === 'long' || input.replyLength === 'saga'
   const schema = multi.length ? textingContent(extended).and(z.object({ speaker: z.string().optional() })) : textingContent(extended)
   const content = await llm.generateStructured({ schema, responseSchema: textingResponse(multi),
     task: 'dialogue', promptVersion: REALITY_CONTENT_VERSION, maxRetries: 1,
     system: prompts.get('reality', 'v2').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM
-      + (extended ? '\n앱에서 사용자가 ECHO(긴 대화)를 선택했습니다. 이 답장에는 위의 평소 120자 제한 대신 최대 400자 안에서 맥락과 감정을 더 충분히 풀어도 됩니다. 짧은 답으로 충분하면 늘리지 마세요. 문자 형식과 캐릭터 말투는 유지하며 행동 지문·내레이션은 넣지 마세요.' : ''), prompt, maxTokens: 1024 })
+      + (extended ? '\n앱에서 사용자가 ECHO(긴 대화)를 선택했습니다. 이 답장에는 위의 평소 120자 제한 대신 최대 400자 안에서 맥락과 감정을 더 충분히 풀어도 됩니다. 짧은 답으로 충분하면 늘리지 마세요. 문자 형식과 캐릭터 말투는 유지하며 행동 지문·내레이션은 넣지 마세요.' : ''), prompt: filled, maxTokens: 1024 })
   // A refusal reason is internal text, never a reply. Let the existing retry path retain the request.
   if (!input.allowAbstain && content.send === false) throw new Error('reality_content_unexpected_abstention')
   const speaker = (content as { speaker?: string }).speaker?.trim()
