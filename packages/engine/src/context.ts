@@ -423,6 +423,8 @@ function castSection(c: SimulationSnapshot['character'], adult = false): string[
   if (!cast.length) return []
   return ['', '## 함께 나오는 인물 (이 카드가 주인공과 함께 연기한다)',
     `주인공 ${c.identity.name} 말고도 아래 인물들이 이 이야기에 나온다. 지금 장면에 있는 인물만 말하고, 각자의 말투·성격·사용자와의 관계를 섞지 않는다. 그 인물의 대사·행동·속마음은 dialogue·action·thought 블록에 speaker 를 그 인물 이름으로 쓴다. 이 인물들에게는 '제3의 인물은 꼭 필요할 때만' 규칙을 적용하지 않는다.`,
+    // 11/17 실측: 카드 이름이 작품·장소 이름('카페 온기')인 사용자 작품에서 지안의 대사가 speaker '카페 온기'로 나왔다.
+    `speaker 는 반드시 실제로 말하는 사람의 이름이다 — 아래 인물 중 하나, 또는 카드 이름 '${c.identity.name}'이 사람 이름이고 그 사람이 지금 말할 때만 그 이름. 카드 이름이 작품·가게·장소·세계 이름이면 사람이 아니므로 speaker 로 절대 쓰지 않는다.`,
     ...cast.map(p => {
       const facts = [p.age && `나이 ${p.age}`, p.occupation, p.mbti, p.nationality].filter(Boolean).join(' · ')
       const traits = traitLines(p)

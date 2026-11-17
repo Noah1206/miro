@@ -229,12 +229,14 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         }
         if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
         const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: realizationContext,
-          state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }],
+          // 11/17 다인 작품: 실제 보낸 인물로 검토한다(카드 이름으로 넘기면 유나 말투의 답이 계속 거절돼 1분마다 다시 만들었다).
+          state: runtime.state, blocks: [{ type: 'dialogue', speaker: content.speaker ?? identity.name, text: content.text }],
           communicationPreference: needsCommunicationPreferenceReview('', snapshot.recentMessages, communicationPreferences),
           userGroundingEvidence: snapshotUserGrounding(snapshot, ''),
           communicationPreferenceSourceIds: communicationPreferences.map(item => item.sourceId) })
         if (productionRuntime() && verified.providerMode !== 'live') return { outcome: 'skipped', reason: 'agency_rejected' }
         if (verified.ok) break
+        observe('agency.reality_rejected', { sessionId, attempt, speaker: content.speaker ?? null, issues: verified.issues.map(issue => issue.reason).slice(0, 6).join(',') })
         if (attempt === 1 || !verified.reviewed || !verified.issues.length || verified.issues.some(issue => !repairable.has(issue.reason))) {
           return { outcome: 'skipped', reason: 'agency_rejected' }
         }
@@ -363,7 +365,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     return { outcome: 'sent', channel, contactId: result, text: content.text }
   } catch (error) {
     if (error instanceof AgencyRealityConflict || (error as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'state_changed' }
-    observe('agency.reality_unavailable', { sessionId, mode: requestedMode, error: error instanceof Error ? error.name : 'unknown' })
+    observe('agency.reality_unavailable', { sessionId, mode: requestedMode, error: error instanceof Error ? error.name : 'unknown', message: error instanceof Error ? error.message.slice(0, 200) : '' })
     return requestedMode === 'shadow' ? null : { outcome: 'skipped', reason: 'agency_unavailable' }
   }
 }

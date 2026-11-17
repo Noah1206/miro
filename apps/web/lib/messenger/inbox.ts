@@ -162,7 +162,17 @@ async function reviewInbox(sessionId: string, now: Date, stream?: MessengerDraft
   try {
     if (review.kind === 'reply') {
       const { evaluateSession } = await import('@/lib/reality/evaluate')
-      await evaluateSession(sessionId, now, { background: true, inbox: { ...review, ...(stream ? { stream: { onText: (text: string) => stream.onDraft(review.token, text), onReset: () => stream.onReset(review.token) } } : {}) } })
+      const outcome = await evaluateSession(sessionId, now, { background: true, inbox: { ...review, ...(stream ? { stream: { onText: (text: string) => stream.onDraft(review.token, text), onReset: () => stream.onReset(review.token) } } : {}) } })
+      // 11/17 실측: 거절된 답장을 1분마다 다시 만들어 25분에 $2.9 를 썼다 — 거절이 이어지면 15분·30분·60분, 세 번째부터는 하루 뒤로 미룬다.
+      if (outcome.outcome === 'skipped' && outcome.reason === 'agency_rejected') {
+        await db.update(messengerInbox).set({
+          attentionDecision: sql`jsonb_set(coalesce(${messengerInbox.attentionDecision}, '{}'::jsonb), '{rejections}', to_jsonb(coalesce((${messengerInbox.attentionDecision}->>'rejections')::int, 0) + 1))`,
+          nextReviewAt: sql`${now.toISOString()}::timestamptz + (CASE WHEN coalesce((${messengerInbox.attentionDecision}->>'rejections')::int, 0) >= 2 THEN interval '24 hours'
+            ELSE interval '15 minutes' * power(2, coalesce((${messengerInbox.attentionDecision}->>'rejections')::int, 0)) END)`,
+          leaseToken: null, leaseUntil: null,
+        }).where(and(inArray(messengerInbox.messageId, review.ids), eq(messengerInbox.leaseToken, review.token)))
+        observe('messenger.reply_rejected', { sessionId, ids: review.ids.length })
+      }
     } else {
       const result = await chooseAttention(sessionId, row.session.userId, now, review.envelopes,
         { availability: availability.availability, label: availability.label }, review.previousKey)
