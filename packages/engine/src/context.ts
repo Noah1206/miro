@@ -58,6 +58,8 @@ export type SimulationSnapshot = {
   semanticEvents?: SemanticEvent[]
   /** 기억 검색의 질의. 이번 사용자 입력. */
   userInput?: string
+  /** 11/18 상황별 사진 순번을 지금 대화와 뜻이 가까운 순서로(웹이 임베딩으로 계산). 없으면 글자 겹침으로 추린다. */
+  situationRanking?: number[]
   /** 아직 기억에 반영되지 않은 최근 턴이 있다(memory_jobs 대기 중, §3.5). 옛 기억을 확정 사실로 내밀지 않게 한다. */
   memoryLag?: boolean
   /** 사용자가 정한 자기 설정(페르소나). 없으면 사용자는 '사용자' 로만 안다 — 옛 세션·체험·테스트 경로. */
@@ -487,12 +489,36 @@ function endingRules(c: SimulationSnapshot['character']): string[] {
  * 같은 사진을 다시 써도 되고 한 응답에 두 장까지. 언베일 전용 사진은 언베일 장면에서만 목록에 싣는다.
  */
 function imageRules(c: SimulationSnapshot['character'], adult: boolean): string[] {
-  const list = (c.worldRole.situationImages ?? []).map((e, i) => ({ code: `p${i + 1}`, ...e })).filter(e => adult || !e.adult)
+  const list = situationList(c, adult)
   if (!list.length) return []
+  const many = list.length > IMAGE_LIST_MAX
   return ['', '## 사진 (만든 사람이 올린 장면 사진)',
-    '- 이번 장면에서 아래 상황이 실제로 벌어지고 있거나 막 벌어졌으면, 그 사진 코드를 최상위 images 칸에 냅니다(한 응답에 최대 2장, 장면에 나오는 순서대로). 맞는 사진이 없으면 images 는 빈 배열입니다.',
+    `- 이번 장면에서 ${many ? "프롬프트의 '## 지금 고를 수 있는 사진'" : '아래'} 상황이 실제로 벌어지고 있거나 막 벌어졌으면, 그 사진 코드를 최상위 images 칸에 냅니다(한 응답에 최대 2장, 장면에 나오는 순서대로). 맞는 사진이 없으면 images 는 빈 배열입니다.`,
     '- 말로만 언급하거나 가정·과거·나중 이야기·남의 이야기면 고르지 않습니다. 같은 상황이 다시 벌어지면 같은 사진을 다시 골라도 됩니다. 본문에 코드나 사진 설명을 쓰지 않습니다.',
-    ...list.map(e => `  · ${e.code}: ${e.situation}`)]
+    ...(many ? [] : list.map(e => `  · ${e.code}: ${e.situation}`))]
+}
+
+/**
+ * 11/18 사진이 많은 작품(최대 1000장) — 전부 지시문에 실으면 매 턴 수만 자가 붙어 맥락 상한을 넘는다.
+ * 30장 이하는 위처럼 캐시되는 지시문에 그대로, 넘으면 이번 턴 프롬프트에 지금 대화와 가까운 30장만 싣는다(코드는 원래 순번 그대로라 검증기와 맞는다).
+ * 가까움은 뜻으로(s.situationRanking — 웹의 임베딩 순위), 그게 없을 때(임베딩 실패·시간 초과)만 글자 겹침으로.
+ */
+const IMAGE_LIST_MAX = 30
+const situationList = (c: SimulationSnapshot['character'], adult: boolean) =>
+  (c.worldRole.situationImages ?? []).map((e, i) => ({ code: `p${i + 1}`, i, ...e })).filter(e => adult || !e.adult)
+const bigrams = (text: string) => { const t = text.toLowerCase().replace(/\s+/g, ''); const out = new Set<string>(); for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2)); return out }
+export function relevantSituationImages(s: SimulationSnapshot, limit = IMAGE_LIST_MAX) {
+  const list = situationList(s.character, !!s.adultMode)
+  if (list.length <= limit) return list
+  if (s.situationRanking?.length) {
+    const pos = new Map(s.situationRanking.map((i, p) => [i, p]))
+    return [...list].sort((a, b) => (pos.get(a.i) ?? Infinity) - (pos.get(b.i) ?? Infinity) || a.i - b.i).slice(0, limit)
+  }
+  const query = [...s.recentMessages.slice(-4).map(m => m.content), s.userInput ?? '', s.scene ? `${s.scene.mood} ${s.scene.weather}` : ''].join('\n')
+  const q = bigrams(query)
+  // 상황 설명(없으면 키워드 — character-context 가 이미 합쳐 줌)과 최근 대화가 겹치는 두 글자 수.
+  const score = (e: (typeof list)[number]) => { let n = 0; for (const b of bigrams(e.situation)) if (q.has(b)) n++; return n }
+  return list.map(e => ({ e, n: score(e) })).sort((a, b) => b.n - a.n || a.e.i - b.e.i).slice(0, limit).map(x => x.e)
 }
 
 function statusRules(c: SimulationSnapshot['character']): string[] {
@@ -682,6 +708,10 @@ function buildPrompt(
   if (lore.length > 0) {
     parts.push('', '## 캐릭터가 알고 있는 것 (원래 알던 배경 — 새로 알게 된 척하지 말 것)')
     for (const entry of lore) parts.push(`- ${entry.name ? `[${entry.name}] ` : ''}${entry.content}`)
+  }
+  if (!spoken && situationList(s.character, !!s.adultMode).length > IMAGE_LIST_MAX) {
+    parts.push('', '## 지금 고를 수 있는 사진 (지금 대화와 가까운 것만 추림 — 이 중 지금 장면인 것만 images 에)')
+    for (const e of relevantSituationImages(s)) parts.push(`  · ${e.code}: ${e.situation}`)
   }
 
   const r = s.relationship

@@ -1560,6 +1560,7 @@
  "사진을 고르지 못했어요.": "Couldn't pick that photo.",
  "상황 사진 빼기": "Remove situation photo",
  "상황 사진 추가 ({n}/{max})": "Add situation photo ({n}/{max})",
+ "사진은 {max}장까지 넣을 수 있어요. {n}장은 올리지 않았어요.": "You can add up to {max} photos. {n} were not uploaded.",
  "상황 키워드": "Situation keywords",
  "상황 키워드 (쉼표로) 예) 비, 우산": "Keywords (comma-separated) e.g. rain, umbrella",
  "상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.": "Pair keywords with a photo, and the photo appears in chat when that situation comes up.",

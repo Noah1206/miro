@@ -1,6 +1,7 @@
 import { DEFAULT_CHARACTER_STATE, visibleStatValues } from '@miro/domain'
 import { receiveMessenger, MessengerError } from '@/lib/messenger/inbox'
 import { resolveChatModel } from '@/lib/ai/chat-models'
+import { rankSituationImages } from '@/lib/situation-ranking'
 import { eq, and, sql } from 'drizzle-orm'
 import { db, conversationRequests, characters, messages, memories } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
@@ -125,6 +126,8 @@ async function executeTurn(opts: {
     const dialogueModelId = model.modelId
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
     const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
+    // 11/18 사진이 30장을 넘는 작품 — 최근 대화와 뜻이 가까운 순서를 미리 계산해 둔다(모델 준비와 겹쳐 돌고, 실패하면 엔진이 글자 겹침으로).
+    const situationRanking = rankSituationImages(charSettings?.situationImages ?? [], [...loaded.snapshot.recentMessages.slice(-4).map(m => m.content), input].join('\n')).catch(() => null)
     // 11/16 생각 강도는 3단계(빠름·보통·깊게) — 예전 '깊게·최대'(xhigh·max)는 Sonnet 에서 답 없이 잘렸다. 생각이 먹지 않는 모델(DeepSeek 등)은 무시한다.
     const wanted = opts.thinking ?? charSettings?.rec?.thinking
     const thinking = model.thinking && wanted ? (wanted === 'xhigh' || wanted === 'max' ? 'high' as const : wanted) : undefined
@@ -195,6 +198,9 @@ async function executeTurn(opts: {
       // 11/10: 여유분 턴은 보조 모델을 안 넘기므로 기억은 배경 작업으로 — 전엔 inline 이라 그 턴의 기억이 아예 안 남았다.
       policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false, memory: reservation?.continuity ? 'deferred' : 'inline' })
       context.origin = policy.origin
+      // 계산은 위에서 미리 시작했다 — 여기선 길어야 1.5초만 더 기다리고, 넘으면 이번 턴은 글자 겹침으로(답을 늦추지 않게).
+      const ranking = await Promise.race([situationRanking, new Promise<null>(r => setTimeout(() => r(null), 1500))])
+      if (ranking) prepared.snapshot.situationRanking = ranking
       marks.model = at()
       const stream = opts.stream && { ...opts.stream, onFirstText: () => { marks.firstText ??= at() }, onBlocks: (blocks: Parameters<TurnStream['onBlocks']>[0]) => { marks.firstBlock ??= at(); opts.stream!.onBlocks(blocks) } }
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },

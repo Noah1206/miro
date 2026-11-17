@@ -37,8 +37,11 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
   }
 
   // 11/18 여러 장 한 번에(바베챗처럼) — 고른 파일마다 칸을 바로 만들고 3장씩 올린다. 파일 이름을 상황 설명에 미리 넣는다(IMG_1234·해시 같은 이름은 빈칸).
+  const [notice, setNotice] = useState('')
   const bulk = async (files: File[]) => {
     const take = files.slice(0, Math.max(0, SITUATION_LIMITS.entries - rows.length))
+    // 11/18 한도를 넘친 사진은 말없이 버리지 않고 알린다.
+    setNotice(files.length > take.length ? t('사진은 {max}장까지 넣을 수 있어요. {n}장은 올리지 않았어요.', { max: SITUATION_LIMITS.entries, n: files.length - take.length }) : '')
     if (!take.length) return
     const start = Math.max(idRef.current, nextId)
     idRef.current = start + take.length
@@ -64,7 +67,7 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
               <label htmlFor={`${uid}-${r.id}`} style={{ position: 'relative', display: 'grid', placeItems: 'center', aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', cursor: 'pointer',
                 background: 'var(--color-surface-2)', border: r.image ? 0 : '1.5px dashed var(--color-border-strong)', color: 'var(--color-text-tertiary)' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                {r.image ? <img src={r.image} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span className="t-caption">{r.uploading ? t('올리는 중…') : t('사진 고르기')}</span>}
               </label>
               <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
@@ -111,6 +114,7 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
         </label>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('파일 이름이 상황 설명으로 미리 들어가요. 예) "비 맞고 돌아온 장면.png"')}</p>
       </>}
+      {notice && <p role="status" className="t-caption" style={{ color: 'var(--color-danger)' }}>{notice}</p>}
     </div>
   )
 }

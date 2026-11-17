@@ -9,7 +9,8 @@ import type { LLMProvider } from '@miro/providers'
  */
 /** adult: 언베일(성인 모드)이 켜진 턴에만 후보가 된다(11/2) — 일반 대화에는 뜨지 않는다. */
 export type SituationImage = { keywords: string[]; image: string; situation?: string; adult?: true }
-export const SITUATION_LIMITS = { entries: 100, keywords: 5, keywordLength: 20, situationLength: 120 } as const
+// 11/18 100→1000장 — 대화 지시문에는 지금 대화와 가까운 30장만 싣는다(engine relevantSituationImages).
+export const SITUATION_LIMITS = { entries: 1000, keywords: 5, keywordLength: 20, situationLength: 120 } as const
 
 /** 폼 JSON → 저장할 목록. 상황 설명도 키워드도 없는 줄·https 가 아닌 사진은 버린다. */
 export function normalizeSituationImages(input: unknown): SituationImage[] {

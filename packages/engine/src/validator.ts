@@ -295,7 +295,7 @@ function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined
   const list = s.character.worldRole.situationImages ?? []
   const out: number[] = []
   for (const code of codes ?? []) {
-    const i = Number(/^p(\d{1,3})$/i.exec(code.trim())?.[1]) - 1
+    const i = Number(/^p(\d{1,4})$/i.exec(code.trim())?.[1]) - 1
     if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.includes(i)) continue
     out.push(i)
     if (out.length === 2) break

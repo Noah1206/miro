@@ -25,6 +25,28 @@ export async function embedTexts(texts: string[], task: 'RETRIEVAL_QUERY' | 'RET
   } catch { return null }
 }
 
+/**
+ * 11/18 상황별 사진 뜻 검색용 — OpenRouter bge-m3(256차원, 데이터 수집 거부). 언베일 방의 노골적인 글도 보낼 수 있는 길이라
+ * (언베일 대화가 원래 OpenRouter 로 간다) 일반·언베일 사진을 한 모델로 맞춘다. 실패·시간 초과면 null.
+ * 11/18 비교(한국어 동의어 6문항 1위 정답 / 질의 속도): qwen3-8b 6/6·2.9~8.5초(매 턴엔 느림), bge-m3 5/6(놓친 것도 4위)·0.5~1초, qwen3-4b 4/6, OpenAI 3-small 1/6.
+ */
+const OR_EMBED_MODEL = 'baai/bge-m3'
+export async function embedForPhotos(texts: string[], kind: 'query' | 'document', timeoutMs = 4000): Promise<number[][] | null> {
+  const key = process.env.OPENROUTER_API_KEY
+  if (!key || !texts.length) return null
+  const input = texts.map(t => t.slice(0, kind === 'query' ? 2000 : 500))
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, signal: AbortSignal.timeout(timeoutMs),
+      body: JSON.stringify({ model: OR_EMBED_MODEL, input, dimensions: EMBEDDING_DIM, provider: { data_collection: 'deny' } }),
+    })
+    if (!res.ok) return null
+    const { data } = await res.json() as { data?: Array<{ embedding?: number[]; index?: number }> }
+    const out = data?.slice().sort((a, b) => (a.index ?? 0) - (b.index ?? 0)).map(d => d.embedding ?? [])
+    return out && out.length === texts.length && out.every(v => v.length === EMBEDDING_DIM) ? out : null
+  } catch { return null }
+}
+
 export function cosine(a: number[], b: number[]): number {
   let dot = 0, na = 0, nb = 0
   for (let i = 0; i < a.length; i++) { dot += a[i]! * b[i]!; na += a[i]! * a[i]!; nb += b[i]! * b[i]! }
