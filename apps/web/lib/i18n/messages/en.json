@@ -2390,5 +2390,7 @@
   "예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.": "e.g. I'm a 30-year-old designer, talk to me casually.\nWe've been dating for 3 years.",
   "링크 공개": "Link only",
   "링크로만 공유": "Share by link only",
-  "홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.": "Hidden from home and search — only people with the character link can start a chat."
+  "홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.": "Hidden from home and search — only people with the character link can start a chat.",
+  "여러 장 한 번에 올리기": "Upload several at once",
+  "파일 이름이 상황 설명으로 미리 들어가요. 예) \"비 맞고 돌아온 장면.png\"": "File names are pre-filled as the situation. e.g. \"back home soaked in rain.png\""
 }

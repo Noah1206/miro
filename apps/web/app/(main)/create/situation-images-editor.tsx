@@ -1,5 +1,5 @@
 'use client'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import { shrinkImage } from '@/lib/shrink-image'
 import { SITUATION_LIMITS, type SituationImage } from '@/lib/situation-images'
@@ -19,6 +19,7 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
   const uid = useId()
   const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', '), situation: e.situation ?? '', adult: e.adult })))
   const [nextId, setNextId] = useState(defaultValue.length)
+  const idRef = useRef(defaultValue.length)
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
   // 앞 칸에 사진을 다 올려야 다음 칸을 연다(10/28) — 빈 칸만 쌓이지 않게.
   const canAdd = rows.every(r => r.image && !r.uploading)
@@ -33,6 +34,23 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
       const r = await uploadSituationImage(fd)
       patch(id, 'url' in r ? { image: r.url, uploading: false } : { error: r.error, uploading: false })
     } catch { patch(id, { error: '사진을 올리지 못했어요.', uploading: false }) }
+  }
+
+  // 11/18 여러 장 한 번에(바베챗처럼) — 고른 파일마다 칸을 바로 만들고 3장씩 올린다. 파일 이름을 상황 설명에 미리 넣는다(IMG_1234·해시 같은 이름은 빈칸).
+  const bulk = async (files: File[]) => {
+    const take = files.slice(0, Math.max(0, SITUATION_LIMITS.entries - rows.length))
+    if (!take.length) return
+    const start = Math.max(idRef.current, nextId)
+    idRef.current = start + take.length
+    setNextId(start + take.length)
+    const label = (f: File) => {
+      const base = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
+      return /^(img|dsc|image|photo|screenshot|스크린샷|kakaotalk)\b|^[0-9a-f\s]{12,}$|^\d[\d\s]*$/i.test(base) ? '' : base.slice(0, SITUATION_LIMITS.situationLength)
+    }
+    setRows(rs => [...rs, ...take.map((f, i) => ({ id: start + i, image: '', keywords: '', situation: label(f), uploading: true }))])
+    let next = 0
+    const worker = async () => { while (next < take.length) { const i = next++; await pick(start + i, take[i]) } }
+    await Promise.all([worker(), worker(), worker()])
   }
 
   return (
@@ -77,12 +95,22 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
         ))}
       </div>
       {rows.length < SITUATION_LIMITS.entries && (
-        <button type="button" disabled={!canAdd} onClick={() => { setRows(rs => [...rs, { id: nextId, image: '', keywords: '', situation: '' }]); setNextId(n => n + 1) }}
+        <button type="button" disabled={!canAdd} onClick={() => { const id = Math.max(idRef.current, nextId); idRef.current = id + 1; setRows(rs => [...rs, { id, image: '', keywords: '', situation: '' }]); setNextId(id + 1) }}
           style={{ opacity: canAdd ? 1 : 0.45, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-white)', color: 'var(--color-lavender-700)', fontSize: 'var(--font-body-size)', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
           <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           {t('상황 사진 추가 ({n}/{max})', { n: rows.length, max: SITUATION_LIMITS.entries })}
         </button>
       )}
+      {rows.length < SITUATION_LIMITS.entries && <>
+        <input id={`${uid}-bulk`} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; void bulk(fs) }} />
+        <label htmlFor={`${uid}-bulk`} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click() } }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
+          <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3M12 4v12M7 9l5-5 5 5" /></svg>
+          {t('여러 장 한 번에 올리기')}
+        </label>
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('파일 이름이 상황 설명으로 미리 들어가요. 예) "비 맞고 돌아온 장면.png"')}</p>
+      </>}
     </div>
   )
 }
