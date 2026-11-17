@@ -48,7 +48,7 @@ export async function quickFill(description: string, known: Partial<Record<(type
   } })
   const d = await generateCharacterDraft(llm, [text || '아래 정해진 내용에 어울리는 인물', ...facts].join('\n'), { responseSchema: responseJsonSchema(CharacterDraft) })
   return {
-    name: d.identity.name.replace(/^\[초안\]\s*/, '').slice(0, 10), title: d.identity.tagline, age: d.identity.age === null ? '' : String(d.identity.age),
+    name: d.identity.name.replace(/^\[초안\]\s*/, '').slice(0, 20), title: d.identity.tagline, age: d.identity.age === null ? '' : String(d.identity.age),
     nationality: d.identity.nationality ?? '', occupation: d.identity.occupation ?? '', mbti: d.identity.mbti ?? '',
     personality: [d.personality.personality, d.personality.values, d.personality.speechStyle].filter(Boolean).join('\n').slice(0, 1000),
     hobbies: d.personality.hobbies, dislikes: d.personality.dislikes,

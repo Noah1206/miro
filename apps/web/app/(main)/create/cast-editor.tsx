@@ -137,7 +137,7 @@ export function CastProfiles({ cast, onChange, heading }: { cast: CastMember[]; 
           <input id={`${uid}-${i}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(i, f) }} />
           <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}<br />{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</p>
         </div>
-        <LabeledField label={t('이름')} required><Field label={t('이름')} value={c.name} max={10} big onChange={v => set(i, { name: v })} /></LabeledField>
+        <LabeledField label={t('이름')} required><Field label={t('이름')} value={c.name} max={20} big onChange={v => set(i, { name: v })} /></LabeledField>
         <LabeledField label={t('캐릭터 소개')} required hint={t('이 인물의 성격·가치관·말투, 주인공·사용자와의 관계를 적어 주세요.')}>
           <Area label={t('캐릭터 소개')} value={c.intro ?? ''} max={1000} onChange={v => set(i, { intro: v })} />
         </LabeledField>

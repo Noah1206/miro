@@ -16,7 +16,7 @@ export type LoreEntry = {
 }
 
 // 11/12 크랙(400자·키워드 5개)·베이비챗(한 턴 5~15개)보다 넉넉하게: 40항목·600자·키워드 8개, 한 턴 기본 6개(만든 사람이 1~20 으로 고른다).
-export const LORE_LIMITS = { entries: 40, keywords: 8, keywordLength: 24, content: 600, selected: 6, selectedMax: 20, name: 20, scene: 12 } as const
+export const LORE_LIMITS = { entries: 100, keywords: 8, keywordLength: 24, content: 600, selected: 6, selectedMax: 20, name: 20, scene: 12 } as const
 export const loreLimit = (n: unknown) => Math.max(1, Math.min(LORE_LIMITS.selectedMax, Math.round(typeof n === 'number' && Number.isFinite(n) ? n : LORE_LIMITS.selected)))
 
 /**
