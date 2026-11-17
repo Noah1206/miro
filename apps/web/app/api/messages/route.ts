@@ -2,6 +2,7 @@ import { currentUser } from '@/lib/auth'
 import { afterResponse } from '@/lib/defer'
 import { messengerItems, MessengerError, receiveMessenger, runMessengerInbox } from '@/lib/messenger/inbox'
 import { observe } from '@/lib/observe'
+import { messengerDraft, messengerDraftWriter } from '@/lib/simulation/live-turns'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -34,9 +35,23 @@ export async function GET(req: Request) {
       const send = (event: unknown) => { try { controller.enqueue(encoder.encode(JSON.stringify(event) + '\n')) } catch { /* Delivery continues in the leased queue after disconnect. */ } }
       send({ type: 'items', items })
       try {
-        await runMessengerInbox(new Date(), { sessionId, limit: 1, stream: {
-          onDraft: (id, text) => send({ type: 'draft', id, text }), onReset: id => send({ type: 'reset', id }),
-        } })
+        const watching = messengerDraft(sessionId, user.id)
+        if (watching) {
+          // 11/17 다른 요청(새로고침 전 화면)이 답장을 쓰는 중 — 그 초안을 이어 받아 보여 주고, 끝나면 저장본을 보낸다.
+          await new Promise<void>(resolve => {
+            const timer = setTimeout(() => finish(), 280_000)
+            const finish = () => { clearTimeout(timer); watching.listeners.delete(push); resolve() }
+            const push = () => { if (watching.done) finish(); else if (watching.text) send({ type: 'draft', id: watching.id, text: watching.text }) }
+            watching.listeners.add(push); push()
+          })
+        } else {
+          const writer = messengerDraftWriter(sessionId, user.id)
+          try {
+            await runMessengerInbox(new Date(), { sessionId, limit: 1, stream: {
+              onDraft: (id, text) => { writer.draft(id, text); send({ type: 'draft', id, text }) }, onReset: id => { writer.reset(); send({ type: 'reset', id }) },
+            } })
+          } finally { writer.end() }
+        }
         const saved = await messengerItems(user.id, sessionId)
         if (saved) send({ type: 'items', items: saved })
       } catch { /* Keep the durable queue for the next worker; no partial message is committed. */ }
