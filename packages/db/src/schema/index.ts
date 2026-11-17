@@ -838,6 +838,20 @@ export const rechargeGrants = pgTable('recharge_grants', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ activeIdx: index('recharge_grants_user_active_idx').on(t.userId, t.expiresAt, t.createdAt) }))
 
+/** 11/18 이벤트 쿠폰 — 코드(대문자)를 넣으면 units 를 valid_days 동안 준다. 지급은 recharge_grants(provider 'coupon', '사용자:코드')라 계정당 한 번. */
+export const coupons = pgTable('coupons', {
+  code: text('code').primaryKey(),
+  units: integer('units').notNull(),
+  validDays: integer('valid_days').notNull().default(7),
+  /** 선착순 상한. 비우면 무제한. */
+  maxUses: integer('max_uses'),
+  uses: integer('uses').notNull().default(0),
+  /** 이 시각 뒤로는 받을 수 없다. 비우면 마감 없음. */
+  endsAt: timestamp('ends_at', { withTimezone: true }),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 /** 예약 한 건이 어느 잔액에서 얼마를 썼는지. 한 예약이 여러 잔액에 걸칠 수 있다. */
 export const rechargeLedger = pgTable('recharge_ledger', {
   id: uuid('id').primaryKey().defaultRandom(),

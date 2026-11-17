@@ -2396,5 +2396,14 @@
   "파일 이름이 상황 설명으로 미리 들어가요. 예) \"비 맞고 돌아온 장면.png\"": "File names are pre-filled as the situation. e.g. \"back home soaked in rain.png\"",
   "{n}턴째": "Turn {n}",
   "대화하면서 그 말에 떠올린 기억이에요. 최근 대화부터 보여요.": "Memories that came to mind during your conversation. Most recent first.",
-  "떠올린 기억": "Recalled memories"
+  "떠올린 기억": "Recalled memories",
+  "{amount}토큰을 받았어요 · {days}일 동안 쓸 수 있어요": "You got {amount} tokens · usable for {days} days",
+  "마감된 쿠폰이에요.": "This coupon has ended.",
+  "없는 쿠폰 코드예요.": "That coupon code doesn't exist.",
+  "이미 받은 쿠폰이에요.": "You've already used this coupon.",
+  "쿠폰": "Coupon",
+  "쿠폰 코드": "Coupon code",
+  "쿠폰 코드 입력": "Enter coupon code",
+  "쿠폰 코드를 입력해 주세요.": "Please enter a coupon code.",
+  "쿠폰을 받지 못했어요. 다시 시도해 주세요.": "Couldn't redeem the coupon. Please try again."
 }

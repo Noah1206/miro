@@ -14,6 +14,7 @@ import { logout } from './actions'
 import { MenuItemContent, MenuRow, MenuSection } from './menu'
 import { CreditCard } from './credit-card'
 import { AttendanceCard } from './attendance-card'
+import { CouponCard } from './coupon-card'
 import { attendanceStatus } from '@/lib/attendance'
 import { ProfileIdentity } from './profile-editor'
 import { InstallAppButton } from '@/components/pwa-install'
@@ -67,6 +68,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
 
       <CreditCard initial={wallet} />
       <AttendanceCard initial={attendance} />
+      <CouponCard />
 
       <div className={styles.sections}>
         <MenuSection title={t('내 활동')}>

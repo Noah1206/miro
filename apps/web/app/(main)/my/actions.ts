@@ -7,6 +7,7 @@ import { getPersona, parsePersona, savePersona } from '@/lib/persona'
 import { uploadCharacterImage } from '@/lib/storage/images'
 import { accountProfile, type AccountProfile } from '@/lib/account-profile'
 import { checkIn } from '@/lib/attendance'
+import { redeemCoupon } from '@/lib/coupon'
 
 export type ProfileResult = { ok: true; profile: AccountProfile } | { ok: false; error: string } | null
 
@@ -51,4 +52,10 @@ export async function logout(): Promise<void> {
 export async function attend() {
   const user = await requireUser()
   return checkIn(user.id)
+}
+
+/** 11/18 이벤트 쿠폰 — 프로필의 쿠폰 칸. */
+export async function claimCoupon(code: string) {
+  const user = await requireUser()
+  return redeemCoupon(user.id, String(code ?? ''))
 }
