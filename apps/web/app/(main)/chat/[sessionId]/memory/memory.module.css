@@ -1,7 +1,10 @@
 .header { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: var(--space-4); }
+.tab { position: relative; padding: 10px 0; border: 0; border-radius: 7px; background: none; font: inherit; font-size: var(--font-body-size); font-weight: var(--weight-medium); color: var(--color-text-tertiary); cursor: pointer; transition: color 180ms ease; }
+.tab[aria-selected='true'] { color: #1c1c1c; font-weight: var(--weight-semibold); }
+.pill { position: absolute; inset: 0; border-radius: 7px; background: #e9e9ea; }
+.tabLabel { position: relative; }
+.stage { overflow-x: hidden; }
 .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 10px; background: var(--color-surface-2); }
-.tab { padding: 10px 0; border-radius: 7px; text-align: center; text-decoration: none; font-size: var(--font-body-size); font-weight: var(--weight-medium); color: var(--color-text-tertiary); transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
-.tab[aria-current='page'] { background: #e9e9ea; color: #1c1c1c; font-weight: var(--weight-semibold); }
 .noteActions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
 .primary, .ghost { min-height: 40px; padding: 0 16px; border-radius: var(--radius-button); border: 0; font: inherit; font-size: var(--font-caption); cursor: pointer; }
 .primary { background: var(--color-accent); color: var(--color-accent-on); }
