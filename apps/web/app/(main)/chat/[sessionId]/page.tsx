@@ -97,8 +97,12 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 11/17 사용자: 만든 사람이 인물마다 올린 사진이 채팅 프로필로 — 공식 '[여러 인물]'뿐 아니라 만들기 화면의 '캐릭터 추가' 인물(ensemble_cast)도 인물 목록에 넣는다.
   const cast = castNames(s.character)
   // 11/17 사용자: 말풍선 위 이름이 작품 이름이면 안 된다 — 1:1 공식 작품은 설정의 '[히로인] 강세라(28) —' 에서 그 인물 이름을 꺼내 인물로 둔다.
-  const heroine = cast.length ? null : /\[히로인[^\]]*\][\s·\-—]*([가-힣A-Za-z]{1,12})\s*\(/.exec(s.character.personality.secret ?? '')?.[1]
-  if (heroine) cast.push(heroine)
+  // '[숨긴 사정] · 세실리아는 …'(첫 줄의 인물), '[프로필] 한도은. 27세'(소개 첫 줄) 형식도 같은 식으로(11/17 사용자).
+  const secret = s.character.personality.secret ?? '', intro = s.character.personality.personality ?? ''
+  const heroine = cast.length ? null : /\[히로인[^\]]*\][\s·\-—]*([가-힣A-Za-z]{1,12})\s*\(/.exec(secret)?.[1]
+    ?? /\[숨긴 사정\]\s*·\s*([가-힣]{1,6}?)(?:은|는|이|가|의)\s/.exec(secret)?.[1]
+    ?? /\[프로필\]\s*([가-힣]{1,6})[.\s]/.exec(intro)?.[1]
+  if (heroine && heroine !== loaded.characterName) cast.push(heroine)
   const castImages = (loaded.characterImages ?? []).filter(src => !isUnveilPhoto(src))
   // 11/10: 만든 사람이 인물마다 올린 사진(ensemble_photos)이 먼저 — 없을 때만 작품 사진 순서로 대신한다.
   const named = rec?.ensemblePhotos ?? {}
