@@ -28,7 +28,6 @@ import { type LoadedAgency } from '@/lib/agency/runtime'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { resolveChatCommand } from './chat-command'
-import { chooseSituationImage } from '@/lib/situation-images'
 import { endingTitle } from '@/lib/novel-ending'
 import { recordEnding } from '@/lib/novel'
 
@@ -275,14 +274,10 @@ async function executeTurn(opts: {
     // 11/14 사용자: 한 턴 최소 차감은 모델별(floorTokens) — 검증 없는 언베일 방도 같은 모델이면 일반 방과 같은 최소(예약 안에서만).
     const actualTokens = reservation ? Math.min(Math.min(Math.max(costTokens, model.floorTokens), maximumTokens) + (voiceOn ? voiceTokens(transition.blocks as Array<Record<string, unknown>>) : 0), reservation.cost) : costTokens
     const responseText = renderBlocks(transition.blocks)
-    // 상황별 사진(10/28) — 만든 사람이 적은 상황이 지금 장면이 됐으면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
-    // 10/31: 싼 분류 모델이 상황 설명을 보고 고른다(실패하면 키워드). 이번 턴 차감 계량기는 이미 닫혔으므로 서비스 예산으로 부른다.
-    // 11/2: 언베일 전용(adult) 사진은 언베일이 켜진 턴에만 후보로 둔다.
-    const situationImages = (charSettings?.situationImages ?? []).filter(e => loaded.adult.turn || !e.adult)
-    const situationImage = situationImages.length === 0 ? null : await chooseSituationImage(
-      auxiliaryLLM(loaded.characterName, { ...context, turnMeter: undefined, usageUnits: 0 }), situationImages,
-      { userInput: input ?? '', responseText, scene: sceneAfter },
-      new Set((await db.select({ content: messages.content }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'photo')))).map(m => m.content)))
+    // 상황별 사진 — 11/18 바베챗식: 답을 쓰는 AI 가 지금 장면의 사진 코드를 직접 고른다(images, 한 답에 최대 2장, 같은 사진 재사용 가능).
+    // 예전엔 답 뒤에 분류 AI 를 한 번 더 불러 한 장만, 방에서 한 번 띄운 사진은 다시 안 썼다. 순번·허용(언베일 전용)은 엔진 검증기가 이미 걸렀다.
+    const sceneImages = charSettings?.situationImages ?? []
+    const situationImages = (transition.images ?? []).map(i => sceneImages[i]?.image).filter((url): url is string => !!url)
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,
       providerMode: result.providerMode, characterState: result.characterState, firedRules: result.firedRules,
@@ -293,7 +288,7 @@ async function executeTurn(opts: {
       const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, actualTokens, moments, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: withStatus(transition.blocks, transition.status ?? null, transition.statValues ? visibleStatValues(loaded.snapshot.character.worldRole.stats ?? [], transition.statValues) : null) as typeof transition.blocks, transition, sceneMarker, channel: 'scene', situationImage,
+        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: withStatus(transition.blocks, transition.status ?? null, transition.statValues ? visibleStatValues(loaded.snapshot.character.worldRole.stats ?? [], transition.statValues) : null) as typeof transition.blocks, transition, sceneMarker, channel: 'scene', situationImages,
         // 리롤(10/27) — 이 턴은 다시 받을 수 있다. 다시 보낼 때 같은 명령어를 붙인다.
         undo: { command: opts.command ?? null, commandId: opts.commandId ?? null, voice: voiceOn },
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),

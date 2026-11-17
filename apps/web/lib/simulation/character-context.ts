@@ -26,6 +26,8 @@ export function characterContext(
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore, loreLimit: c.loreLimit,
       ...(c.statusFormat ? { statusFormat: c.statusFormat } : {}), ...(c.stats.length ? { stats: c.stats } : {}), ...(c.endings.length ? { endings: c.endings } : {}), ...(c.ensembleCast?.length ? { cast: c.ensembleCast } : {}),
       ...(c.intimacy?.trim() ? { intimacy: c.intimacy } : {}),
+      // 11/18 상황별 사진은 답을 쓰는 AI 가 직접 고른다(바베챗식) — 설명(없으면 키워드)과 언베일 전용 여부만, 주소는 싣지 않는다.
+      ...(c.situationImages?.length ? { situationImages: c.situationImages.map(e => ({ situation: (e.situation || e.keywords.join(', ')).slice(0, 120), ...(e.adult ? { adult: true } : {}) })) } : {}),
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,
     ...(visual ? { appearance: {

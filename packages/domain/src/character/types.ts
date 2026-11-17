@@ -87,6 +87,8 @@ export type CharacterCore = {
     endings?: CharacterEnding[]
     /** 다인 작품(11/11)의 함께 나오는 인물 — 이 카드가 주인공과 함께 연기한다. */
     cast?: CastProfile[]
+    /** 11/18 상황별 사진 목록(바베챗식 멀티 이미지) — 순서가 곧 코드(p1, p2…). AI 가 답을 쓰며 지금 장면의 사진 코드를 images 칸에 낸다. */
+    situationImages?: Array<{ situation: string; adult?: boolean }>
     /** 11/13 성적 설정 — 언베일 방에서만 지시문에 실린다. */
     intimacy?: string
   }

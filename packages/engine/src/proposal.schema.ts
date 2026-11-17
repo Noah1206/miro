@@ -166,7 +166,7 @@ export function lenientArray<T extends z.ZodTypeAny>(item: T, max: number) {
  * 괄호는 extractJson 이 채우고, 여기서는 rp 안에 들어간 최상위 키를 제자리로 옮긴다. 이미 최상위에 있는 키는 건드리지 않는다.
  */
 const ROOT_KEYS = ['emotion', 'intent', 'worldDelta', 'relationshipDelta', 'sceneDelta', 'memoryCandidates', 'eventCandidates',
-  'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent', 'status', 'statValues'] as const
+  'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent', 'status', 'statValues', 'images'] as const
 function hoistFromRp(v: unknown): unknown {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return v
   const root = v as Record<string, unknown>
@@ -202,6 +202,8 @@ export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   status: z.string().max(2000).optional().catch(undefined),
   /** 11/10 스탯 새 값 { 이름: 값 } — 서버가 작품 스탯 정의·범위로 자른다. */
   statValues: z.record(z.number()).optional().catch(undefined),
+  // 11/18 바베챗식 사진 — 상황별 사진 코드(p1…).
+  images: z.array(z.string().max(8)).max(4).optional().catch(undefined),
 }))
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>
@@ -231,6 +233,7 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
   sceneDelta: { type: 'object', properties: { location: text('only a place the user moved to in this input'), time: text(), mood: text(), weather: text() } },
   status: text('Only when the card defines a status window format: that format filled in for this scene. Otherwise omit.'),
   statValues: { type: 'object', description: 'Only when the card defines stats: { stat name: new number } for every stat. Otherwise omit.', additionalProperties: { type: 'number' } },
+  images: { type: 'array', description: 'Only when the card lists scene photos: codes (p1, p2…) of photos whose situation is happening in this scene now, max 2. Otherwise [].', items: { type: 'string' } },
 }, required: ['rp'] }
 
 /** 11/11 음성 모드가 꺼진 방 — 대사 블록에 숨은 음성 칸(delivery·speech)이 없는 같은 스키마. 그 출력이 답 분량(토큰)을 깎았다. */

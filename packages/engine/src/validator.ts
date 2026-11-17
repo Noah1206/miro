@@ -29,6 +29,8 @@ export type ValidatedTransition = {
   status?: string | null
   /** 11/10 범위로 자른 이번 턴 뒤 스탯 값(작품에 스탯이 있을 때만) */
   statValues?: Record<string, number> | null
+  /** 11/18 이번 장면에 띄울 상황별 사진의 순번(0부터) — 작품 목록에 있고 이 방에서 허용된 것만, 최대 2장. */
+  images?: number[]
   issues: ValidationIssue[]
 }
 
@@ -60,6 +62,7 @@ export function validateProposal(
     intent: proposal.intent,
     status: snapshot.character.worldRole.statusFormat?.trim() && proposal.status?.trim() ? proposal.status.trim() : null,
     statValues: snapshot.character.worldRole.stats?.length ? clampStatValues(snapshot.character.worldRole.stats, snapshot.statValues ?? {}, proposal.statValues) : null,
+    images: sceneImages(snapshot, proposal.images),
     issues,
   }
 }
@@ -286,3 +289,16 @@ function validateNpcActions(
 }
 
 export type { SimulationEvent }
+
+/** 11/18 AI 가 고른 사진 코드(p1…) → 순번. 목록 밖·언베일 아닌 방의 언베일 전용 사진·중복은 버리고 최대 2장. */
+function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): number[] {
+  const list = s.character.worldRole.situationImages ?? []
+  const out: number[] = []
+  for (const code of codes ?? []) {
+    const i = Number(/^p(\d{1,3})$/i.exec(code.trim())?.[1]) - 1
+    if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.includes(i)) continue
+    out.push(i)
+    if (out.length === 2) break
+  }
+  return out
+}

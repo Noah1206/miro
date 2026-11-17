@@ -480,6 +480,19 @@ function endingRules(c: SimulationSnapshot['character']): string[] {
   ]
 }
 
+/**
+ * 11/18 바베챗식 멀티 이미지 — 만든 사람이 올린 상황별 사진을 코드(p1…)로 보여 주고, 지금 장면이 그 상황이면 AI 가 최상위 images 칸에 코드를 낸다.
+ * 같은 사진을 다시 써도 되고 한 응답에 두 장까지. 언베일 전용 사진은 언베일 장면에서만 목록에 싣는다.
+ */
+function imageRules(c: SimulationSnapshot['character'], adult: boolean): string[] {
+  const list = (c.worldRole.situationImages ?? []).map((e, i) => ({ code: `p${i + 1}`, ...e })).filter(e => adult || !e.adult)
+  if (!list.length) return []
+  return ['', '## 사진 (만든 사람이 올린 장면 사진)',
+    '- 이번 장면에서 아래 상황이 실제로 벌어지고 있거나 막 벌어졌으면, 그 사진 코드를 최상위 images 칸에 냅니다(한 응답에 최대 2장, 장면에 나오는 순서대로). 맞는 사진이 없으면 images 는 빈 배열입니다.',
+    '- 말로만 언급하거나 가정·과거·나중 이야기·남의 이야기면 고르지 않습니다. 같은 상황이 다시 벌어지면 같은 사진을 다시 골라도 됩니다. 본문에 코드나 사진 설명을 쓰지 않습니다.',
+    ...list.map(e => `  · ${e.code}: ${e.situation}`)]
+}
+
 function statusRules(c: SimulationSnapshot['character']): string[] {
   const format = c.worldRole.statusFormat?.trim(), stats = c.worldRole.stats ?? []
   if (!format && !stats.length) return []
@@ -560,6 +573,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
       '- 사건은 지금 상황에서 자연스러울 때만 제안합니다. 매 턴 사건을 만들지 않습니다.',
       '- 기억은 관계에 실제로 중요한 것만 남깁니다.',
       ...statusRules(c),
+      ...imageRules(c, !!s.adultMode),
       '',
       '반드시 지정된 JSON 스키마에 맞는 객체만 반환합니다.',
     ]),
@@ -587,7 +601,7 @@ function personaSection(s: SimulationSnapshot): string[] {
 function startingScene(c: SimulationSnapshot['character']): string[] {
   const text = c.worldRole.startingContext?.trim()
   if (!text) return []
-  return ['', '## 첫 장면 (대화는 여기서 시작했다)', text.slice(0, 600)]
+  return ['', '## 첫 장면 (대화는 여기서 시작했다)', text.slice(0, 1000)]
 }
 
 /**
