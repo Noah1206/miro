@@ -19,7 +19,6 @@ import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
 import { useImmersive } from './immersive'
 import { PhotoButton } from './photo-button'
-import { useParams } from 'next/navigation'
 import { endingReady, endingTitle } from '@/lib/novel-ending'
 
 type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'female'; scenes: Array<{ id: string; label: string; unveil: boolean }> }
@@ -240,7 +239,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
   if (m.kind === 'reality_message') {
     // 캐릭터가 먼저 보낸 연락 — 세계관의 표현(편지·문자·사내 메신저)을 함께. 이 순간만 관계색 한 줄.
     return (
-      <Reportable id={m.id} kind="message" text={m.content}>
+      <Reportable id={m.id} kind="message">
         <RealityTag sender={reality?.senderLabel} channel={reality?.channelLabel} />
         <div data-reality-message style={{ paddingLeft: 12, borderLeft: '2px solid var(--color-accent)' }}>
           <CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} cast={cast} castPhotos={castPhotos} />
@@ -248,7 +247,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       </Reportable>
     )
   }
-  return <Reportable id={m.id} kind="message" text={m.content}><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} castPhotos={castPhotos} /></Reportable>
+  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} castPhotos={castPhotos} /></Reportable>
 }
 
 function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast, castPhotos = {} }: {
@@ -354,28 +353,18 @@ function RealityTag({ sender, channel }: { sender?: string; channel?: string }) 
 }
 
 /** 화면에 별도 신고 버튼을 두지 않고 길게 누르면 신고 메뉴를 연다. */
-function Reportable({ id, kind, text, children }: { id: string; kind: 'message' | 'photo'; text?: string; children: React.ReactNode }) {
+// 11/17 '이 장면 기억하기'(11/16) 삭제 — 기억 노트는 캐릭터가 매 턴·5턴마다 스스로 정리하는 기억이라 사용자가 직접 넣지 않는다.
+function Reportable({ id, kind, children }: { id: string; kind: 'message' | 'photo'; children: React.ReactNode }) {
   const t = useT()
   const [menu, setMenu] = useState(false)
-  const [kept, setKept] = useState<'saved' | 'failed' | null>(null)
-  const sessionId = useParams<{ sessionId?: string }>()?.sessionId
-  // 11/16 이 장면 기억하기 — 길게 눌러 이 글(앞 300자)을 방의 기억에 직접 넣는다(사용자가 넣은 기억은 정리 때 먼저 버려지지 않는다). 11/17 기억 관리 화면은 보기만.
-  const keep = async () => {
-    setMenu(false)
-    const res = await fetch(`/api/memory-graph/${sessionId}`, { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'add', layer: 'relationship', content: (text ?? '').replace(/\s+/g, ' ').trim().slice(0, 300) }) }).catch(() => null)
-    setKept(res?.ok ? 'saved' : 'failed'); setTimeout(() => setKept(null), 2500)
-  }
   const { handlers } = usePress({ onLongPress: () => setMenu(true) })
   const href = `/report?type=${kind}&id=${id}`
   return (
     <div {...handlers} className="stack" style={{ gap: 6, position: 'relative', touchAction: 'pan-y' }}>
       {children}
       <Popover open={menu} onClose={() => setMenu(false)}>
-        {sessionId && text?.trim() && <MenuItem type="button" onClick={keep}>{t('이 장면 기억하기')}</MenuItem>}
         <MenuItem type="button" onClick={() => { setMenu(false); window.location.href = href }}>{t('이 내용 신고')}</MenuItem>
       </Popover>
-      {kept && <p role="status" className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{kept === 'saved' ? t('기억에 넣었어요.') : t('기억에 넣지 못했어요.')}</p>}
     </div>
   )
 }
