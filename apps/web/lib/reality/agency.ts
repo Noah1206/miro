@@ -23,6 +23,7 @@ import { messengerPhotosReady, prepareMessengerPhoto } from '@/lib/messenger/pho
 import { REPLY_DISPOSITION_VERSION, nextReplyReview, readReplyDisposition } from '@/lib/messenger/reply-disposition'
 import { conversationVariationDirective, repeatedConversationBlock, snapshotUserGrounding } from '@miro/engine'
 import { resolveChatModel } from '@/lib/ai/chat-models'
+import { castNames } from '@miro/engine'
 
 type RealityRow = {
   session: typeof roleplaySessions.$inferSelect
@@ -201,6 +202,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         userPersona: snapshot.userPersona ? personaLines(snapshot.userPersona) : null,
         languageRule: languageRule(snapshot.userLanguage),
         characterName: identity.name, personality: personality.personality, speechStyle: personality.speechStyle,
+        // 11/17 다인 작품: 이 문자를 보낸 인물을 고르게 한다(저장 블록의 speaker → 문자방 이름·알림 제목).
+        cast: castNames(snapshot.character),
         channelLabel: presented.channelLabel, reason: plan.decision.candidate.description,
         worldLocation: snapshot.world.currentLocation, worldStatus: snapshot.world.worldStatus,
         relationshipHint: describeRelationship(snapshot.relationship), activeEventSummary: null,
@@ -283,7 +286,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         }
         await tx.insert(messages).values({ id: messageId, sessionId, role: 'character', kind: photo ? 'photo' : 'reality_message',
           content: photo?.url ?? content.text, blocks: [{ type: 'reality', channel, reason: plan.decision.candidate.description,
-            ...presented, ...(photo ? { caption: content.text, photoDescription: photo.choice.description, mediaId: photo.id } : {}) }],
+            ...presented, ...(content.speaker ? { speaker: content.speaker } : {}), ...(photo ? { caption: content.text, photoDescription: photo.choice.description, mediaId: photo.id } : {}) }],
           turnIndex: current.turnCount, createdAt: now,
         })
         await tx.insert(realityContacts).values({ id: contactId, sessionId, channel, reason: plan.decision.candidate.description,

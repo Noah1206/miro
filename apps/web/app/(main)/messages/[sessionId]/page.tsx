@@ -2,7 +2,7 @@ import { ChatTheme } from '@/components/chat-theme'
 import { RoomMenu } from '@/components/room-menu'
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
-import { db, realityContacts } from '@miro/db'
+import { characters, db, realityContacts } from '@miro/db'
 import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
@@ -18,6 +18,8 @@ import { MessengerComposer } from './composer'
 import { getT } from '@/lib/i18n/server'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import { leadName } from '@/lib/editorial/heroine-name'
+import { castNames } from '@miro/engine'
+import { isUnveilPhoto } from '@/lib/unveil-photo'
 
 /**
  * 문자(카톡형) 페이지 — 미로 캐릭터가 먼저 보낸 연락, 내가 보낸 문자, 통화 기록이 여기 모인다.
@@ -34,12 +36,17 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const [loaded, rows, profile] = await Promise.all([loadSession(sessionId, user.id, '', { view: true }), messengerItems(user.id, sessionId), accountProfile(user)])
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
-  const [modelOptions] = await Promise.all([
+  const [modelOptions, [rec]] = await Promise.all([
     chatModelOptions(user.id, loaded.adult.since !== null),
+    db.select({ photos: characters.ensemblePhotos }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1),
     // This is the user reading the character's incoming contacts, not the reverse.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
+  // 11/17 다인 작품: 문자마다 보낸 인물(블록 speaker)의 이름·사진 — 인물 사진 → 갤러리 순서(채팅방과 같은 규칙).
+  const cast = castNames(loaded.snapshot.character)
+  const castImages = (loaded.characterImages ?? []).filter(src => !isUnveilPhoto(src))
+  const castPhotos = { ...Object.fromEntries(cast.flatMap((name, i) => castImages[i] ? [[name, castImages[i]!]] : [])), ...(rec?.photos ?? {}) }
   const items = (rows ?? []).filter(m => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
   const lastChoice = [...items].reverse().find(item => item.role === 'user' && item.kind === 'messenger')?.chatModel
   const initialModel = modelOptions.choices.find(choice => choice.id === lastChoice)?.id ?? modelOptions.choices[0]?.id
@@ -59,7 +66,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           </Notice>
         )}
         {/* 11/17 문자 말풍선의 보낸 사람은 작품명 대신 대표 인물(공식 히로인·다인 작품 첫 인물, 1:1 사용자 작품은 그 캐릭터) */}
-        <MessengerThread characterName={leadName({ name: loaded.characterName, secret: loaded.snapshot.character.personality.secret, personality: loaded.snapshot.character.personality.personality, cast: loaded.snapshot.character.worldRole.cast })} portrait={loaded.characterPhoto} />
+        <MessengerThread characterName={leadName({ name: loaded.characterName, secret: loaded.snapshot.character.personality.secret, personality: loaded.snapshot.character.personality.personality, cast: loaded.snapshot.character.worldRole.cast })} portrait={loaded.characterPhoto} castPhotos={cast.length >= 2 ? castPhotos : undefined} />
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 문자 페이지에서 알림 권한을 묻는다. */}
         <MessengerComposer modelOptions={modelOptions}/>
       </section>

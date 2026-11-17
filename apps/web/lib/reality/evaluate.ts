@@ -30,6 +30,7 @@ import { msg } from '@/lib/i18n'
 import { translateTo } from '@/lib/i18n/server'
 import { adoptRelationshipPolicy } from '@/lib/agency/session-policy'
 import { characterPushIcon } from '@/lib/push/character-icon'
+import { castOf } from '@/lib/editorial/heroine-name'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -288,6 +289,8 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   const contentInput = {
     allowAbstain: !intent.answers && !intent.momentKey && !intent.promise,
     characterName: row.character.name,
+    // 11/17 다인 작품: 이 문자를 보낸 인물을 고르게 한다(저장 블록의 speaker → 문자방 이름·알림 제목).
+    cast: castOf(row.character),
     personality: row.character.personality,
     speechStyle: row.character.speechStyle,
     channelLabel: presented.channelLabel,
@@ -375,7 +378,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
         content: mediaUrl ?? content.text,
         blocks: [{
           type: 'reality', channel: decision.channel, reason: intent.reason,
-          senderLabel: presented.senderLabel, channelLabel: presented.channelLabel,
+          senderLabel: presented.senderLabel, channelLabel: presented.channelLabel, ...(content.speaker ? { speaker: content.speaker } : {}),
           caption: mediaUrl ? content.text : null,
         }],
         turnIndex: row.session.turnCount,

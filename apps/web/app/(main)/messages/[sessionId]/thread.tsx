@@ -13,7 +13,8 @@ import { MessengerPhoto } from './photo'
 const clock = (iso: string | undefined, locale: string) => iso ? new Date(iso).toLocaleTimeString(locale, { timeZone: 'Asia/Seoul', hour: 'numeric', minute: '2-digit' }) : ''
 
 /** Delivered messages and actual character read receipts; no live scene turn. */
-export function MessengerThread({ items: sample, characterName, portrait }: { items?: ReturnType<typeof useMessenger>['items']; characterName: string; portrait?: string | null }) {
+/** castPhotos 가 있으면(다인 작품, 11/17) 문자마다 보낸 인물(블록 speaker)의 이름·사진을 보인다. 없으면 대표 인물 하나. */
+export function MessengerThread({ items: sample, characterName, portrait, castPhotos }: { items?: ReturnType<typeof useMessenger>['items']; characterName: string; portrait?: string | null; castPhotos?: Record<string, string> }) {
   const { theme } = useChatTheme()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
@@ -73,11 +74,14 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
         const reality = m.blocks.find((b) => b.type === 'reality') as { channelLabel?: string; caption?: string | null } | undefined
         const lines = m.kind === 'photo' ? [] : m.blocks.filter((b) => b.type === 'dialogue' && typeof b.text === 'string').map((b) => String(b.text))
         const texts = m.kind === 'photo' ? [] : lines.length ? lines : m.content.split(/\n\s*\n/).filter(Boolean)
+        const sent = m.blocks.map(b => b.speaker).find((s): s is string => typeof s === 'string' && !!s.trim())
+        const who = castPhotos && sent ? sent : characterName
+        const face = (castPhotos && sent && castPhotos[sent]) || portrait
         return (
           <div key={m.id} className={styles.row} data-dm-role="character" data-reality-message>
-            <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
+            <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : face ? <CharacterPhoto src={face} alt="" size="avatar" sizes="32px" width={32} height={32} /> : who.slice(0, 1)}</span>
             <div className={styles.group}>
-              {theme === 'talk' && <span className={styles.speaker}>{characterName}</span>}
+              {(theme === 'talk' || castPhotos) && <span className={styles.speaker}>{who}</span>}
               {reality?.channelLabel && reality.channelLabel !== '문자' && <p className={styles.tag}>{reality.channelLabel}</p>}
               {m.kind === 'photo' && <MessengerPhoto src={m.content} caption={reality?.caption} />}
               {m.kind === 'photo' && reality?.caption ? <p className={styles.bubble}>{reality.caption}</p> : texts.map((text, i) => <div key={i} className={styles.timedBubble}><p className={styles.bubble} data-continuation={i > 0 || undefined}>{text}</p>{i === texts.length - 1 && <span className={styles.time}>{time}</span>}</div>)}

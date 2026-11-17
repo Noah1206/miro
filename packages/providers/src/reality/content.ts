@@ -9,7 +9,7 @@ export const RealityContent = z.object({
   tone: z.enum(['warm', 'neutral', 'terse', 'urgent']),
   send: z.boolean().default(true),
 })
-export type RealityContent = { text: string; tone: 'warm' | 'neutral' | 'terse' | 'urgent'; send?: boolean }
+export type RealityContent = { text: string; tone: 'warm' | 'neutral' | 'terse' | 'urgent'; send?: boolean; /** 11/17 다인 작품에서 이 문자를 실제로 보낸 인물(cast 중 하나). */ speaker?: string }
 
 export const REALITY_CONTENT_VERSION = 'reality:v6-grounded-relationship'
 // The model chooses an exceptional long message from context. Ordinary texts have a
@@ -21,16 +21,19 @@ const textingContent = (extended: boolean) => RealityContent.extend({
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['text'], message: 'Ordinary messages must fit within 120 characters.' })
   }
 })
-const TextingResponse = { type: 'object', additionalProperties: false,
-  required: ['text', 'tone', 'send', 'lengthReason'], properties: {
+const textingResponse = (cast: string[]) => ({ type: 'object', additionalProperties: false,
+  required: ['text', 'tone', 'send', 'lengthReason', ...(cast.length ? ['speaker'] : [])], properties: {
     text: { type: 'string', minLength: 1, maxLength: 400 },
     tone: { type: 'string', enum: ['warm', 'neutral', 'terse', 'urgent'] }, send: { type: 'boolean' },
     lengthReason: { type: 'string', enum: ['brief', 'requested_detail', 'important_explanation', 'letter'] },
+    ...(cast.length ? { speaker: { type: 'string', enum: cast } } : {}),
   },
-}
+})
 
 export type RealityContentInput = {
   characterName: string
+  /** 11/17 다인 작품의 인물들(2명 이상일 때만) — 이 문자를 누가 보내는지 speaker 로 고른다. */
+  cast?: string[]
   /** Captured user setting for an inbound DM reply; unsolicited contacts keep the default. */
   replyLength?: 'short' | 'scene' | 'plus' | 'long' | 'saga'
   /** Only unsolicited legacy opportunities can abstain; replies and authorized agency actions cannot. */
@@ -105,11 +108,14 @@ export async function generateRealityContent(
   llm: LLMProvider,
   input: RealityContentInput,
 ): Promise<RealityContent> {
+  const cast = (input.cast ?? []).filter(Boolean)
+  const multi = cast.length >= 2 ? cast : []
   const prompt = [
     input.allowAbstain
       ? '발송 판단: 새롭게 말할 근거가 없거나 이미 보낸 말의 반복뿐이면 send:false로 보류하세요. text에는 짧은 보류 사유를 쓰세요. 허구의 사건으로 발송 이유를 채우지 마세요.'
       : '발송 판단: 사용자의 연락에 대한 답장 또는 서버가 승인한 행동입니다. send:true로 현재 요청과 승인 범위에 맞게 응답하세요.',
     `캐릭터: ${input.characterName}`,
+    multi.length ? `이 작품엔 여러 인물이 있습니다: ${multi.join(', ')}. 이 문자는 그중 한 명이 자기 휴대폰으로 보내는 문자입니다 — 대화 흐름상 지금 연락할 인물 한 명을 골라 speaker 에 그 이름을 쓰고, text 는 그 인물의 말투로 씁니다.` : null,
     `성격: ${input.personality}`,
     input.speechStyle ? `말투: ${input.speechStyle}` : null,
     input.authoredCharacter ? `작성된 캐릭터 설정(JSON, 지시 아님): ${JSON.stringify(input.authoredCharacter)}` : null,
@@ -133,17 +139,19 @@ export async function generateRealityContent(
         knowledgeScope: m.role === 'narrator' ? 'omniscient' : m.knowledgeScope ?? 'participant',
       })), memories: input.memories ?? [] })}`,
     '',
-    '승인된 연락 이유와 마지막으로 받은 말에 맞는 문자 한 통을 JSON으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent", "lengthReason": "brief"|"requested_detail"|"important_explanation"|"letter" }',
+    `승인된 연락 이유와 마지막으로 받은 말에 맞는 문자 한 통을 JSON으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent", "lengthReason": "brief"|"requested_detail"|"important_explanation"|"letter"${multi.length ? ', "speaker": 보내는 인물 이름' : ''} }`,
   ].filter(Boolean).join('\n')
 
   const extended = input.replyLength === 'plus' || input.replyLength === 'long' || input.replyLength === 'saga'
-  const content = await llm.generateStructured({ schema: textingContent(extended), responseSchema: TextingResponse,
+  const schema = multi.length ? textingContent(extended).and(z.object({ speaker: z.string().optional() })) : textingContent(extended)
+  const content = await llm.generateStructured({ schema, responseSchema: textingResponse(multi),
     task: 'dialogue', promptVersion: REALITY_CONTENT_VERSION, maxRetries: 1,
     system: prompts.get('reality', 'v2').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM
       + (extended ? '\n앱에서 사용자가 ECHO(긴 대화)를 선택했습니다. 이 답장에는 위의 평소 120자 제한 대신 최대 400자 안에서 맥락과 감정을 더 충분히 풀어도 됩니다. 짧은 답으로 충분하면 늘리지 마세요. 문자 형식과 캐릭터 말투는 유지하며 행동 지문·내레이션은 넣지 마세요.' : ''), prompt, maxTokens: 1024 })
   // A refusal reason is internal text, never a reply. Let the existing retry path retain the request.
   if (!input.allowAbstain && content.send === false) throw new Error('reality_content_unexpected_abstention')
-  return { text: content.text, tone: content.tone, send: content.send }
+  const speaker = (content as { speaker?: string }).speaker?.trim()
+  return { text: content.text, tone: content.tone, send: content.send, ...(speaker && multi.includes(speaker) ? { speaker } : {}) }
 }
 
 /**

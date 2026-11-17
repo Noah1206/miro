@@ -26,3 +26,8 @@ export function contactSenderName(c: Parameters<typeof leadName>[0], blocks: Arr
   const spoke = blocks?.map(b => b.speaker?.trim()).find(s => s && s !== c.name)
   return spoke || leadName(c)
 }
+
+/** 작품의 인물 목록 — 공식 '[여러 인물]' + 만들기 '캐릭터 추가'(ensemble_cast). 문자 답장이 보낸 사람을 고를 때 쓴다(11/17). */
+export function castOf(c: { secret?: string | null; ensembleCast?: ReadonlyArray<{ name: string }> | null }): string[] {
+  return [...new Set([...ensembleNames(c.secret ?? ''), ...(c.ensembleCast ?? []).map(p => p.name?.trim()).filter(Boolean)])]
+}

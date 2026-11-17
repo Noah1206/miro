@@ -270,3 +270,6 @@
 .thread > [data-dm-role='user'] + [data-dm-role='character'],
 .thread > [data-dm-role='character'] + [data-dm-role='user'] { margin-top:calc(28px - var(--dm-row-gap)); }
 .composer, :global([data-chat-theme]) .composer { padding-top:12px; }
+/* 11/17 다인 작품의 보낸 인물 이름 — 기본(미로) 테마는 어두운 배경이라 밝은 회색 */
+:global([data-chat-theme='miro']) .speaker { color:#b3b3b3; }
+:global([data-chat-theme='dm']) .speaker, :global([data-chat-theme='dm-light']) .speaker { color:#8e8e93; }
