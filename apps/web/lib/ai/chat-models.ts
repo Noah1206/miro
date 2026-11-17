@@ -16,6 +16,9 @@ const TYPICAL_TURN_SHARE = 0.19
  * 원래 값이 약 32 이상인 모델(Sonnet 등)은 그대로. 최소 차감과 '보통' 안내에 같이 쓴다.
  */
 export const liftTurnTokens = (raw: number) => Math.ceil(Math.max(raw, 21 + raw * 0.35))
+/** 11/18 사용자: 원가가 똑같은 쌍도 값이 달라야 한다 — 상위·최신 쪽을 1 높게(Luna 21 < Haiku 22, 3.7 Flash 27 < 3.8 Flash 28). */
+const TURN_TOKEN_NUDGE: Array<[RegExp, number]> = [[/gpt-6-luna$/, -1], [/gemini-3\.8-flash$/, 1]]
+const nudge = (providerModelId: string) => TURN_TOKEN_NUDGE.find(([re]) => re.test(providerModelId))?.[1] ?? 0
 /** 11/18 사용자: 고르는 목록에서 뺀 모델(예비 역할 gpt-5.4-mini 는 그대로 — 목록에만 안 뜬다). */
 const HIDDEN_CHAT_MODELS = /(^|\/)gpt-(5\.4-(mini|nano)|5\.6-luna)$/
 export type ChatTier = (typeof POLICY.chatTier)[keyof typeof POLICY.chatTier]
@@ -114,7 +117,7 @@ export async function chatModelOptions(_userId: string, adult = false) {
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
       return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
-        maximumTokens: quote.maximumTokens, typicalTokens: liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId) }
+        maximumTokens: quote.maximumTokens, typicalTokens: liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId) }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
   } catch { return { freeReady: false, proReady: false, choices: [] as ChatModelChoice[] } }
@@ -140,7 +143,7 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
   // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
   const main = adult ? availableModels(false).find(m => m.id === key) : model
-  const floorTokens = liftTurnTokens(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE)
+  const floorTokens = liftTurnTokens(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE) + nudge(model.providerModelId)
   // thinking 은 선택 칸으로 — 이 반환형을 흉내 내는 시험 자료를 깨지 않는다.
   return Object.assign({ modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }, { thinking: modelThinks(model.providerModelId) } as { thinking?: boolean })
 }
