@@ -359,7 +359,7 @@ function Reportable({ id, kind, text, children }: { id: string; kind: 'message' 
   const [menu, setMenu] = useState(false)
   const [kept, setKept] = useState<'saved' | 'failed' | null>(null)
   const sessionId = useParams<{ sessionId?: string }>()?.sessionId
-  // 11/16 이 장면 기억하기 — 길게 눌러 이 글(앞 300자)을 방의 기억에 직접 넣는다(사용자가 넣은 기억은 정리 때 먼저 버려지지 않는다). 고치기·고정은 기억 화면에서.
+  // 11/16 이 장면 기억하기 — 길게 눌러 이 글(앞 300자)을 방의 기억에 직접 넣는다(사용자가 넣은 기억은 정리 때 먼저 버려지지 않는다). 11/17 기억 관리 화면은 보기만.
   const keep = async () => {
     setMenu(false)
     const res = await fetch(`/api/memory-graph/${sessionId}`, { method: 'POST', headers: { 'content-type': 'application/json' },

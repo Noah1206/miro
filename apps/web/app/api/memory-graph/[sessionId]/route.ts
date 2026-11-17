@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
-import { and, asc, eq, isNull, sql } from 'drizzle-orm'
+import { and, asc, eq, isNull } from 'drizzle-orm'
 import { db, memories, roleplaySessions } from '@miro/db'
 import { buildMemoryGraph, layerOf, tagsOf, type MemoryGraph, type MemoryLayer, type MemoryType, type Memory } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
-import { compactChapters } from '@/lib/ai/memory-compact'
 
 export const runtime = 'nodejs'
 
@@ -12,13 +11,6 @@ export type MemoryNoteItem = { id: string; type: MemoryType; layer: MemoryLayer;
 export type MemoryNotes = MemoryGraph & { items: MemoryNoteItem[]; note: string }
 /** 11/10 유저노트 최대 글자 수 — 매 턴 프롬프트에 실린다. */
 const USER_NOTE_MAX = 2000
-
-/** 한 방에서 고정할 수 있는 기억 수 — 고정은 매 턴 먼저 실리므로 너무 많으면 다른 기억 자리가 없다. */
-const PIN_LIMIT = 10 // 11/16 5→10
-/** 정리 중인 방 — 동시 정리 요청을 막는다. */
-const compacting = new Set<string>()
-/** 요약·지난 이야기는 1500자까지(11/10), 나머지 기억은 300자까지(모델이 쓰는 한도와 같다). */
-const maxLength = (type: string) => type === 'chapter' ? 4000 : type === 'short_term_summary' ? 1500 : 300
 /** 직접 적을 때 고르는 칸 → 저장할 종류. */
 const ADD_TYPES: Partial<Record<MemoryLayer, MemoryType>> = { long_term: 'user_fact', relationship: 'shared_event', world: 'world_fact' }
 
@@ -49,46 +41,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ session
   return NextResponse.json({ ...buildMemoryGraph(scoped, sessionId), items, note } satisfies MemoryNotes)
 }
 
-/** 이 사용자의 살아 있는 방에 속한 기억인지 — 아니면 null. */
-async function ownedMemory(sessionId: string, id: unknown) {
-  const user = await currentUser()
-  if (!user || typeof id !== 'string') return null
-  const [row] = await db.select({ id: memories.id, type: memories.type }).from(memories)
-    .innerJoin(roleplaySessions, eq(roleplaySessions.id, memories.sessionId))
-    .where(and(eq(memories.id, id), eq(memories.sessionId, sessionId), scope(sessionId, user.id)))
-  return row ?? null
-}
-
-/**
- * 기억 고치기·고정(11/3) — 사용자가 바로잡은 기억은 확신 100, 태그는 새 내용에서 다시 뽑는다(검색·그래프가 옛 낱말을 따라가지 않게).
- * 다음 턴부터 프롬프트에 고친 내용이 실린다.
- */
-export async function PATCH(req: Request, { params }: { params: Promise<{ sessionId: string }> }): Promise<Response> {
-  const { sessionId } = await params
-  const body = await req.json().catch(() => null) as { id?: unknown; content?: unknown; pinned?: unknown } | null
-  const row = await ownedMemory(sessionId, body?.id)
-  if (!row) return NextResponse.json({ error: 'not_found' }, { status: 404 })
-  if (typeof body?.pinned === 'boolean') {
-    const pinned = body.pinned
-    // 방 줄을 잠근 채 세고 고정한다 — 동시에 여러 번 눌러도 상한을 넘지 않는다.
-    const ok = await db.transaction(async tx => {
-      if (pinned) {
-        await tx.execute(sql`select 1 from roleplay_sessions where id = ${sessionId} for update`)
-        const [count] = await tx.select({ n: sql<number>`count(*)::int` }).from(memories).where(and(eq(memories.sessionId, sessionId), eq(memories.pinned, true)))
-        if ((count?.n ?? 0) >= PIN_LIMIT) return false
-      }
-      await tx.update(memories).set({ pinned }).where(eq(memories.id, row.id))
-      return true
-    })
-    return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: 'pin_limit' }, { status: 409 })
-  }
-  const content = typeof body?.content === 'string' ? body.content.trim() : ''
-  if (!content || content.length > maxLength(row.type)) return NextResponse.json({ error: 'invalid_content' }, { status: 400 })
-  await db.update(memories).set({ content, confidence: 100, tags: tagsOf({ content, tags: [] }), embedding: null }).where(eq(memories.id, row.id))
-  return NextResponse.json({ ok: true })
-}
-
-/** 기억 직접 적기 / 지난 이야기 정리하기(11/3). */
+/** 유저노트 저장 / '이 장면 기억하기'(말풍선). 11/17 기억 관리는 보기만 — 기억 고치기·고정·지우기·정리하기는 사용자에게 열지 않는다. */
 export async function POST(req: Request, { params }: { params: Promise<{ sessionId: string }> }): Promise<Response> {
   const user = await currentUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -104,28 +57,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
     await db.update(roleplaySessions).set({ userNote: note }).where(scope(sessionId, user.id))
     return NextResponse.json({ ok: true })
   }
-  if (body?.action === 'compact') {
-    // 같은 방 정리는 한 번에 하나만 — 연타해도 AI 호출은 1번. 끝나면 편이 1개라 다음 호출은 AI 없이 'nothing'.
-    // ponytail: 서버 한 대(맥) 기준 메모리 잠금, 여러 대로 늘리면 DB advisory lock 으로
-    if (compacting.has(sessionId)) return NextResponse.json({ error: 'busy' }, { status: 429 })
-    compacting.add(sessionId)
-    const result = await compactChapters(sessionId, user.id).catch(() => null).finally(() => compacting.delete(sessionId))
-    return result ? NextResponse.json({ ok: true, result }) : NextResponse.json({ error: 'compact_failed' }, { status: 502 })
-  }
   const type = ADD_TYPES[body?.layer as MemoryLayer]
   const content = typeof body?.content === 'string' ? body.content.trim() : ''
   if (body?.action !== 'add' || !type || !content || content.length > 300) return NextResponse.json({ error: 'invalid_content' }, { status: 400 })
   // 사용자가 적은 건 확인된 기억이다 — 중요도·지속성을 높게 둬서 정리 때 먼저 버려지지 않게.
   await db.insert(memories).values({ sessionId, characterId: room.characterId, type, content, importance: 90, persistence: 90, confidence: 100,
     sourceMessageId: null, byUser: true, tags: tagsOf({ content, tags: [] }) })
-  return NextResponse.json({ ok: true })
-}
-
-export async function DELETE(req: Request, { params }: { params: Promise<{ sessionId: string }> }): Promise<Response> {
-  const { sessionId } = await params
-  const body = await req.json().catch(() => null) as { id?: unknown } | null
-  const row = await ownedMemory(sessionId, body?.id)
-  if (!row) return NextResponse.json({ error: 'not_found' }, { status: 404 })
-  await db.delete(memories).where(eq(memories.id, row.id))
   return NextResponse.json({ ok: true })
 }

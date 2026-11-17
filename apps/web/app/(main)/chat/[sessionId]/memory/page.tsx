@@ -73,7 +73,7 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
 
       <details className={styles.manage}>
         <summary className="t-body">{t('기억 관리')}</summary>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('기억을 고정하거나 고치고, 지우거나 직접 적을 수 있어요.')}</p>
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('캐릭터가 대화에서 쌓은 기억이에요. 보기만 할 수 있어요.')}</p>
         <MemoryGraphView sessionId={sessionId} refreshKey={room.turns} />
       </details>
     </Page>

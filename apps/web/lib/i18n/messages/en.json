@@ -2357,5 +2357,7 @@
   "예: 나는 서른 살 디자이너고, 반말로 불러 줘": "e.g. I'm a 30-year-old designer — talk to me casually",
   "예: 우리는 3년째 사귀는 사이야": "e.g. We've been dating for three years",
   "예: 지금 이야기는 비 오는 겨울밤이 배경이야": "e.g. This story takes place on a rainy winter night",
-  "이 대화에서 캐릭터가 꼭 지켜 줬으면 하는 설정을 적어 주세요. 매 답변 바로 앞에 실려서, 대화가 길어져도 잊지 않아요.": "Write the settings you want the character to keep in this chat. It's placed right before every reply, so it isn't forgotten even in long chats."
+  "이 대화에서 캐릭터가 꼭 지켜 줬으면 하는 설정을 적어 주세요. 매 답변 바로 앞에 실려서, 대화가 길어져도 잊지 않아요.": "Write the settings you want the character to keep in this chat. It's placed right before every reply, so it isn't forgotten even in long chats.",
+  "기억 {n}개 · 점이나 아래 목록을 누르면 자세히 볼 수 있어요.": "{n} memories · Tap a dot or the list below to see details.",
+  "캐릭터가 대화에서 쌓은 기억이에요. 보기만 할 수 있어요.": "Memories the character built from your chats. View only."
 }
