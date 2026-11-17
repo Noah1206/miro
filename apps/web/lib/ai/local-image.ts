@@ -29,7 +29,7 @@ export function cappedLevel(level: UnveilLevel): UnveilLevel {
 export const levelTags = (level: UnveilLevel) => LEVEL_TAGS[cappedLevel(level)]
 
 // 안전장치(필수, 10/19): 유저 요청 글에 미성년 신호나 실존 인물·실사 사진 요청이 있으면 그리지 않는다.
-const MINOR_EN = /\b(child|kid|loli|shota|teen(?:ager)?|underage|minor|schoolgirl|schoolboy|student|young boy|young girl|preteen|elementary|middle school|high school)\b/i
+const MINOR_EN = /\b(child|kid|loli|shota|teen(?:ager)?|underage|minor|schoolgirl|schoolboy|(?<!(?:college|university|grad|graduate) )student|young boy|young girl|preteen|elementary|middle school|high school)\b/i
 const REAL_PERSON = /(https?:\/\/|실존|연예인|아이돌|배우 .{1,6} 얼굴|실제 사람|내 사진|이 사진|real person|celebrity|photo of me|my face|this photo|deepfake)/i
 export function unsafeRequest(text: string | null | undefined): 'minor' | 'real_person' | null {
   if (!text) return null
