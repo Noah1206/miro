@@ -17,7 +17,7 @@ import { useWallet } from '@/components/wallet/provider'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import { ChatModelOptions } from '@/app/(main)/chat/[sessionId]/model-picker'
-import { MemoryGraphView, RoomUserNote } from '@/app/(main)/chat/[sessionId]/memory-graph'
+import { MemoryGraphView } from '@/app/(main)/chat/[sessionId]/memory-graph'
 import { useImmersive } from '@/app/(main)/chat/[sessionId]/immersive'
 import { RoomVoicePanel, type RoomVoice } from '@/components/room-voice'
 import { RoomGallery } from '@/components/room-gallery'
@@ -100,7 +100,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}
         {available && on && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
         {/* 11/17 대화 기억은 서랍 안 패널 대신 따로 된 페이지로 — 기억과 캐릭터가 생각하는 나를 크게 본다. */}
-        <div className={styles.grid}>{tiles.map(id => id === 'memory' ? <TransitionLink key={id} href={`/chat/${sessionId}/memory`} className={styles.tile} onClick={close}>
+        <div className={styles.grid}>{tiles.map(id => id === 'memory' || id === 'note' ? <TransitionLink key={id} href={`/chat/${sessionId}/${id}`} className={styles.tile} onClick={close}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
         </TransitionLink> : <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
@@ -113,8 +113,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
           {panel === 'persona' && <ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/>}
           {panel === 'theme' && <ChatThemeOptions compact portrait={portrait}/>}
           {panel === 'memory' && <MemoryGraphView sessionId={sessionId} refreshKey={turnCount}/>}
-          {/* 11/17 유저노트(베이비챗과 같은 개념: 사용자가 적는 설정)는 기억 노트(캐릭터가 쌓은 기억)와 따로 — 메뉴의 제 칸. */}
-          {panel === 'note' && <RoomUserNote sessionId={sessionId}/>}
           {panel === 'model' && <ChatModelOptions choices={choices}/>}
         </div>}
       </section>

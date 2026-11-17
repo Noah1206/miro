@@ -5,8 +5,8 @@ import { stageLabel } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { getConversationPersona } from '@/lib/persona'
 import { reflectionKey } from '@/lib/memory-reflection'
-import { CharacterPhoto } from '@/components/character-visual'
-import { Page, PageHeader } from '@/components/ui'
+import { Page } from '@/components/ui'
+import { NotesHeader } from './notes-header'
 import { getT } from '@/lib/i18n/server'
 import { MemoryGraphView } from '../memory-graph'
 import { Reflection } from './reflection'
@@ -49,16 +49,8 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
 
   return (
     <Page style={{ maxWidth: 640 }}>
-      <PageHeader back={`/chat/${sessionId}`} title={t('{name}의 기억 노트', { name: room.name })} lead={t('대화하면서 {name}의 기억에 남은 것들이에요.', { name: room.name })} />
-      <div className={styles.profile}>
-        {photo && <span className={styles.avatar}><CharacterPhoto src={photo} alt="" size="avatar" width={56} height={56} sizes="56px" /></span>}
-        <div>
-          <strong className="t-name">{room.name}</strong>
-          <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-            {rel ? t(stageLabel(rel.stage, rel)) : t('낯선 사이')} · {t('함께한 대화 {n}턴', { n: room.turns })}
-          </p>
-        </div>
-      </div>
+      <NotesHeader sessionId={sessionId} name={room.name} photo={photo} active="memory" />
+      <p className={`t-caption ${styles.meta}`}>{rel ? t(stageLabel(rel.stage, rel)) : t('낯선 사이')} · {t('함께한 대화 {n}턴', { n: room.turns })}</p>
 
       {rows.length === 0 ? <p className={`t-body ${styles.empty}`}>{t('아직 기억이 없어요. 조금 더 이야기를 나누면 하나씩 쌓여요.')}</p> : <>
         <Reflection sessionId={sessionId} name={room.name} initial={fresh} />
