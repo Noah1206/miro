@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { flushSync } from 'react-dom'
 import type { CharacterMedia } from '@miro/config'
 import { useT } from '@/lib/i18n/client'
+import { useToast } from '@/components/ui'
 import { spokenSegments } from '@/lib/voice-text'
 import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { VoiceStreamPlayer } from '@/lib/voice-stream'
@@ -42,6 +43,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const on=enabled&&preferredOn
   const audio = useRef<HTMLAudioElement | null>(null)
   const [status, setStatus] = useState<VoicePlaybackStatus>('idle')
+  const toast=useToast(),busyNoticed=useRef(false),t=useT()
   const {appended}=useTurns()
   const controller=useRef<AbortController|null>(null)
   useEffect(()=>{if(!enabled){controller.current?.abort();audio.current?.pause();setStatus('idle')}},[enabled])
@@ -76,6 +78,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       if(current.current===null)return
       report('preparing')
       const res=await post(body)
+      // 11/18 음성 서버가 바쁘면(503 voice_busy) 기다리지 않는다 — 글은 바로 보이고, 안내는 방마다 한 번.
+      if(res.status===503&&(await res.clone().json().catch(()=>null))?.error==='voice_busy'&&!busyNoticed.current){busyNoticed.current=true;toast(t('지금 목소리를 듣는 사람이 많아요. 이번 답은 글로 먼저 보여 드려요'))}
       if(!res.ok||!res.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
       const fed=await player.current!.feed(res,active.signal,()=>{report('playing');started?.()})
       ended=fed.ended;player.current!.gap(Math.max(0,Math.min(1500,pause)))

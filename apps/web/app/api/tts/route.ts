@@ -35,6 +35,29 @@ function holdVoiceServer() {
  * plan=true returns the utterance order without generating audio.
  * part selects a server-owned utterance, never client-supplied text or directions.
  */
+/**
+ * 11/18 음성 서버는 GPU 1대가 한 번에 하나씩 만든다 — 동시에 몰리면 줄을 길게 세우지 않고 바로 'voice_busy'(503)로 돌려준다.
+ * 화면은 기다리지 않고 글을 바로 보여 준다(immersive.tsx). 스트림이 끝나거나 끊길 때 자리를 돌려준다. ponytail: 서버 한 대(맥) 프로세스 안 숫자.
+ */
+const VOICE_MAX_INFLIGHT = Number(process.env.MIRO_VOICE_MAX_INFLIGHT ?? 3)
+let voiceInflight = 0
+const voiceBusy = () => Response.json({ error: 'voice_busy' }, { status: 503 })
+function takeVoiceSlot(): (() => void) | null {
+  if (voiceInflight >= VOICE_MAX_INFLIGHT) return null
+  voiceInflight++
+  let done = false
+  return () => { if (!done) { done = true; voiceInflight-- } }
+}
+function releasing(stream: ReadableStream<Uint8Array>, release: () => void): ReadableStream<Uint8Array> {
+  const reader = stream.getReader()
+  return new ReadableStream<Uint8Array>({
+    async pull(c) {
+      try { const { done, value } = await reader.read(); if (done) { release(); c.close() } else c.enqueue(value) } catch (e) { release(); c.error(e) }
+    },
+    cancel(reason) { release(); return reader.cancel(reason) },
+  })
+}
+
 export async function POST(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
   const user = await currentUser()
@@ -88,26 +111,28 @@ export async function POST(req: Request) {
   if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
   // 11/11 한 턴 통째(사용자: 묶음이 아니라 1턴당 바로) — 대화 순서의 묶음과 각 목소리를 넘기면 서버가 목소리마다 한 번에 합성해 잘라 순서대로 흘려보낸다.
   // 11/11 감정은 줄마다(parts) — 서버가 바뀌는 줄 앞에 지시를 끼운다. 목소리 결은 한 번에 합성해 그대로.
+  const release = takeVoiceSlot()
+  if (!release) return voiceBusy()
   holdVoiceServer()
   if (body?.turn === true && tts.speakTurn) {
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
     const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
-    if (lines.some(l => !l.voice)) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
+    if (lines.some(l => !l.voice)) { release(); return Response.json({ error: 'voice_unavailable' }, { status: 503 }) }
     try {
       const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
       // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
       await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: lines.map(l => l.voice ?? '') }).catch(() => {})
-      return new Response(out.stream, { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
-    } catch { return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
+      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
+    } catch { release(); return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }
   const selected = body?.part === undefined ? null : segments[Number(body.part)]
-  if (body?.part !== undefined && !selected) return new Response(null, { status: 400 })
+  if (body?.part !== undefined && !selected) { release(); return new Response(null, { status: 400 }) }
   // Preserve the original whole-reply contract for older clients. New clients select each part.
   const text = selected ? (selected.speech ?? selected.text) : segments.map(s => s.speech ?? s.text).join(' ')
   const delivery = selected?.delivery ?? (segments.length === 1 ? segments[0]!.delivery : undefined)
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   return synthesize(tts, { text, voice: await segmentVoice(row, selected ?? segments[0]),
-    language: settings?.language ?? 'ko', style: delivery?.tone === 'whisper' ? 'whisper' : 'normal', delivery }, req, body?.stream === true)
+    language: settings?.language ?? 'ko', style: delivery?.tone === 'whisper' ? 'whisper' : 'normal', delivery }, req, body?.stream === true, release)
 }
 
 /**
@@ -145,16 +170,18 @@ async function primeRoomVoice(userId: string, sessionId: string): Promise<void> 
  * 11/11 stream=true 면 만드는 대로 PCM16 조각을 그대로 흘려보낸다(audio/L16, x-sample-rate) — 첫소리가 대사 전체 합성을 기다리지 않는다.
  * 스트리밍을 못 하는 합성 서버면 예전처럼 WAV 하나.
  */
-async function synthesize(tts: TtsProvider, request: TtsRequest, req: Request, stream: boolean): Promise<Response> {
+async function synthesize(tts: TtsProvider, request: TtsRequest, req: Request, stream: boolean, release: () => void): Promise<Response> {
   try {
     const signal = AbortSignal.any([req.signal, AbortSignal.timeout(170_000)])
     if (stream && tts.speakStream) {
       const out = await tts.speakStream(request, signal)
-      return new Response(out.stream, { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
+      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
     }
     const out = await tts.speak(request, signal)
+    release()
     return new Response(out.audio, { headers: { 'content-type': out.contentType, 'cache-control': 'private, no-store' } })
   } catch {
+    release()
     // No automatic paid retry and no substitution with an unrelated browser voice.
     return Response.json({ error: 'voice_generation_failed' }, { status: 502 })
   }

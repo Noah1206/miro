@@ -27,6 +27,8 @@ export type MediaState = { error: string | null; notice: string | null; job?: st
 // ponytail: 한 프로세스 메모리(맥 한 대, next start 하나). 서버가 여러 대가 되면 표로 옮긴다 — 재시작으로 잃어도 사진·차감은 DB 에 그대로라 화면은 새로고침만 한다.
 type PhotoJob = { userId: string; at: number; status: 'pending' | 'done' | 'failed'; error: string | null; done: number }
 const jobs: Map<string, PhotoJob> = ((globalThis as { __miroPhotoJobs?: Map<string, PhotoJob> }).__miroPhotoJobs ??= new Map())
+/** 11/18 동시에 만드는 사진 묶음 상한 — 넘으면 줄 세우지 않고 '잠시 후 다시'(그림 서버 GPU 는 modal_lora_test.py max_containers 로 함께 묶는다). */
+const MAX_PHOTO_JOBS = Number(process.env.MIRO_PHOTO_MAX_JOBS ?? 4)
 
 /** 사진 묶음이 끝났는지. 모르는 번호(서버 재시작·남의 것)는 null — 끝난 묶음은 한 번 알려 주고 지운다. */
 export async function photoJob(id: string): Promise<{ status: PhotoJob['status']; error: string | null; done: number } | null> {
@@ -108,6 +110,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
 
   const now = Date.now()
   for (const [id, j] of jobs) if (now - j.at > 15 * 60_000) jobs.delete(id)
+  if ([...jobs.values()].filter(j => j.status === 'pending').length >= MAX_PHOTO_JOBS) return { error: msg('지금 사진을 만드는 사람이 많아요. 잠시 후 다시 시도해 주세요.'), notice: null }
   const jobId = randomUUID()
   const job: PhotoJob = { userId: user.id, at: now, status: 'pending', error: null, done: 0 }
   jobs.set(jobId, job)
