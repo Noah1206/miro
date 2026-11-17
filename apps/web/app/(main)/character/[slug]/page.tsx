@@ -48,7 +48,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const can = features()
   const editedDescription = officialDescription(c)
 
-  const cheerable = !c.isOfficial && c.isPublic && !!c.ownerId && c.ownerId !== user?.id
+  const cheerable = !c.isOfficial && (c.isPublic || c.linkShared) && !!c.ownerId && c.ownerId !== user?.id
   // 11/12 크리에이터 이름 — 해시태그 아래와 응원 버튼에 같이 쓴다(운영 작품은 그림체별 필명, lib/creator-name).
   const creator = creatorName(c, c.ownerId ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId)).limit(1))[0]?.name : null)
   const creatorKey = creatorKeyOf(c)

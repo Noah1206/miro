@@ -2387,5 +2387,8 @@
   "저장해 둔 노트를 고르면 아래에 채워져요. 대화마다 하나만 적용돼요.": "Pick a saved note to fill it in below. Only one applies per chat.",
   "제목": "Title",
   "제목을 적으면 보관함에도 저장돼요.": "Add a title to also save it to your notes.",
-  "예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.": "e.g. I'm a 30-year-old designer, talk to me casually.\nWe've been dating for 3 years."
+  "예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.": "e.g. I'm a 30-year-old designer, talk to me casually.\nWe've been dating for 3 years.",
+  "링크 공개": "Link only",
+  "링크로만 공유": "Share by link only",
+  "홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.": "Hidden from home and search — only people with the character link can start a chat."
 }

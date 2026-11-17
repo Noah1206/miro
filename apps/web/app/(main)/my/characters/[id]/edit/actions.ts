@@ -51,6 +51,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
       experienceType: owned.character.experienceType,
       // 초안은 절대 공개되지 않는다.
       isPublic: !stillDraft && p.isPublicOn,
+      linkShared: !stillDraft && p.linkSharedOn,
     }).where(eq(characters.id, characterId))
 
     let worldId = owned.world?.id

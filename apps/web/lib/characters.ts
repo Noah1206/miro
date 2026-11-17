@@ -69,8 +69,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export async function getCharacterByKey(key: string, viewerId: string | null) {
   const byKey = UUID.test(key) ? eq(characters.id, key) : eq(characters.slug, key)
   const visible = viewerId
-    ? or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.ownerId, viewerId))
-    : or(eq(characters.isOfficial, true), eq(characters.isPublic, true))
+    ? or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.linkShared, true), eq(characters.ownerId, viewerId))
+    : or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.linkShared, true))
   return getOne(and(byKey, visible, eq(characters.isDraft, false), isNull(characters.deletedAt)))
 }
 
@@ -87,6 +87,7 @@ async function getOne(where: ReturnType<typeof and>) {
       ownerId: characters.ownerId,
       isOfficial: characters.isOfficial,
       isPublic: characters.isPublic,
+      linkShared: characters.linkShared,
       experienceType: characters.experienceType,
       audience: characters.audience,
       name: characters.name,

@@ -38,7 +38,7 @@ export async function createRoleplaySession(
     .innerJoin(worlds, eq(worlds.characterId, characters.id))
     .where(and(
       UUID.test(key) ? eq(characters.id, key) : eq(characters.slug, key),
-      or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.ownerId, userId)),
+      or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.linkShared, true), eq(characters.ownerId, userId)),
       eq(characters.isDraft, false),
       isNull(characters.deletedAt),
     ))
@@ -89,7 +89,7 @@ export async function createRoleplaySession(
       experienceType: characters.experienceType,
     }).from(characters).innerJoin(worlds, eq(worlds.characterId, characters.id)).where(and(
       eq(characters.id, character.characterId),
-      or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.ownerId, userId)),
+      or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.linkShared, true), eq(characters.ownerId, userId)),
       eq(characters.isDraft, false), isNull(characters.deletedAt),
     )).for('update', { of: characters }).limit(1)
     if (!starting) throw new Error('CHARACTER_NOT_FOUND')

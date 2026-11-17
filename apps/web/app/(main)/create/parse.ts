@@ -73,7 +73,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   const name = s('name')
   if (!name) throw new Error('NAME_REQUIRED')
-  if (name.length > 10 || s('title').length > 40 || s('personality').length > 10000 || s('startingContext').length > 600) throw new Error('CHARACTER_FIELD_TOO_LONG')
+  // 11/18 바베챗 수준으로: 이름 10→20자, 첫 장면 600→1,000자.
+  if (name.length > 20 || s('title').length > 40 || s('personality').length > 10000 || s('startingContext').length > 1000) throw new Error('CHARACTER_FIELD_TOO_LONG')
   if (publish && !s('title')) throw new Error('TITLE_REQUIRED')
   if (publish && !s('startingContext')) throw new Error('STARTING_CONTEXT_REQUIRED')
   const personality = s('personality') || (publish ? '' : `${name}에 대한 설명은 아직 적히지 않았다.`)
@@ -145,7 +146,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     stats,
     endings,
     playGuide: s('playGuide').slice(0, 500),
-    firstReplies: form.getAll('firstReplies').map(v => String(v).trim().slice(0, 80)).filter(Boolean).slice(0, 3),
+    firstReplies: form.getAll('firstReplies').map(v => String(v).trim().slice(0, 200)).filter(Boolean).slice(0, 3),
     tagline: orNull(s('title')),
     age,
     nationality: orNull(s('nationality').slice(0, 60)),
@@ -230,6 +231,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     agencyExplicitFields: [...new Set(form.getAll('agencyExplicitField').filter((field): field is string =>
       typeof field === 'string' && ['personality.jealousy', 'personality.initiative', 'personality.emotionalExpression'].includes(field)))],
     isPublicOn: form.get('isPublic') === 'on',
+    // 11/18 링크 공개 — 공개가 꺼져 있을 때만.
+    linkSharedOn: form.get('isPublic') !== 'on' && form.get('linkShared') === 'on',
     // 공식 목소리 ID. 지금 고를 수 있는 것인지는 저장할 때 서버가 DB 로 다시 본다(lib/voice.ts).
     voiceId: orNull(s('voiceId').slice(0, 40)),
     // 다인 작품(11/10) 등장인물별 목소리 — 이름 20자·20명까지. 목소리 id 는 저장할 때 서버가 다시 본다(lib/voice selectableEnsemble).
@@ -250,7 +253,7 @@ export function normalizeStats(raw: unknown): CharacterStat[] {
   for (const r of raw) {
     if (!r || typeof r !== 'object') continue
     const o = r as Record<string, unknown>
-    const name = typeof o.name === 'string' ? o.name.trim().slice(0, 10) : ''
+    const name = typeof o.name === 'string' ? o.name.trim().slice(0, 20) : ''
     if (!name || out.some(x => x.name === name)) continue
     const n = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(-99999, Math.min(99999, Math.round(v))) : d)
     let min = n(o.min, 0), max = n(o.max, 100)

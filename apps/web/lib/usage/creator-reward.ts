@@ -141,9 +141,9 @@ export class CheerError extends Error {}
 export async function sendCheer(opts: { userId: string; characterId: string; amount: number; requestId: string }): Promise<{ ownerId: string; characterName: string; images: string[]; earned: number } | null> {
   if (!CHEER_AMOUNTS.includes(opts.amount as typeof CHEER_AMOUNTS[number])) throw new CheerError('invalid_amount')
   if (!/^[0-9a-f-]{36}$/i.test(opts.requestId)) throw new CheerError('invalid_request')
-  const [c] = await db.select({ ownerId: characters.ownerId, isOfficial: characters.isOfficial, isPublic: characters.isPublic, deletedAt: characters.deletedAt, name: characters.name, images: characters.images })
+  const [c] = await db.select({ ownerId: characters.ownerId, isOfficial: characters.isOfficial, isPublic: characters.isPublic, linkShared: characters.linkShared, deletedAt: characters.deletedAt, name: characters.name, images: characters.images })
     .from(characters).where(eq(characters.id, opts.characterId)).limit(1)
-  if (!c || c.deletedAt || !c.isPublic || c.isOfficial || !c.ownerId) throw new CheerError('not_cheerable')
+  if (!c || c.deletedAt || !(c.isPublic || c.linkShared) || c.isOfficial || !c.ownerId) throw new CheerError('not_cheerable')
   if (c.ownerId === opts.userId) throw new CheerError('own_character')
   const ownerId = c.ownerId
   const earned = Math.floor(opts.amount * CHEER_SHARE)

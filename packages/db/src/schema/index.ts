@@ -285,6 +285,8 @@ export const characters = pgTable('characters', {
   isDraft: boolean('is_draft').notNull().default(false),
   /** 다른 사람에게 보이는가. 공식이 아닌 캐릭터는 이 값이 켜져야 홈·검색·상세에 노출된다. 초안은 절대 공개되지 않는다. */
   isPublic: boolean('is_public').notNull().default(false),
+  /** 11/18 링크 공개 — 공개가 꺼져 있어도 링크를 아는 사람은 상세를 보고 대화를 시작할 수 있다. 홈·검색 목록에는 안 뜬다(목록은 isPublic 만 본다). */
+  linkShared: boolean('link_shared').notNull().default(false),
 
   /**
    * 경험 유형. `chat` 은 홈의 일반 캐릭터챗 — 말투·기억·관계는 이어지지만 먼저 연락하지 않는다.

@@ -28,7 +28,7 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
     id: characters.id, slug: characters.slug, name: characters.name, tagline: characters.tagline,
     accentA: characters.accentA, genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords,
     images: characters.images,
-    isPublic: characters.isPublic, isDraft: characters.isDraft,
+    isPublic: characters.isPublic, linkShared: characters.linkShared, isDraft: characters.isDraft,
   })
     .from(characters).leftJoin(worlds, eq(worlds.characterId, characters.id))
     .where(and(eq(characters.ownerId, user.id), isNull(characters.deletedAt)))
@@ -50,7 +50,7 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
     filter === 'all' ? true : filter === 'public' ? c.isPublic && !c.isDraft : filter === 'private' ? !c.isPublic && !c.isDraft : c.isDraft)
   const cards: CardCharacter[] = shown.map((c) => ({
     ...c, slug: c.slug ?? c.id,
-    caption: c.isDraft ? t('임시저장') : c.isPublic ? t('공개') : t('비공개'),
+    caption: c.isDraft ? t('임시저장') : c.isPublic ? t('공개') : c.linkShared ? t('링크 공개') : t('비공개'),
     href: c.isDraft ? `/my/characters/${c.id}/edit` : undefined,
   }))
 

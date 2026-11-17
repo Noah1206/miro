@@ -51,6 +51,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     startingContext: c.startingContext ?? '', startingTime: c.startingTime, sampleDialogue: c.sampleDialogue, lore: c.lore, loreLimit: c.loreLimit, situationImages: c.situationImages, photoScenes: c.photoScenes ?? [], presetPersonas: c.presetPersonas ?? [], personaGuide: c.personaGuide ?? '', personaRequired: c.personaRequired, statusFormat: c.statusFormat, stats: c.stats, playGuide: c.playGuide, firstReplies: c.firstReplies, endings: c.endings, recommendedModel: c.recommendedChat?.model ?? '', recommendedLength: c.recommendedChat?.length ?? 'scene', recommendedThinking: c.recommendedChat?.thinking ?? 'low', adultOnly: c.adultOnly,
     commands: c.commands, media: contact?.presentation?.media ?? 'text', intimacy: c.intimacy ?? '',
     isPublic: c.isPublic,
+    linkShared: c.linkShared,
     images: c.images,
   }
 

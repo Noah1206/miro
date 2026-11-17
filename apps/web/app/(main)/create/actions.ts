@@ -57,6 +57,7 @@ export async function saveCharacter(form: FormData): Promise<string> {
       experienceType: p.experienceType,
       // 초안은 절대 공개되지 않는다. 등록할 때만 폼에서 선택한 공개 상태를 적용한다.
       isPublic: p.publish && p.isPublicOn,
+      linkShared: p.publish && p.linkSharedOn,
     }).onConflictDoNothing({ target: characters.id }).returning({ id: characters.id })
     if (!character) {
       const [existing] = await tx.select({ ownerId: characters.ownerId, experienceType: characters.experienceType, isDraft: characters.isDraft })

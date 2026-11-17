@@ -85,6 +85,8 @@ export type FormInitial = {
   audience: 'female' | 'male'
   experienceType?: 'chat' | 'reality'
   isPublic: boolean
+  /** 11/18 링크 공개 — 공개가 꺼져 있을 때만. */
+  linkShared?: boolean
   /** 이미 저장된 사진 URL (편집 화면). 대표가 첫 번째. */
   images: string[]
 }
@@ -176,6 +178,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(i.isPublic)
+  const [linkShared, setLinkShared] = useState(!!i.linkShared)
   const [media, setMedia] = useState<CharacterMedia>(i.media)
   const audience = i.audience
   const can = capabilities
@@ -297,7 +300,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
       <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
         <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending}
-          missingHint={canSubmit ? (isPublic ? t('공개 게시') : t('나만 보기')) : t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') })}
+          missingHint={canSubmit ? (isPublic ? t('공개 게시') : linkShared ? t('링크로만 공유') : t('나만 보기')) : t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') })}
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
         {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{t(saveError)}</p>}
         {mode === 'create' && experienceType === 'reality' && <CreateTour tab={tab} onTab={openTab} />}
@@ -335,6 +338,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
                 label={t('다른 사람에게 공개')}
                 hint={t('게시할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다.')} />
+              {!isPublic && <Switch name="linkShared" checked={linkShared} onChange={setLinkShared}
+                label={t('링크로만 공유')}
+                hint={t('홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.')} />}
             </Card>
           </Section>
           <Section title={t('캐릭터')}>
@@ -344,7 +350,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                 <IdentityCard>
                   <div className="stack" style={{ gap: 18 }}>
                     <LabeledField label={t('이름')} required error={name === '' ? null : undefined}>
-                      <Controlled name="name" label={t('이름')} max={10} value={name} onChange={setName} big />
+                      <Controlled name="name" label={t('이름')} max={20} value={name} onChange={setName} big />
                     </LabeledField>
                     {/* 소개(한 줄)와 성격 설명을 한 칸으로(10/19). 서버 칸 이름은 그대로 — 첫 줄이 title, 나머지가 personality. */}
                     <input type="hidden" name="title" value={title} />
@@ -447,7 +453,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <Card>
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label={t('첫 장면')} required hint={t('대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.')}>
-                  <ControlledArea name="startingContext" label={t('첫 장면')} value={startingContext} onChange={setStartingContext} max={600} rows={3}
+                  <ControlledArea name="startingContext" label={t('첫 장면')} value={startingContext} onChange={setStartingContext} max={1000} rows={4}
                     placeholder={t('비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다.')} />
                 </LabeledField>
                 {/* 첫 장면의 장소 — 비우면 세계는 '어딘가' 에서 시작한다(9/27 운영 실측에서 장면 표시가 "어딘가 · 저녁" 이었다). */}
@@ -481,7 +487,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           <Section title={t('추천 첫 답변 · 선택')} subtitle={t('첫 대화에서 입력창 위에 미리 떠 있는 답이에요. 최대 3개, 행동은 *별표* 로 감싸요.')}>
             <div className="stack" style={{ gap: 8 }}>
-              {[0, 1, 2].map(n => <CountedInput key={n} name="firstReplies" ariaLabel={t('추천 첫 답변 {n}', { n: n + 1 })} max={80}
+              {[0, 1, 2].map(n => <CountedInput key={n} name="firstReplies" ariaLabel={t('추천 첫 답변 {n}', { n: n + 1 })} max={200}
                 placeholder={[t('예) *주위를 둘러본다* 여기가… 어디지?'), t('예) 오늘은 정말 일찍 퇴근할 거예요.'), t('예) 처음 뵙겠습니다.')][n]} defaultValue={i.firstReplies?.[n] ?? ''} />)}
             </div>
           </Section>
