@@ -9,7 +9,7 @@ import {
 } from '@miro/db'
 import { AGENCY_FALLBACK_WAIT_ID, agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview, agencyCommunicationPreferences, communicationPreferenceData, COMMUNICATION_PREFERENCE_RULE } from '@miro/engine'
-import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
+import { buildMockRealityContent, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
 import { loadSession } from '@/lib/simulation/snapshot'
@@ -24,6 +24,7 @@ import { REPLY_DISPOSITION_VERSION, nextReplyReview, readReplyDisposition } from
 import { conversationVariationDirective, repeatedConversationBlock, snapshotUserGrounding } from '@miro/engine'
 import { resolveChatModel } from '@/lib/ai/chat-models'
 import { castNames } from '@miro/engine'
+import { createAIWithAdultFallback } from '@/lib/ai/adult-fallback'
 
 type RealityRow = {
   session: typeof roleplaySessions.$inferSelect
@@ -70,7 +71,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
   if (requestedMode === 'off') return null
   const replyModel = opts.inbox?.chatModel ? await resolveChatModel(userId, opts.inbox.chatModel, row.session.adultSince !== null) : undefined
   installAIUsageSink()
-  const llm = createAI({ mock: req => buildMockRealityContent(req.prompt), context: {
+  const llm = createAIWithAdultFallback({ mock: req => buildMockRealityContent(req.prompt), context: {
     userId, sessionId, workload: opts.background ? 'background' : 'interactive', shadow: requestedMode === 'shadow',
     origin: 'reality:agency:reality:miro:background', adult: row.session.adultSince !== null,
     dialogueModelId: replyModel?.modelId,

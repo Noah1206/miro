@@ -3,10 +3,10 @@ import { POLICY, characterAgencyMode, feature } from '@miro/config'
 import { db, characterLifeEvents, characterRevisions, characterRuntimeStates, characters, messages, relationships, roleplaySessions, userSettings, worldStates } from '@miro/db'
 import { LANGUAGES, acceptLifeEvents, describeRelationship, isLanguage, lifeLines, lifeWindow, localClock, localIso, type LifeEvent } from '@miro/domain'
 import { liveCharacterDay } from '@miro/engine'
-import { createAI } from '@miro/providers'
 import { observe } from '@/lib/observe'
 import { routineFor } from '@/lib/reality/routine'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
+import { createAIWithAdultFallback } from '@/lib/ai/adult-fallback'
 
 const toEvent = (r: typeof characterLifeEvents.$inferSelect): LifeEvent => ({ id: r.id, occurredAt: r.occurredAt.toISOString(), block: r.block,
   kind: r.kind, summary: r.summary, valence: r.valence, intensity: r.intensity, shareable: r.shareable })
@@ -65,7 +65,7 @@ export async function advanceCharacterLife(sessionId: string, now = new Date()):
   const profile = row.revision.profile
   const { identity, personality, worldRole } = profile.character
   installAIUsageSink()
-  const llm = createAI({ mock: () => ({ events: [] }), context: { userId: row.session.userId, sessionId, workload: 'background', origin: 'life:agency:reality:miro:background', adult: row.session.adultSince !== null } })
+  const llm = createAIWithAdultFallback({ mock: () => ({ events: [] }), context: { userId: row.session.userId, sessionId, workload: 'background', origin: 'life:agency:reality:miro:background', adult: row.session.adultSince !== null } })
   const proposed = await liveCharacterDay(llm, {
     character: { identity, personality, worldRole },
     rules: row.revision.compiled.rules.map(({ id, domain, statement }) => ({ id, domain, statement })),

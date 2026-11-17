@@ -18,9 +18,12 @@ const CONNECTED: OpsAlert = { key: 'connected', title: 'MIRO 운영자 알림 �
 export async function collectOpsAlerts(now = new Date()): Promise<OpsAlert[]> {
   const out: OpsAlert[] = []
   const quarter = new Date(now.getTime() - 15 * 60_000)
+  // 11/18 공급자 안전 필터가 내용을 막은 것(content_blocked)은 장애가 아니다 — 비율에서 뺀다(새벽엔 호출이 적어 몇 건만 막혀도 오경보가 났다).
+  // 마지막 오류는 가장 최근 실패의 오류 문구(예전 max() 는 비어 '기록 없음'으로 보였다).
   const [ai] = await db.select({
-    total: sql<number>`count(*)::int`, failed: sql<number>`count(*) filter (where not ${aiUsage.ok})::int`,
-    lastError: sql<string | null>`max(${aiUsage.error}) filter (where not ${aiUsage.ok})`,
+    total: sql<number>`count(*) filter (where ${aiUsage.ok} or coalesce(${aiUsage.error}, '') <> 'content_blocked')::int`,
+    failed: sql<number>`count(*) filter (where not ${aiUsage.ok} and coalesce(${aiUsage.error}, '') <> 'content_blocked')::int`,
+    lastError: sql<string | null>`(array_agg(${aiUsage.error} order by ${aiUsage.createdAt} desc) filter (where not ${aiUsage.ok} and ${aiUsage.error} is not null and ${aiUsage.error} <> 'content_blocked'))[1]`,
   }).from(aiUsage).where(gte(aiUsage.createdAt, quarter))
   if (ai && ai.total >= 3 && ai.failed * 2 >= ai.total) {
     out.push({ key: 'ai_failures', title: 'AI 제공자 장애 의심', detail: `최근 15분 호출 ${ai.total}건 중 ${ai.failed}건 실패. 마지막 오류: ${(ai.lastError ?? '').slice(0, 120) || '기록 없음'}` })
