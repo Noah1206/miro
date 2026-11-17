@@ -1,4 +1,4 @@
-"""채팅 사진 가림 서버(11/8) — 앱이 만든 언베일 사진을 받아 성기 부위만 투명 블러(색은 보이고 세부만 뭉갬)로 덮어 돌려준다.
+"""채팅 사진 가림 서버(11/8) — 앱이 만든 언베일 사진을 받아 남성 성기만 흰색으로 칠해 돌려준다(11/18 사용자 결정: 남성기만 흰색, 그 밖은 가리지 않음 — 딜도가 함께 칠해져도 괜찮다).
 
 감지는 tooling/image/censor.py 와 같은 애니 전용 모델(dghs-imgutils detect_censors, penis·pussy). CPU 로 충분하다.
 그림 서버(modal_lora_test.py)와 따로 둔다 — 앱(lib/ai/censor.ts)이 그림을 받은 뒤 여기를 거친다.
@@ -22,12 +22,15 @@ image = (modal.Image.debian_slim(python_version='3.11')
          .pip_install('dghs-imgutils', 'onnxruntime', 'pillow', 'fastapi[standard]')
          .run_function(warm))
 
-LABELS = {'penis', 'pussy'}
+LABELS = {'penis'}
 THRESHOLD = 0.3   # 놓치는 것보다 더 가리는 편이 낫다
 PAD = 0.25
 
 
-def blur(img, boxes):
+WHITE = 0.97   # 흰색 비율 — 0.9 는 윤곽이 비쳤다(11/18 실측), 거의 흰색으로
+
+
+def whiten(img, boxes):
     from PIL import Image, ImageDraw, ImageFilter
     w, h = img.size
     mask = Image.new('L', (w, h), 0)
@@ -35,11 +38,9 @@ def blur(img, boxes):
     for x0, y0, x1, y1 in boxes:
         px, py = (x1 - x0) * PAD, (y1 - y0) * PAD
         draw.ellipse((x0 - px, y0 - py, x1 + px, y1 + py), fill=255)
-    mask = mask.filter(ImageFilter.GaussianBlur(max(6, min(w, h) // 80)))
-    # 사용자가 손으로 칠한 블러(blur_editor.py)와 같은 방식 — 줄였다 키워 색은 남기고 세부만 없앤다
-    s = max(12, max(w, h) // 70)
-    soft = img.resize((max(1, w // s), max(1, h // s)), Image.BILINEAR).resize((w, h), Image.BICUBIC)
-    return Image.composite(soft, img, mask)
+    mask = mask.filter(ImageFilter.GaussianBlur(max(2, min(w, h) // 400)))   # 가장자리만 살짝 부드럽게
+    white = Image.blend(img.convert('L').convert('RGB'), Image.new('RGB', (w, h), 'white'), WHITE)
+    return Image.composite(white, img, mask)
 
 
 # POST {key, png(base64)} → {png(base64), hits}
@@ -57,7 +58,7 @@ def censor(body: dict):
     img = Image.open(io.BytesIO(base64.b64decode(body['png']))).convert('RGB')
     boxes = [b for b, l, s in detect_censors(img) if l in LABELS and s >= THRESHOLD]
     if boxes:
-        img = blur(img, boxes)
+        img = whiten(img, boxes)
     buf = io.BytesIO()
     img.save(buf, 'WEBP', quality=90, method=4)   # 11/11 PNG 대신 WebP(약 1/10) — 앱으로 돌려보내고 저장·전송하는 크기. 키 이름 png 는 예전 그대로
     return {'png': base64.b64encode(buf.getvalue()).decode(), 'hits': len(boxes)}
