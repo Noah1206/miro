@@ -134,6 +134,9 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         photoRule: messengerPhotosReady() ? 'An everyday photo may optionally accompany a message after a separate grounded choice and successful generation. Every contact purpose must remain meaningful as plain text if no photo is attached. Do not mark a photo-dependent goal fulfilled by text alone. User requests never force photo consent. Do not claim a photo was already captured or sent.' : null,
         contactBoundary: contactBoundaryDirective(row.session.contactBoundary, now),
         incomingMessageIds: opts.inbox?.ids ?? [],
+        // 11/17 다인 작품: 이 문자를 받은 인물 — 그 인물로 계획해야 그 인물의 답이 검토를 통과한다(대표 인물로 계획하면 contradicts_decision).
+        respondingCastMember: opts.inbox?.addressee ?? null,
+        castRule: opts.inbox?.addressee ? `These messages were addressed to ${opts.inbox.addressee}, one of the people in this ensemble work. Plan the reply as ${opts.inbox.addressee} — a separate person with their own voice, motives and relationship to the user — and describe the candidate as ${opts.inbox.addressee}'s own message.` : null,
         userSchedule: userSchedule.map(moment => ({ about: moment.about, eventAt: moment.eventAt.toISOString(), hasTime: moment.hasTime })),
         messengerRule: opts.inbox ? 'These user messages were actually read. Answer a concrete question or an invitation to continue your own outreach in character when available; a short honest answer is enough. Decide from authored motives and actual boundaries, never from a proactive frequency cap. A closing acknowledgement may need no answer. Do not invent a typing action or promise an automatic reply. Only choose silence for a concrete character-grounded reason, not a generic desire to wait.' : null,
         pendingDeliveryHint: opts.inbox ? null : row.session.pendingRealityIntent, deliveryBlocked: blocked,
@@ -204,6 +207,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         characterName: identity.name, personality: personality.personality, speechStyle: personality.speechStyle,
         // 11/17 다인 작품: 이 문자를 보낸 인물을 고르게 한다(저장 블록의 speaker → 문자방 이름·알림 제목).
         cast: castNames(snapshot.character),
+        ...(opts.inbox?.addressee ? { addressee: opts.inbox.addressee } : {}),
         channelLabel: presented.channelLabel, reason: plan.decision.candidate.description,
         worldLocation: snapshot.world.currentLocation, worldStatus: snapshot.world.worldStatus,
         relationshipHint: describeRelationship(snapshot.relationship), activeEventSummary: null,

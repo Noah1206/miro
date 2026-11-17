@@ -8,12 +8,13 @@ import { observe } from '@/lib/observe'
 import { characterAvailability } from '@/lib/reality/routine'
 import type { MessengerDraftStream, MessengerDraftEvents } from './stream'
 import { resolveChatModel } from '@/lib/ai/chat-models'
+import { addresseeOf, castOf } from '@/lib/editorial/heroine-name'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 export class MessengerError extends Error {
   constructor(readonly reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'conflict' | 'rate_limit' | 'invalid_model') { super(reason) }
 }
-export type InboxReview = { ids: string[]; token: string; chatModel?: string; stream?: MessengerDraftStream }
+export type InboxReview = { ids: string[]; token: string; chatModel?: string; stream?: MessengerDraftStream; /** 11/17 다인 작품: 이 묶음을 받은 인물 — 그 인물로 계획하고 답한다. */ addressee?: string }
 export type MessengerItem = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>; at: string; readAt?: string | null; chatModel?: string | null }
 
 /** Reception validates configuration, but never calls AI or reserves a reply. */
@@ -140,12 +141,26 @@ async function reviewInbox(sessionId: string, now: Date, stream?: MessengerDraft
       sql`${messengerInbox.nextReviewAt} <= ${now.toISOString()}::timestamptz`))
       .orderBy(sql`CASE WHEN ${messengerInbox.status} = 'read' THEN 0 ELSE 1 END`, asc(messengerInbox.createdAt), asc(messengerInbox.messageId)).limit(8)
     if (!batch.length) return null
-    const alreadyRead = batch.filter(item => item.status === 'read')
+    let alreadyRead = batch.filter(item => item.status === 'read')
+    // 11/17 다인 작품: 읽은 문자를 받은 인물별로 나눠 한 사람씩 답한다(실측: 유나·지안에게 한 통씩 보냈는데 지안만 답했다).
+    // 가장 먼저 온 문자의 받는 사람 묶음(이름 없는 문자 포함)만 이번에 답하고, 나머지는 '읽음'으로 남아 다음 차례에 그 인물이 답한다.
+    let addressee: string | undefined
+    if (alreadyRead.length) {
+      const [character] = await tx.select({ secret: characters.secret, ensembleCast: characters.ensembleCast }).from(characters).where(eq(characters.id, row.session.characterId))
+      const cast = character ? castOf(character) : []
+      if (cast.length >= 2) {
+        const texts = new Map((await tx.select({ id: messages.id, content: messages.content }).from(messages)
+          .where(inArray(messages.id, alreadyRead.map(item => item.messageId)))).map(m => [m.id, m.content]))
+        const to = (id: string) => addresseeOf(texts.get(id) ?? '', cast)
+        addressee = alreadyRead.map(item => to(item.messageId)).find((name): name is string => !!name)
+        if (addressee) alreadyRead = alreadyRead.filter(item => { const name = to(item.messageId); return !name || name === addressee })
+      }
+    }
     if (alreadyRead.length) {
       const ids = alreadyRead.map(item => item.messageId)
       await tx.update(messengerInbox).set({ leaseToken: token, leaseUntil: new Date(now.getTime() + 5 * 60_000) }).where(inArray(messengerInbox.messageId, ids))
       // A batched reply follows the latest received message's captured choice.
-      return { kind: 'reply' as const, ids, token, chatModel: alreadyRead.at(-1)?.chatModel ?? undefined }
+      return { kind: 'reply' as const, ids, token, chatModel: alreadyRead.at(-1)?.chatModel ?? undefined, ...(addressee ? { addressee } : {}) }
     }
     const unread = batch.filter(item => item.status === 'unread')
     if (unread.length) {

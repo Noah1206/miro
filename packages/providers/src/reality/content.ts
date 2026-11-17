@@ -34,6 +34,8 @@ export type RealityContentInput = {
   characterName: string
   /** 11/17 다인 작품의 인물들(2명 이상일 때만) — 이 문자를 누가 보내는지 speaker 로 고른다. */
   cast?: string[]
+  /** 11/17 이 답장이 답하는 문자를 받은 인물 — 그 인물이 보낸다. */
+  addressee?: string
   /** Captured user setting for an inbound DM reply; unsolicited contacts keep the default. */
   replyLength?: 'short' | 'scene' | 'plus' | 'long' | 'saga'
   /** Only unsolicited legacy opportunities can abstain; replies and authorized agency actions cannot. */
@@ -115,6 +117,7 @@ export async function generateRealityContent(
       ? '발송 판단: 새롭게 말할 근거가 없거나 이미 보낸 말의 반복뿐이면 send:false로 보류하세요. text에는 짧은 보류 사유를 쓰세요. 허구의 사건으로 발송 이유를 채우지 마세요.'
       : '발송 판단: 사용자의 연락에 대한 답장 또는 서버가 승인한 행동입니다. send:true로 현재 요청과 승인 범위에 맞게 응답하세요.',
     `캐릭터: ${input.characterName}`,
+    multi.length && input.addressee && multi.includes(input.addressee) ? `이번 답장은 ${input.addressee}에게 온 문자에 대한 답이다. speaker 는 ${input.addressee}이고, ${input.addressee}의 말투로 쓴다.` : null,
     multi.length ? `이 작품엔 여러 인물이 있습니다: ${multi.join(', ')}. 이 문자는 그중 한 명이 자기 휴대폰으로 보내는 문자입니다 — 대화 흐름상 지금 연락할 인물 한 명을 골라 speaker 에 그 이름을 쓰고, text 는 그 인물의 말투로 씁니다.` : null,
     `성격: ${input.personality}`,
     input.speechStyle ? `말투: ${input.speechStyle}` : null,
@@ -151,7 +154,9 @@ export async function generateRealityContent(
   // A refusal reason is internal text, never a reply. Let the existing retry path retain the request.
   if (!input.allowAbstain && content.send === false) throw new Error('reality_content_unexpected_abstention')
   const speaker = (content as { speaker?: string }).speaker?.trim()
-  return { text: content.text, tone: content.tone, send: content.send, ...(speaker && multi.includes(speaker) ? { speaker } : {}) }
+  // 받는 사람이 정해진 답장은 그 사람이 보낸다.
+  const sender = input.addressee && multi.includes(input.addressee) ? input.addressee : speaker && multi.includes(speaker) ? speaker : undefined
+  return { text: content.text, tone: content.tone, send: content.send, ...(sender ? { speaker: sender } : {}) }
 }
 
 /**

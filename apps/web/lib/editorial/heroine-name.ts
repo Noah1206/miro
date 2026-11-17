@@ -31,3 +31,15 @@ export function contactSenderName(c: Parameters<typeof leadName>[0], blocks: Arr
 export function castOf(c: { secret?: string | null; ensembleCast?: ReadonlyArray<{ name: string }> | null }): string[] {
   return [...new Set([...ensembleNames(c.secret ?? ''), ...(c.ensembleCast ?? []).map(p => p.name?.trim()).filter(Boolean)])]
 }
+
+/** 문자가 누구에게 온 것인지 — 본문에 가장 먼저 나오는 인물 이름(성 뺀 이름도: '서지안' ↔ '지안'). 없으면 null(11/17 다인 작품 문자). */
+export function addresseeOf(text: string, cast: readonly string[]): string | null {
+  let best: { name: string; at: number } | null = null
+  for (const name of cast) {
+    for (const alias of [name, ...(/^[가-힣]{3,4}$/.test(name) ? [name.slice(1)] : [])]) {
+      const at = text.indexOf(alias)
+      if (at >= 0 && (!best || at < best.at)) best = { name, at }
+    }
+  }
+  return best?.name ?? null
+}
