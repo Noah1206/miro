@@ -14,7 +14,7 @@ import { SuggestButton, SuggestList, type SuggestState } from './suggest-replies
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { ENDING_VIEW, REROLL, useTurns } from './turns'
+import { ENDING_VIEW, REROLL, useTurns, type LiveTurn } from './turns'
 import { useChosenThinking } from '@/components/reply-length-sheet'
 import { streamTurn } from './stream-turn'
 import { useImmersive } from './immersive'
@@ -111,7 +111,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   useEffect(() => {
     let input = '', id = crypto.randomUUID()
     try {
-      const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
+      // 11/17 쓰던 글은 탭을 닫거나 나갔다 와도 남게 localStorage(전엔 sessionStorage — 새로고침만 버텼다).
+      const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null')
       if (saved && typeof saved.input === 'string' && saved.input.length <= 2000 && typeof saved.requestId === 'string' && /^[0-9a-f-]{36}$/i.test(saved.requestId)) {
         input = saved.input; id = saved.requestId
         if (saved.command && typeof saved.command.name === 'string' && saved.command.name.length > 0 && saved.command.name.length <= 12
@@ -129,10 +130,44 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   useEffect(() => {
     if (!ready) return
     try {
-      if (draft || command) sessionStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId, model, command }))
-      else sessionStorage.removeItem(storageKey)
+      if (draft || command) localStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId, model, command }))
+      else localStorage.removeItem(storageKey)
     } catch { /* Draft persistence must not prevent sending. */ }
   }, [draft, command, requestId, model, ready, storageKey])
+  // 11/17 답이 나오는 중에 새로고침했으면 서버에서 진행 중인 턴을 이어 받아 그대로 보여 준다(api/turn/live). 끝나면 저장본을 다시 불러온다.
+  useEffect(() => {
+    if (!ready) return
+    let alive = true
+    const ctrl = new AbortController()
+    void (async () => {
+      const res = await fetch(`/api/turn/live?sessionId=${sessionId}`, { signal: ctrl.signal }).catch(() => null)
+      if (!alive || !res || res.status !== 200 || !res.body || sending.current) return
+      sending.current = true; setPending(true)
+      const playbackId = `resume:${crypto.randomUUID()}`
+      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+      let buffer = ''
+      try {
+        for (;;) {
+          const { value, done } = await reader.read()
+          if (done || !alive) break
+          buffer += value
+          for (let nl = buffer.indexOf('\n'); nl >= 0; nl = buffer.indexOf('\n')) {
+            const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1)
+            if (!line.trim()) continue
+            const event = JSON.parse(line) as { type: 'blocks'; input: string; blocks: LiveTurn['blocks'] } | { type: 'done' }
+            if (event.type === 'blocks') setLive({ input: event.input, blocks: event.blocks, playbackId })
+          }
+        }
+      } catch { /* 끊기면 저장본을 다시 불러오는 것으로 끝낸다 */ }
+      if (!alive) return
+      sending.current = false; setPending(false); setLive(null)
+      void refreshBalance(true)
+      startRefresh(() => router.refresh())
+    })()
+    return () => { alive = false; ctrl.abort() }
+    // 화면을 연 한 번만 — 그 뒤 턴은 직접 보낸 스트림이 그린다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, sessionId])
   useEffect(() => {
     // 결과가 오면 오던 답(스트리밍)을 거둔다 — 성공이면 같은 렌더에서 저장본이 그 자리를 채우고, 실패면 저장되지 않은 답은 사라진다.
     const playbackId = live?.playbackId

@@ -11,7 +11,7 @@
 .primary:disabled { background: var(--color-surface-3); color: var(--color-text-tertiary); cursor: default; }
 .ghost { background: none; color: var(--color-text-secondary); }
 
-.noteForm { display: flex; flex-direction: column; gap: 20px; max-width: none; background: none; --field-font: 16px; --field-pad-y: 8px; --color-surface-2: #333335; --color-border-strong: #3f3f42; }
+.noteForm { display: flex; flex-direction: column; gap: 20px; max-width: none; background: none; --field-font: 16px; --field-pad-y: 6px; --field-pad-b: 4px; --color-surface-2: #333335; --color-border-strong: #3f3f42; }
 /* 11/17 사용자: 자리표시 글씨를 작고 옅게 — 입력 글씨(14px)보다 한 단 작게, 줄 간격 넉넉히 */
 .noteForm ::placeholder { font-size: 15px; line-height: 1.5; color: #6f6f72; }
 .noteForm select { min-height: 40px !important; border-radius: var(--field-radius) !important; }
