@@ -1,82 +1,87 @@
 'use client'
 import { useState } from 'react'
 import { useT } from '@/lib/i18n/client'
+import { LabeledField, box, fieldFont, fieldPad } from '../../../create/form-parts'
+import { SelectField } from '../../../create/settings-controls'
 import { deletePreset, listPresets, savePreset, saveRoomNote, type NotePreset } from './actions'
 import styles from '../memory/memory.module.css'
 
-const MAX = 2000
+const MAX = 2000, TITLE_MAX = 40, NEW = 'new'
 
 /**
- * 11/17 유저노트 편집기(베이비챗식) — 위: 이 대화에 적용 중인 노트, 아래: 내 노트 보관함(여러 개 저장 → 하나를 골라 이 대화에 적용).
+ * 11/17 유저노트 편집기 — 만들기 화면과 같은 입력 칸(.create-page 토큰).
+ * 위: 보관함 드롭다운(고르면 제목·내용이 채워진다) → 제목 → 내용. 저장하면 이 대화에 적용되고, 제목이 있으면 보관함에도 저장(고른 노트면 고친다).
  */
 export function NoteEditor({ sessionId, initial, initialPresets }: { sessionId: string; initial: string; initialPresets: NotePreset[] }) {
   const t = useT()
-  const [saved, setSaved] = useState(initial)
+  const [presets, setPresets] = useState(initialPresets)
+  const start = initialPresets.find(p => p.content.trim() === initial.trim() && initial.trim())
+  const [picked, setPicked] = useState(start?.id ?? NEW)
+  const [title, setTitle] = useState(start?.title ?? '')
   const [text, setText] = useState(initial)
+  const [applied, setApplied] = useState(initial.trim())
   const [busy, setBusy] = useState(false)
+  const [confirm, setConfirm] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
-  const [presets, setPresets] = useState<NotePreset[]>(initialPresets)
-  const [naming, setNaming] = useState(false)
-  const [title, setTitle] = useState('')
-  const [confirmId, setConfirmId] = useState<string | null>(null)
-  const changed = text.trim() !== saved.trim()
-  const refresh = () => listPresets().then(setPresets).catch(() => setPresets([]))
+  const [focus, setFocus] = useState<'title' | 'text' | null>(null)
+  const current = presets.find(p => p.id === picked)
+  const changed = text.trim() !== applied || (!!title.trim() && (!current || current.title !== title.trim() || current.content.trim() !== text.trim()))
 
-  const save = async (value = text) => {
-    setBusy(true); setStatus(null)
-    const ok = await saveRoomNote(sessionId, value).catch(() => false)
-    setBusy(false)
-    if (ok) { setSaved(value.trim()); setText(value.trim()); setStatus(t('이 대화에 적용했어요.')) } else setStatus(t('저장하지 못했어요. 다시 시도해 주세요.'))
+  const pick = (id: string) => {
+    setPicked(id); setConfirm(false); setStatus(null)
+    const p = presets.find(x => x.id === id)
+    setTitle(p?.title ?? ''); setText(p?.content ?? '')
   }
-  const keep = async () => {
-    const r = await savePreset(title, text).catch(() => 'invalid' as const)
-    if (r === 'ok') { setNaming(false); setTitle(''); setStatus(t('보관함에 저장했어요.')); void refresh() }
-    else setStatus(r === 'full' ? t('보관함은 20개까지예요. 안 쓰는 노트를 지워 주세요.') : t('제목과 내용을 적어 주세요.'))
+  const save = async () => {
+    setBusy(true); setStatus(null)
+    const ok = await saveRoomNote(sessionId, text).catch(() => false)
+    let message = ok ? t('이 대화에 적용했어요.') : t('저장하지 못했어요. 다시 시도해 주세요.')
+    if (ok) setApplied(text.trim())
+    if (ok && title.trim() && text.trim()) {
+      const r = await savePreset(picked === NEW ? null : picked, title, text).catch(() => 'invalid' as const)
+      if (typeof r === 'object') { setPicked(r.id); setPresets(await listPresets().catch(() => presets)); message = t('이 대화에 적용하고 보관함에 저장했어요.') }
+      else if (r === 'full') message = t('이 대화에 적용했어요. 보관함은 20개까지라 저장하지 못했어요.')
+    }
+    setBusy(false); setStatus(message)
+  }
+  const remove = async () => {
+    if (!confirm) { setConfirm(true); return }
+    await deletePreset(picked).catch(() => undefined)
+    setPresets(presets.filter(p => p.id !== picked)); setConfirm(false); pick(NEW)
   }
 
   return (
-    <div className="stack" style={{ gap: 'var(--space-5)' }}>
-      <section className={styles.noteCard}>
-        <div className={styles.noteHead}>
-          <h2 className="t-title-3">{t('이 대화에 적용 중')}</h2>
-          <span className="t-micro" style={{ color: text.length > MAX * 0.9 ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }}>{text.length.toLocaleString()} / {MAX.toLocaleString()}</span>
-        </div>
-        <textarea className={styles.noteField} value={text} maxLength={MAX} rows={12} aria-label={t('유저노트')}
-          placeholder={t('캐릭터가 이 대화에서 꼭 지켜 줬으면 하는 설정을 적어 주세요.\n예: 나는 서른 살 디자이너, 반말로 불러 줘 / 우리는 3년째 사귀는 사이')}
-          onChange={(e) => { setText(e.target.value); setStatus(null) }} />
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('매 답변 바로 앞에 실려서, 대화가 길어져도 잊지 않아요.')}</p>
-        <div className={styles.noteActions}>
-          {text.trim() && <button type="button" className={styles.ghost} onClick={() => { setNaming(true); setStatus(null) }}>{t('보관함에 저장')}</button>}
-          <button type="button" className={styles.primary} disabled={busy || !changed} onClick={() => save()}>{t('저장')}</button>
-        </div>
-        {naming && <div className={styles.noteActions} style={{ justifyContent: 'stretch' }}>
-          <input className={styles.noteField} style={{ flex: 1 }} value={title} maxLength={40} autoFocus aria-label={t('노트 제목')} placeholder={t('노트 제목')} onChange={(e) => setTitle(e.target.value)} />
-          <button type="button" className={styles.primary} onClick={keep}>{t('저장')}</button>
-          <button type="button" className={styles.ghost} onClick={() => setNaming(false)}>{t('취소')}</button>
-        </div>}
-        {status && <p className="t-caption" role="status" style={{ color: 'var(--color-text-secondary)' }}>{status}</p>}
-      </section>
+    <div className={`create-page ${styles.noteForm}`}>
+      <LabeledField label={t('내 노트 보관함')} hint={t('저장해 둔 노트를 고르면 아래에 채워져요. 대화마다 하나만 적용돼요.')}>
+        <SelectField name="preset" value={picked} onChange={pick}
+          options={[{ value: NEW, label: t('새 노트') }, ...presets.map(p => ({ value: p.id, label: p.title }))]} />
+      </LabeledField>
 
-      <section className="stack" style={{ gap: 10 }}>
-        <div className={styles.noteHead}>
-          <h2 className="t-title-3">{t('내 노트 보관함')}</h2>
-          <span className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{presets.length} / 20</span>
+      <LabeledField label={t('제목')} hint={t('제목을 적으면 보관함에도 저장돼요.')}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: fieldPad, ...box(focus === 'title') }}>
+          <input value={title} maxLength={TITLE_MAX} aria-label={t('제목')} placeholder={t('예: 경호원 설정')} autoComplete="off"
+            onFocus={() => setFocus('title')} onBlur={() => setFocus(null)} onChange={(e) => { setTitle(e.target.value); setStatus(null) }}
+            style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont }} />
         </div>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('자주 쓰는 노트를 저장해 두고, 대화마다 하나를 골라 적용하세요.')}</p>
-        {presets.length === 0 && <p className={`t-caption ${styles.emptyBox}`}>{t('아직 저장한 노트가 없어요.')}</p>}
-        {presets.map(p => (
-          <article key={p.id} className={styles.preset}>
-            <strong className="t-body">{p.title}</strong>
-            <p className="t-caption">{p.content}</p>
-            <div className={styles.noteActions}>
-              <button type="button" className={styles.ghost} onClick={async () => { if (confirmId !== p.id) { setConfirmId(p.id); return } setConfirmId(null); await deletePreset(p.id).catch(() => undefined); void refresh() }}>
-                {confirmId === p.id ? t('정말 지우기') : t('지우기')}</button>
-              <button type="button" className={styles.primary} disabled={busy || saved.trim() === p.content.trim()} onClick={() => save(p.content)}>
-                {saved.trim() === p.content.trim() ? t('적용 중') : t('이 대화에 적용')}</button>
-            </div>
-          </article>
-        ))}
-      </section>
+      </LabeledField>
+
+      <LabeledField label={t('내용')} hint={t('매 답변 바로 앞에 실려서, 대화가 길어져도 잊지 않아요.')}>
+        <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(focus === 'text') }}>
+          <textarea value={text} maxLength={MAX} rows={12} aria-label={t('유저노트')}
+            placeholder={t('캐릭터가 이 대화에서 꼭 지켜 줬으면 하는 설정을 적어 주세요.\n예: 나는 서른 살 디자이너, 반말로 불러 줘 / 우리는 3년째 사귀는 사이')}
+            onFocus={() => setFocus('text')} onBlur={() => setFocus(null)} onChange={(e) => { setText(e.target.value); setStatus(null) }}
+            style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: text.length >= MAX ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{text.length.toLocaleString()}/{MAX.toLocaleString()}</span>
+          </div>
+        </div>
+      </LabeledField>
+
+      <div className={styles.noteActions}>
+        {picked !== NEW && <button type="button" className={styles.ghost} onClick={remove}>{confirm ? t('정말 지우기') : t('보관함에서 지우기')}</button>}
+        <button type="button" className={styles.primary} disabled={busy || !changed} onClick={save}>{t('저장')}</button>
+      </div>
+      {status && <p className="t-caption" role="status" style={{ color: 'var(--color-text-secondary)' }}>{status}</p>}
     </div>
   )
 }

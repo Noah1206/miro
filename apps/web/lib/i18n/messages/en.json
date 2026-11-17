@@ -2377,5 +2377,14 @@
   "적용 중": "Applied",
   "제목과 내용을 적어 주세요.": "Please enter a title and content.",
   "최근 대화의 흐름이에요. 5턴마다 새로 정리돼요.": "The flow of your recent chat. Refreshed every 5 turns.",
-  "캐릭터가 이 대화에서 꼭 지켜 줬으면 하는 설정을 적어 주세요.\n예: 나는 서른 살 디자이너, 반말로 불러 줘 / 우리는 3년째 사귀는 사이": "Write the settings you want the character to keep in this chat.\ne.g. I'm a 30-year-old designer, talk casually / We've been dating for 3 years"
+  "캐릭터가 이 대화에서 꼭 지켜 줬으면 하는 설정을 적어 주세요.\n예: 나는 서른 살 디자이너, 반말로 불러 줘 / 우리는 3년째 사귀는 사이": "Write the settings you want the character to keep in this chat.\ne.g. I'm a 30-year-old designer, talk casually / We've been dating for 3 years",
+  "내용": "Content",
+  "보관함에서 지우기": "Delete from my notes",
+  "새 노트": "New note",
+  "예: 경호원 설정": "e.g. Bodyguard setup",
+  "이 대화에 적용하고 보관함에 저장했어요.": "Applied to this chat and saved to your notes.",
+  "이 대화에 적용했어요. 보관함은 20개까지라 저장하지 못했어요.": "Applied to this chat. Your notes are full (20), so it wasn't saved there.",
+  "저장해 둔 노트를 고르면 아래에 채워져요. 대화마다 하나만 적용돼요.": "Pick a saved note to fill it in below. Only one applies per chat.",
+  "제목": "Title",
+  "제목을 적으면 보관함에도 저장돼요.": "Add a title to also save it to your notes."
 }

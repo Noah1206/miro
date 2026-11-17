@@ -20,7 +20,7 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
   if (!user) redirect('/login')
   const { sessionId } = await params
   const t = await getT()
-  const [room] = await db.select({ name: characters.name, images: characters.images, persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, stored: roleplaySessions.memoryReflection })
+  const [room] = await db.select({ name: characters.name, persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, stored: roleplaySessions.memoryReflection })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!room) notFound()
@@ -36,7 +36,6 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
   const summary = of('short_term_summary')[0]
   const promises = of('promise'), facts = of('user_fact', 'preference'), together = of('shared_event', 'relationship_change', 'conflict'), chapters = of('chapter'), world = of('world_fact')
   const fresh = room.stored && room.stored.key === reflectionKey(rows) ? room.stored : null
-  const photo = room.images?.[0]
 
   const List = ({ title, items }: { title: string; items: typeof rows }) => items.length ? (
     <div className={styles.group}>
@@ -49,7 +48,7 @@ export default async function MemoryPage({ params }: { params: Promise<{ session
 
   return (
     <Page style={{ maxWidth: 640 }}>
-      <NotesHeader sessionId={sessionId} name={room.name} photo={photo} active="memory" />
+      <NotesHeader sessionId={sessionId} active="memory" />
       <p className={`t-caption ${styles.meta}`}>{rel ? t(stageLabel(rel.stage, rel)) : t('낯선 사이')} · {t('함께한 대화 {n}턴', { n: room.turns })}</p>
 
       {rows.length === 0 ? <p className={`t-body ${styles.empty}`}>{t('아직 기억이 없어요. 조금 더 이야기를 나누면 하나씩 쌓여요.')}</p> : <>

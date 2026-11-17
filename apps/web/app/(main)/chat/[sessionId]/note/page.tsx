@@ -12,14 +12,14 @@ export default async function UserNotePage({ params }: { params: Promise<{ sessi
   const user = await currentUser()
   if (!user) redirect('/login')
   const { sessionId } = await params
-  const [room] = await db.select({ name: characters.name, images: characters.images, note: roleplaySessions.userNote })
+  const [room] = await db.select({ note: roleplaySessions.userNote })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!room) notFound()
   const presets = await listPresets()
   return (
     <Page style={{ maxWidth: 640 }}>
-      <NotesHeader sessionId={sessionId} name={room.name} photo={room.images?.[0]} active="note" />
+      <NotesHeader sessionId={sessionId} active="note" />
       <NoteEditor sessionId={sessionId} initial={room.note} initialPresets={presets} />
     </Page>
   )

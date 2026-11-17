@@ -25,15 +25,20 @@ export async function saveRoomNote(sessionId: string, content: string): Promise<
   return rows.length > 0
 }
 
-/** 보관함에 새 노트로 저장 — 회원당 20개까지. */
-export async function savePreset(title: string, content: string): Promise<'ok' | 'invalid' | 'full'> {
+/** 보관함에 저장 — id 가 있으면 그 노트를 고치고, 없으면 새로(회원당 20개까지). 저장된 노트 id 를 돌려준다. */
+export async function savePreset(id: string | null, title: string, content: string): Promise<{ id: string } | 'invalid' | 'full'> {
   const user = await currentUser()
   const t = title.trim().slice(0, TITLE_MAX), c = content.trim()
   if (!user || !t || !c || c.length > NOTE_MAX) return 'invalid'
+  if (id) {
+    const rows = await db.update(userNotePresets).set({ title: t, content: c, updatedAt: new Date() })
+      .where(and(eq(userNotePresets.id, id), eq(userNotePresets.userId, user.id))).returning({ id: userNotePresets.id })
+    if (rows[0]) return rows[0]
+  }
   const [count] = await db.select({ n: sql<number>`count(*)::int` }).from(userNotePresets).where(eq(userNotePresets.userId, user.id))
   if ((count?.n ?? 0) >= PRESET_LIMIT) return 'full'
-  await db.insert(userNotePresets).values({ userId: user.id, title: t, content: c })
-  return 'ok'
+  const [row] = await db.insert(userNotePresets).values({ userId: user.id, title: t, content: c }).returning({ id: userNotePresets.id })
+  return row!
 }
 
 export async function deletePreset(id: string): Promise<void> {
