@@ -8,9 +8,12 @@ export function chatViewportState(viewport: { height: number; width: number; sca
 export function bindChatViewport(element: HTMLElement) {
   const viewport = window.visualViewport
   if (!viewport) return () => {}
+  // 11/17 사용자(모바일): 키보드를 닫았는데 입력창 아래가 크게 빈다 — 기준이 '지금까지 잰 가장 큰 높이'라, 위·아래 툴바가 접혔다 펴지는
+  // 브라우저에선 툴바가 다시 나온 것만으로 120px 넘게 줄어 키보드로 보였다. 기준은 '입력 중이 아닐 때 잰 지금 높이'(키보드 열기 직전)로.
   let baselineHeight = Math.max(window.innerHeight, viewport.height * viewport.scale)
   let layoutWidth = window.innerWidth
   let keyboard = false
+  let blurAt = 0
   let frame = 0
   let roomTop = 0
   let headerHidden = false
@@ -25,12 +28,14 @@ export function bindChatViewport(element: HTMLElement) {
     // Layout and visual viewport rotation events can arrive in different frames.
     // Do not carry the old portrait height into the new landscape baseline.
     if (Math.abs(viewport.width * viewport.scale - layoutWidth) > 24) return
-    baselineHeight = Math.max(baselineHeight, window.innerHeight, viewport.height * viewport.scale)
     const active = document.activeElement
     const focused = (active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)
       && !!active.closest('[data-chat-composer]') && element.contains(active)
-    // Blur can precede the keyboard's closing animation. Keep the compact layout until it actually closes.
-    const state = chatViewportState(viewport, baselineHeight, focused, keyboard)
+    if (!focused && !keyboard) baselineHeight = Math.max(window.innerHeight, viewport.height * viewport.scale)
+    // Blur can precede the keyboard's closing animation. Keep the compact layout until it actually closes —
+    // 다만 포커스가 빠지고 1.2초가 지나면 키보드는 닫힌 것이다(입력칸 없이 키보드가 떠 있을 수 없다).
+    const holding = keyboard && Date.now() - blurAt < 1200
+    const state = chatViewportState(viewport, baselineHeight, focused, holding)
     if (!keyboard && state.keyboard) roomTop = element.getBoundingClientRect().top + window.scrollY
     const closed = keyboard && !state.keyboard
     keyboard = state.keyboard
@@ -65,7 +70,7 @@ export function bindChatViewport(element: HTMLElement) {
   // 11/11 사용자: 입력창 아래가 빈다 — iOS(특히 홈 화면 앱)는 키보드가 닫힌 뒤 화면 크기 이벤트를 안 줄 때가 있어 방이 키보드 열린 높이에 멈췄다.
   // 포커스가 빠지면 닫히는 애니메이션이 끝날 때쯤 몇 번 더 잰다.
   const timers: number[] = []
-  const settle = () => { schedule(); timers.push(window.setTimeout(schedule, 350), window.setTimeout(schedule, 800), window.setTimeout(schedule, 1500)) }
+  const settle = () => { blurAt = Date.now(); schedule(); timers.push(window.setTimeout(schedule, 350), window.setTimeout(schedule, 800), window.setTimeout(schedule, 1500)) }
   update()
   viewport.addEventListener('resize', schedule)
   viewport.addEventListener('scroll', schedule)
