@@ -25,9 +25,11 @@ import { faqList } from '@/lib/faq'
 import styles from './my.module.css'
 
 /** Account overview: identity, real wallet balance, activity, settings and support. */
-export default async function MyPage({ searchParams }: { searchParams: Promise<{ verify?: string; r?: string }> }) {
+export default async function MyPage({ searchParams }: { searchParams: Promise<{ verify?: string; r?: string; coupon?: string }> }) {
   const user = await currentUser()
-  if (!user) redirect('/login')
+  // 11/18 이벤트 페이지의 '미로에서 쓰러 가기'(/my?coupon=…) — 로그인 뒤 쿠폰 칸이 채워진 채로 돌아오게.
+  const coupon = (await searchParams).coupon?.trim().slice(0, 40) || null
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/my${coupon ? `?coupon=${encodeURIComponent(coupon)}` : ''}`)}`)
   const [t, language] = await Promise.all([getT(), getLanguage()])
   const { verify, r } = await searchParams
 
@@ -70,7 +72,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
 
       <CreditCard initial={wallet} />
       <AttendanceCard initial={attendance} />
-      <CouponCard referral={referral} />
+      <CouponCard referral={referral} initialCode={coupon} />
 
       <div className={styles.sections}>
         <MenuSection title={t('내 활동')}>

@@ -31,7 +31,7 @@ import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { resolveChatCommand } from './chat-command'
 import { endingTitle } from '@/lib/novel-ending'
 import { recordEnding } from '@/lib/novel'
-import { rewardReferrer } from '@/lib/referral'
+import { maybeRewardReferrer } from '@/lib/referral'
 
 export type ConversationOutcome =
   | {
@@ -321,7 +321,7 @@ async function executeTurn(opts: {
     }
 
     // 11/18 추천인 보상 — 친구(이 사용자)가 대화 3턴에 닿으면 추천인에게 한 번(추천받지 않았으면 아무 일 없음).
-    if (turnIndex === REFERRAL_GRANT.afterTurns) void afterResponse(() => rewardReferrer(userId))
+    if (turnIndex >= REFERRAL_GRANT.afterTurns) void afterResponse(() => maybeRewardReferrer(userId))
     // 11/18 기억 노트 '떠올린 기억' — 지시문에 실린 기억 중 이번 입력과 실제로 맞은 것(최근 30턴, 새것이 앞).
     const recalled = recalledFor(loaded.snapshot.memories.filter(m => m.type !== 'short_term_summary'), sessionId, POLICY.context.relevantMemoryCount, input).map(m => m.id)
     if (recalled.length) void afterResponse(async () => {

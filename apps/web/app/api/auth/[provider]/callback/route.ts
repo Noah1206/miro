@@ -9,6 +9,7 @@ import { signInWithProfile } from '@/lib/auth'
 import { isProvider, takeNext, takeOAuthState } from '@/lib/oauth-state'
 import { track } from '@/lib/analytics/track'
 import { JUST_SIGNED_IN_COOKIE } from '@/lib/onboarding-options'
+import { applyReferral, normalizeReferralCode, REF_COOKIE } from '@/lib/referral'
 import { observe } from '@/lib/observe'
 
 /** n7 — 제공자에서 돌아옴. state 검증 → 코드 교환 → 세션 → 약관 또는 홈. */
@@ -31,6 +32,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   const r = await signInWithProfile(profile)
   if (!r.ok) return to('/login?error=deleted')
   if (r.isNew) void track(r.userId, 'signup', { provider })
+  // 11/18 친구 초대 링크(/r/<코드>)로 들어왔으면 로그인·가입하자마자 추천 적용(가입 7일 안의 계정만, 자기 코드·두 번은 applyReferral 이 막는다).
+  {
+    const jar = await cookies(), ref = jar.get(REF_COOKIE)?.value
+    if (ref) { jar.delete(REF_COOKIE); await applyReferral(r.userId, normalizeReferralCode(ref)).catch(e => observe('referral.apply_failed', { error: (e as Error).message.slice(0, 80) })) }
+  }
 
   // 계정에 고른 언어가 있으면 이 기기의 화면도 그 언어로 맞춘다(새 기기·쿠키를 지운 브라우저).
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, r.userId)).limit(1)

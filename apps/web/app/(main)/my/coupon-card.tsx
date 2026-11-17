@@ -13,11 +13,11 @@ import styles from './my.module.css'
  * 11/18 쿠폰·추천인 코드 — 출석 체크 바로 밑, 열지 않아도 보이는 입력 칸(이벤트 쿠폰이나 친구의 추천인 코드).
  * 아래에는 내 추천인 코드와 복사 버튼. 받으면 지갑 잔액을 다시 읽는다.
  */
-export function CouponCard({ referral }: { referral: MyReferral }) {
+export function CouponCard({ referral, initialCode = null }: { referral: MyReferral; initialCode?: string | null }) {
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const { refreshBalance } = useWallet()
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(initialCode ?? '')
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
   const [pending, start] = useTransition()
@@ -44,12 +44,24 @@ export function CouponCard({ referral }: { referral: MyReferral }) {
   const copy = async () => {
     try { await navigator.clipboard.writeText(referral.code); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* 복사를 막은 브라우저 — 코드는 화면에 그대로 보인다 */ }
   }
+  // 11/18 내 초대 링크 공유(/r/<내 코드>) — 친구가 이 링크로 가입하면 추천이 자동으로 적용된다. 공유 창이 없으면 링크를 복사.
+  const share = async () => {
+    const url = `${location.origin}/r/${referral.code}`
+    try {
+      if (navigator.share) { await navigator.share({ title: t('미로 — 음성 캐릭터챗'), text: t('캐릭터 대사를 목소리로 듣는 미로! 이 링크로 들어오면 무료 토큰을 받아요.'), url }); return }
+    } catch { return /* 공유 창을 닫음 */ }
+    try { await navigator.clipboard.writeText(url); setNotice({ ok: true, text: t('초대 링크를 복사했어요') }) } catch { setNotice({ ok: true, text: url }) }
+  }
   return (
-    <section className={styles.credit} aria-label={t('쿠폰·추천인 코드')} style={{ marginTop: 12 }}>
+    <section id="coupon" className={styles.credit} aria-label={t('쿠폰·추천인 코드')} style={{ marginTop: 12, scrollMarginTop: 80 }}>
       <div className={styles.creditHeader}><h2>{t('쿠폰·추천인 코드')}</h2></div>
       <form onSubmit={submit} style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
         <input value={code} onChange={e => setCode(e.target.value)} aria-label={t('쿠폰 코드')} placeholder={t('쿠폰 또는 추천인 코드 입력')} maxLength={40} autoCapitalize="characters" autoComplete="off" spellCheck={false}
           style={{ flex: 1, minWidth: 0, height: 40, padding: '0 12px', borderRadius: 8, border: 0, outline: 'none', background: 'var(--profile-control)', color: 'inherit', fontSize: 15, letterSpacing: '.04em' }} />
+        <button type="button" onClick={() => void share()} aria-label={t('내 초대 링크 공유')} title={t('내 초대 링크 공유')}
+          style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 8, border: 0, background: 'var(--profile-control)', color: 'inherit', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
+          <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
+        </button>
         <Button type="submit" variant="primary" size="sm" className={styles.chargeButton} status={pending ? 'loading' : 'idle'} disabled={!code.trim()}
           style={{ borderRadius: 8, fontSize: 15, background: '#fff', color: '#111015', borderColor: '#fff', flexShrink: 0 }}>{t('받기')}</Button>
       </form>

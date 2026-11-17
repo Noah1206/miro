@@ -10,6 +10,7 @@ import { definitionOf, runFor, type Protagonist } from './repo'
 import { DM_VERSION, INTERPRET_VERSION, NARRATE_VERSION, dmPrompt, interpretPrompt, narratePrompt, type LogLine } from './prompts'
 import { storyMock } from './mock'
 import { syncContacts } from './contacts'
+import { maybeRewardReferrer } from '@/lib/referral'
 import { storyUnveilAllowed } from '@/lib/home-mode'
 
 const ACTION_TYPES = ['option', 'trust', 'affinity', 'contact', 'boundary', 'relation_outcome', 'exclusive', 'memory', 'promise', 'refuse_premise', 'accept_premise', 'time_skip'] as const
@@ -116,8 +117,11 @@ export async function runStoryTurn(input: { userId: string; runId: string; clien
 
     // 11/12 개발 정보가 새면 저장하지 않고 실패로(다시 보내면 새로 받는다).
     if (looksLikeBackstageLeak(reply.content)) throw new Error('BACKSTAGE_LEAK')
-    return await commitTurn({ def, runId: run.id, turnId, userMessageId, input: { ...input, text, thread }, state: result.state, applied: result.applied,
+    const outcome = await commitTurn({ def, runId: run.id, turnId, userMessageId, input: { ...input, text, thread }, state: result.state, applied: result.applied,
       rejected: result.rejected, clarify: interpreted.clarify, reply, now: now() })
+    // 11/18 추천 친구가 오리지널 스토리로 3턴을 해도 추천인 보상(실패해도 턴은 끝난 것).
+    if (outcome.status === 'done') void maybeRewardReferrer(input.userId).catch(() => {})
+    return outcome
   } catch (e) {
     const error = e instanceof Error ? e.message.slice(0, 200) : 'unknown'
     await db.update(storyTurns).set({ status: 'failed', error, finishedAt: new Date() }).where(eq(storyTurns.id, turnId))
