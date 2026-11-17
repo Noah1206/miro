@@ -38,7 +38,7 @@ const Choice = z.object({ pick: z.number().int().min(0).max(SITUATION_LIMITS.ent
  * AI 가 고르기 — 만든 사람이 적은 상황 목록과 이번 턴(사용자 말 + 캐릭터 답)을 보고, 지금 장면이 그 상황이 된 사진 하나(없으면 0).
  * 싼 분류 모델(semantic_event 배치)로 짧게 한 번. 실패·시간 초과면 키워드로 고른다 — 사진 때문에 답을 망치지 않는다.
  */
-export async function chooseSituationImage(llm: LLMProvider, entries: SituationImage[], turn: { userInput: string; responseText: string }, shown: ReadonlySet<string>): Promise<string | null> {
+export async function chooseSituationImage(llm: LLMProvider, entries: SituationImage[], turn: { userInput: string; responseText: string; scene?: string }, shown: ReadonlySet<string>): Promise<string | null> {
   const candidates = entries.filter(e => !shown.has(e.image))
   if (!candidates.length) return null
   const text = `${turn.userInput}\n${turn.responseText}`
@@ -47,11 +47,12 @@ export async function chooseSituationImage(llm: LLMProvider, entries: SituationI
   try {
     const { pick } = await Promise.race([
       llm.generateStructured({
-        schema: Choice, task: 'semantic_event', promptVersion: 'situation-photo:v1', temperature: 0, maxTokens: 64, maxRetries: 1,
+        schema: Choice, task: 'semantic_event', promptVersion: 'situation-photo:v2', temperature: 0, maxTokens: 64, maxRetries: 1,
         responseSchema: { type: 'object', properties: { pick: { type: 'integer', minimum: 0 } }, required: ['pick'] },
-        system: '캐릭터 채팅에서 지금 장면에 띄울 사진을 고른다. 만든 사람이 적어 둔 상황 목록 중, 이번 대화에서 그 상황이 실제로 벌어지고 있거나 막 벌어진 것 하나의 번호를 고른다. '
-          + '말로만 언급하거나 가정·과거·나중 이야기면 고르지 않는다. 확실하지 않거나 맞는 게 없으면 0. 반드시 {"pick": 번호} JSON 하나로만 답한다.',
-        prompt: `## 상황 목록\n${list}\n\n## 이번 대화\n사용자: ${turn.userInput.slice(0, 600)}\n캐릭터: ${turn.responseText.slice(0, 1500)}`,
+        // 11/17 실측: 드라마 속 운전 얘기에 '운전' 사진을 띄워, 정작 차에 탄 턴엔 이미 쓴 사진이라 안 떴다 — 지금 두 사람이 있는 장소·하는 행동만 보게.
+        system: '캐릭터 채팅에서 지금 장면에 띄울 사진을 고른다. 만든 사람이 적어 둔 상황 목록 중, 이번 대화에서 두 사람이 지금 있는 장소에서 지금 하고 있는(또는 방금 한) 행동이 그 상황인 것 하나의 번호를 고른다. '
+          + '드라마·영화·꿈·소문·남의 이야기, 말로만 언급, 가정·과거·나중 이야기, 비유는 고르지 않는다. 지금 장면과 장소가 맞지 않으면 고르지 않는다. 확실하지 않거나 맞는 게 없으면 0. 반드시 {"pick": 번호} JSON 하나로만 답한다.',
+        prompt: `## 상황 목록\n${list}\n\n${turn.scene ? `## 지금 장면\n${turn.scene}\n\n` : ''}## 이번 대화\n사용자: ${turn.userInput.slice(0, 600)}\n캐릭터: ${turn.responseText.slice(0, 1500)}`,
       }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('situation photo timeout')), 6000)),
     ])

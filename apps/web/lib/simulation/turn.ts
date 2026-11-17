@@ -281,7 +281,7 @@ async function executeTurn(opts: {
     const situationImages = (charSettings?.situationImages ?? []).filter(e => loaded.adult.turn || !e.adult)
     const situationImage = situationImages.length === 0 ? null : await chooseSituationImage(
       auxiliaryLLM(loaded.characterName, { ...context, turnMeter: undefined, usageUnits: 0 }), situationImages,
-      { userInput: input ?? '', responseText },
+      { userInput: input ?? '', responseText, scene: sceneAfter },
       new Set((await db.select({ content: messages.content }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'photo')))).map(m => m.content)))
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,

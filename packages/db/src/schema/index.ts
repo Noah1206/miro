@@ -444,6 +444,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   statValues: jsonb('stat_values').$type<Record<string, number>>().notNull().default({}),
   /** 11/10 유저노트 — 캐릭터가 반드시 기억하길 바라는 사용자의 글(최대 1000자). 매 턴 프롬프트 끝(최근 대화 뒤)에 실린다. */
   userNote: text('user_note').notNull().default(''),
+  /** 11/17 기억 페이지의 '나에 대한 생각' — 캐릭터가 기억을 보고 쓴 글. key 가 지금 기억과 같으면 다시 쓰지 않는다. */
+  memoryReflection: jsonb('memory_reflection').$type<{ key: string; oneLine: string; thought: string; wonder: string[]; at: string }>(),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

@@ -98,7 +98,10 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {!available && soon && <button type="button" disabled className={styles.voiceRow}><span>{t('음성 모드')}</span><em>{t('곧 열림')}</em></button>}
         {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}
         {available && on && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
-        <div className={styles.grid}>{tiles.map(id => <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
+        {/* 11/17 대화 기억은 서랍 안 패널 대신 따로 된 페이지로 — 기억과 캐릭터가 생각하는 나를 크게 본다. */}
+        <div className={styles.grid}>{tiles.map(id => id === 'memory' ? <TransitionLink key={id} href={`/chat/${sessionId}/memory`} className={styles.tile} onClick={close}>
+          <MenuIcon name={id}/><span>{titles[id]}</span>
+        </TransitionLink> : <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
         </button>)}
           {/* 11/10 출력량 설정 — 서랍 대신 팝업(크랙·베이비챗 참고). 모델 선택과 같은 저장소를 쓴다. */}
