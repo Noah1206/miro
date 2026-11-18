@@ -719,3 +719,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .inputRow, :global([data-chat-theme]) .inputRow { padding-top: 0; }
 .inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height: 72px; }
 @media (max-width: 767px) { .inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height: 52px; } }
+/* 11/19 사용자: 채팅방 헤더 높이를 거의 반(62 → 34px, 상단 안전 영역 별도)으로, 아래로 갈수록 투명하게.
+   투명한 아래쪽으로 대화가 비치도록 헤더를 대화 위에 겹친다(음수 아래 여백 = 헤더 높이, 대화 위 여백이 그만큼 늘어난다). */
+:global([data-chat-theme]) .header.header { box-sizing: border-box; height: calc(34px + env(safe-area-inset-top, 0px)); min-height: 0; padding: env(safe-area-inset-top, 0px) 12px 0; margin-bottom: calc(-34px - env(safe-area-inset-top, 0px)); border-bottom: 0; background: linear-gradient(180deg, #1e1e1e 0%, #1e1e1e 45%, #1e1e1e00 100%); transition: height .28s cubic-bezier(.2,.8,.2,1), margin .28s cubic-bezier(.2,.8,.2,1), padding .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease, transform .28s cubic-bezier(.2,.8,.2,1); }
+:global([data-header-hidden='true']) .header.header.header { height: 0; margin-bottom: 0; padding-top: 0; }
+.header > a:first-child { min-height: 32px; }
+.header > a:first-child::after { inset: -6px; }
+.header > :global(button), .contextButton, .storyDateButton { height: 32px; }
+.transcript, :global([data-chat-theme]) .transcript { padding-top: calc(34px + env(safe-area-inset-top, 0px) + 16px); }
+@media (prefers-reduced-motion: reduce) { :global([data-chat-theme]) .header.header { transition: none; } }
