@@ -96,7 +96,7 @@ export async function precompileAgencyRevisions(limit = 2): Promise<number> {
   const { compileAgencyRevision } = await import('./runtime')
   let compiled = 0
   for (const revision of pending) {
-    const llm = resolveRpLLM('캐릭터 설정', { userId: revision.ownerId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0 })
+    const llm = resolveRpLLM('캐릭터 설정', { userId: revision.ownerId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0 }, true)
     if (await compileAgencyRevision(revision.id, llm)) compiled++
   }
   return compiled
@@ -113,7 +113,7 @@ export async function scheduleAgencyCompilation(revisionId: string | null | unde
       const llm = resolveRpLLM('캐릭터 설정', {
         userId, requestId: randomUUID(), workload: 'background', usageUnits: 0,
         shadow: characterAgencyMode() === 'shadow',
-      })
+      }, true) // 11/18 수위 높은 설정이 Gemini 안전 필터에 막혀 3회 한도를 다 쓰고 영영 정리되지 않았다(스키장에서 생긴 일 등)
       await compileAgencyRevision(revisionId, llm)
     } catch {
       observe('agency.compilation_schedule_failed', { revisionId })
