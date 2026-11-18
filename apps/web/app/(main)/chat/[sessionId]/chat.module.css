@@ -705,3 +705,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .flow .inlinePhotos { gap: 14px; }
 .flow .photo { width: 100%; max-width: 100%; margin: 0; border-radius: 8px; }
 :global([data-chat-theme='miro']) .turnPhotoRow { padding-left: 0; }
+/* 11/19 사용자(스크린샷): 한 턴 덩어리에 옅은 회색 바탕 카드, 글씨 크기는 서술·대사·속마음·내 말 모두 14px/21px 로 통일, 문단 사이 8px. */
+.flow { padding: 14px 12px 16px; border-radius: 16px; background: #262728; gap: 12px; }
+.flowText, .flowText .flowLine, .flowText .thought { font-size: 14px; line-height: 21px; letter-spacing: -.2px; }
+.flowText p + p { margin-top: 8px; }
+:global([data-chat-theme='miro']) .userBubble { font-size: 14px; line-height: 21px; }
