@@ -277,6 +277,8 @@ function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, on
   const t = useT()
   const { theme } = useChatTheme()
   const voice = useImmersive()
+  // 11/19 사용자: 기본 테마는 한 턴을 한 덩어리 글로 — 말풍선·사진·이름 없이 서술 문단과 굵은 대사가 위에서 아래로 이어지고, 사진은 그 사이에 꽉 차게.
+  const flow = theme === 'miro'
   const segments = segmentReply(m.blocks, m.content, name, cast)
   // 11/6: 음성 모드(무료)에선 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다. 길게 누르기(신고)와 겹치지 않게 짧은 누름만.
   const replayable = voice.on && voice.free && !typing && /^[0-9a-f-]{36}$/i.test(m.id)
@@ -324,8 +326,6 @@ function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, on
   const segmentEls = shown.map((seg, i) => <Fragment key={i}>{segment(seg, i)}{photosAfter(seg)}</Fragment>)
   const rest = inline.filter(x => !placed.has(x))
 
-  // 11/19 사용자: 기본 테마는 한 턴을 한 덩어리 글로 — 말풍선·사진·이름 없이 서술 문단과 굵은 대사가 위에서 아래로 이어지고, 사진은 그 사이에 꽉 차게.
-  const flow = theme === 'miro'
   return <div className={flow ? `${styles.reply} ${styles.flow}` : styles.reply}>
     {segmentEls}
     {rest.length > 0 && renderPhoto && <div className={styles.inlinePhotos} hidden={typing && typed < count} data-inline-photos>{rest.map(x => renderPhoto(x.photo))}</div>}
