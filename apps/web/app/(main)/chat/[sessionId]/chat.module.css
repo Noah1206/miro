@@ -693,3 +693,15 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .composer, :global([data-chat-theme]) .composer { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; background: transparent; pointer-events: none; }
 .composer > *, :global([data-chat-theme]) .composer > * { pointer-events: auto; }
 .transcript, :global([data-chat-theme]) .transcript { padding-bottom: calc(var(--composer-h, 140px) + 12px); }
+
+/* 11/19 사용자: 기본 테마(miro)는 한 턴 = 한 덩어리 글 — 서술은 옅은 회색 보통 글씨(왼쪽 정렬), 대사는 굵은 흰 글씨('이름 | "…"'), 사진은 글 사이에 폭을 꽉 채워. 말풍선·사진·이름 줄 없음. */
+.flow { gap: 14px; }
+.flowText { color: #cfcfcf; font-size: 15px; line-height: 1.75; letter-spacing: -.2px; font-weight: 400; overflow-wrap: anywhere; word-break: keep-all; }
+.flowText p { margin: 0; white-space: pre-wrap; }
+.flowText p + p { margin-top: 12px; }
+.flowText em { font-style: normal; }
+.flowText .flowLine { color: #fff; font-weight: 700; }
+.flowText .thought { color: #a5a5a5; }
+.flow .inlinePhotos { gap: 14px; }
+.flow .photo { width: 100%; max-width: 100%; margin: 0; border-radius: 8px; }
+:global([data-chat-theme='miro']) .turnPhotoRow { padding-left: 0; }

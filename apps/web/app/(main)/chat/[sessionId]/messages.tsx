@@ -14,7 +14,6 @@ import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { ENDING_VIEW, REROLL, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
-import { CharacterPhoto } from '@/components/character-visual'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
 import { useImmersive } from './immersive'
@@ -270,7 +269,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
   return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} castPhotos={castPhotos} inline={inline} renderPhoto={renderPhoto} /></Reportable>
 }
 
-function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast, castPhotos = {}, inline = [], renderPhoto }: {
+function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, onDone, cast, inline = [], renderPhoto }: {
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]; castPhotos?: Record<string, string>
   inline?: InlinePhoto[]; renderPhoto?: (photo: Msg) => React.ReactNode
 }) {
@@ -282,12 +281,12 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   // 11/6: 음성 모드(무료)에선 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다. 길게 누르기(신고)와 겹치지 않게 짧은 누름만.
   const replayable = voice.on && voice.free && !typing && /^[0-9a-f-]{36}$/i.test(m.id)
   const pressedAt = useRef(0)
-  const replayProps = (texts: string[]) => replayable ? {
-    className: `${styles.bubble} ${styles.replayable}`, role: 'button', tabIndex: 0, 'aria-label': t('이 대사 다시 듣기'),
+  const replayProps = (texts: string[], base = styles.bubble) => replayable ? {
+    className: `${base} ${styles.replayable}`, role: 'button', tabIndex: 0, 'aria-label': t('이 대사 다시 듣기'),
     onPointerDown: () => { pressedAt.current = Date.now() },
     onClick: () => { if (Date.now() - pressedAt.current < 450) voice.replay(m, texts) },
     onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); voice.replay(m, texts) } },
-  } : { className: styles.bubble }
+  } : { className: base }
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
@@ -323,13 +322,32 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const segmentEls = shown.map((seg, i) => <Fragment key={i}>{segment(seg, i)}{photosAfter(seg)}</Fragment>)
   const rest = inline.filter(x => !placed.has(x))
 
-  return <div className={styles.reply}>
+  // 11/19 사용자: 기본 테마는 한 턴을 한 덩어리 글로 — 말풍선·사진·이름 없이 서술 문단과 굵은 대사가 위에서 아래로 이어지고, 사진은 그 사이에 꽉 차게.
+  const flow = theme === 'miro'
+  return <div className={flow ? `${styles.reply} ${styles.flow}` : styles.reply}>
     {segmentEls}
     {rest.length > 0 && renderPhoto && <div className={styles.inlinePhotos} hidden={typing && typed < count} data-inline-photos>{rest.map(x => renderPhoto(x.photo))}</div>}
   </div>
 
   function segment(seg: (typeof shown)[number], i: number) {
       const hidden = typing && seg.paragraphs[0]!.index > typed
+      if (flow) {
+        // 대사 덩어리의 첫 대사 앞에 '이름 |' — 말풍선이 없으니 누가 말하는지 여기서 보인다.
+        const lead = seg.kind === 'bubble' && seg.speaker === name && cast?.length ? cast[0]! : null
+        const who = seg.kind === 'bubble' ? lead ?? seg.speaker : null
+        const firstLine = seg.paragraphs.find(p => p.kind === 'dialogue')
+        const lines = seg.paragraphs.map((p) => (
+          <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'dialogue' ? styles.flowLine : undefined}
+            hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
+            {p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}
+            {who && p === firstLine && <>{who} | </>}
+            {line(p.kind === 'dialogue' ? quoted(p) : p)}
+          </p>
+        ))
+        return seg.kind === 'bubble'
+          ? <div key={i} hidden={hidden} {...replayProps(seg.paragraphs.filter(p => p.kind === 'dialogue').map(p => p.text), styles.flowText)}>{lines}</div>
+          : <div key={i} className={styles.flowText} hidden={hidden} data-narration>{lines}</div>
+      }
       if (seg.kind === 'narration') return (
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
           <div className={styles.narrationText}>
@@ -340,17 +358,10 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
       // 11/17 사용자: 여러 인물 카드에서 화자를 모르는 줄(카드 이름으로 온 줄)도 프로필 사진이 보이게 — 첫 장면을 이끄는 첫 인물(cast[0])로 보인다.
       const lead = seg.speaker === name && cast?.length ? cast[0]! : null
       const speaker = lead ?? seg.speaker
-      const own = speaker === name
       return (
         <div key={i} className={styles.characterRow} hidden={hidden}>
-          {(() => {
-            // 11/6: 여러 인물 — 이름이 같거나 줄임("연화" ↔ "백리연화")이면 그 인물 사진.
-            const photoOf = own ? portrait : castPhotos[speaker] ?? Object.entries(castPhotos).find(([n]) => n.endsWith(speaker) || speaker.endsWith(n))?.[1] ?? (lead ? portrait : undefined)
-            const face = theme !== 'miro' ? <DefaultChatAvatar /> : photoOf
-              ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="28px" width={28} height={28} />
-              : speaker.slice(0, 1)
-            return <span className={styles.avatar} aria-hidden>{face}</span>
-          })()}
+          {/* 말풍선은 메신저 테마(dm·talk)에만 남았다 — 기본 아바타. 기본 테마는 위 flow 로 그린다. */}
+          <span className={styles.avatar} aria-hidden><DefaultChatAvatar /></span>
           <div className={styles.characterContent}>
             <p className={styles.speaker}>{speaker}</p>
             <div className={styles.timedBubble}><div {...replayProps(seg.paragraphs.filter(p => p.kind === 'dialogue').map(p => p.text))}>
