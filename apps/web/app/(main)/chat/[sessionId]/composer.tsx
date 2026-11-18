@@ -257,8 +257,18 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }, [refreshing, state.succeeded])
   useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, Math.min(window.innerHeight * 0.4, 320))}px` } }, [draft])
 
+  // 11/19: 입력창이 대화 위에 떠 있으니, 대화 끝이 가려지지 않게 입력창 높이를 --composer-h 로 알린다.
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = box.current, host = el?.parentElement
+    if (!el || !host) return
+    const ro = new ResizeObserver(() => host.style.setProperty('--composer-h', `${el.offsetHeight}px`))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <div className={styles.composer} data-chat-composer>
+    <div ref={box} className={styles.composer} data-chat-composer>
       <AnimatePresence initial={false}>
         {showTyping && (
           <motion.p key="thinking" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 10, display: 'flex', alignItems: 'center' }}>

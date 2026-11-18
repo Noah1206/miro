@@ -684,3 +684,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .bubble .thought { color:#8a8a8a; }
 .avatarBlank, :global([data-chat-theme='miro']) .avatarBlank { background:transparent; }
 :global([data-chat-theme='miro']) .typingBubble { margin-left:44px; }
+
+/* 11/19 사용자: 입력 카드만 보이게(모바일·데스크톱) — 바깥 띠(위아래·양옆 여백의 배경)는 투명, 입력창은 대화 위에 떠 있고 대화가 그 뒤·아래로 비친다.
+   대화 끝은 --composer-h(입력창 높이, composer.tsx 가 잰다)만큼 띄워 가려지지 않는다. */
+.main { position: relative; }
+.composer, :global([data-chat-theme]) .composer { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; background: transparent; pointer-events: none; }
+.composer > *, :global([data-chat-theme]) .composer > * { pointer-events: auto; }
+.transcript, :global([data-chat-theme]) .transcript { padding-bottom: calc(var(--composer-h, 140px) + 12px); }
