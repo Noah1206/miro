@@ -21,13 +21,13 @@ export const runtime = 'nodejs'
 export const maxDuration = 600
 
 /**
- * 11/17 사용자: 음성 서버를 마지막 요청 뒤 25분 켜 둔다. 합성 서버(Modal)의 대기 상한이 20분이라, 마지막 요청 5분 뒤에 한 번 더 깨워 합쳐서 25분.
+ * 11/19 사용자: 음성 서버를 마지막 요청 뒤 30분 켜 둔다(11/17 25분에서). 합성 서버(Modal)의 대기 상한이 20분이라, 마지막 요청 10분 뒤에 한 번 더 깨워 합쳐서 30분.
  * ponytail: 이 웹 서버 프로세스의 타이머 하나 — 그 사이 웹 서버가 다시 뜨면 그 방은 20분에 꺼진다.
  */
 let voiceHold: ReturnType<typeof setTimeout> | undefined
 function holdVoiceServer() {
   clearTimeout(voiceHold)
-  voiceHold = setTimeout(() => { void resolveTts()?.warm?.(AbortSignal.timeout(60_000))?.catch(() => {}) }, 5 * 60_000)
+  voiceHold = setTimeout(() => { void resolveTts()?.warm?.(AbortSignal.timeout(60_000))?.catch(() => {}) }, 10 * 60_000)
   voiceHold.unref?.()
 }
 
