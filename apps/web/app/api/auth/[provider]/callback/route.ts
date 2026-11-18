@@ -31,7 +31,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
 
   const r = await signInWithProfile(profile)
   if (!r.ok) return to('/login?error=deleted')
-  if (r.isNew) void track(r.userId, 'signup', { provider })
+  void track(r.userId, r.isNew ? 'signup' : 'login', { provider })
   // 11/18 친구 초대 링크(/r/<코드>)로 들어왔으면 로그인·가입하자마자 추천 적용(가입 7일 안의 계정만, 자기 코드·두 번은 applyReferral 이 막는다).
   {
     const jar = await cookies(), ref = jar.get(REF_COOKIE)?.value

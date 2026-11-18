@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 /**
  * 11/13 '지금 접속 중' 신호 — 화면을 보고 있는 동안 45초마다, 화면을 옮길 때마다 한 번. 아무것도 그리지 않는다.
  * 처음 들어온 주소의 utm_source 와 어디서 왔는지(referrer 의 호스트)를 같이 보낸다 — 홈을 거치지 않고 작품으로 바로 온 사람도 잡힌다.
+ * path 는 usePathname 이라 쿼리가 없다(쿠폰 코드 등은 보내지 않는다).
  */
 export function PresenceBeacon() {
   const path = usePathname()
@@ -16,10 +17,13 @@ export function PresenceBeacon() {
       if (document.visibilityState !== 'visible') return
       void fetch('/api/presence', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ path, src, ref }) }).catch(() => {})
     }
+    // 11/18 탭을 닫거나 다른 사이트로 나감 — 관리자 현황에서 바로 오프라인으로.
+    const leave = () => { navigator.sendBeacon?.('/api/presence', new Blob([JSON.stringify({ leave: true })], { type: 'application/json' })) }
     send()
     const timer = setInterval(send, 45_000)
     document.addEventListener('visibilitychange', send)
-    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', send) }
+    window.addEventListener('pagehide', leave)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', send); window.removeEventListener('pagehide', leave) }
   }, [path])
   return null
 }

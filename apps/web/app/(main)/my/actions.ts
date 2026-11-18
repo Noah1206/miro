@@ -2,7 +2,8 @@
 import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db, users } from '@miro/db'
-import { destroySession, requireUser } from '@/lib/auth'
+import { currentUser, destroySession, requireUser } from '@/lib/auth'
+import { track } from '@/lib/analytics/track'
 import { getPersona, parsePersona, savePersona } from '@/lib/persona'
 import { uploadCharacterImage } from '@/lib/storage/images'
 import { accountProfile, type AccountProfile } from '@/lib/account-profile'
@@ -45,6 +46,8 @@ export async function saveProfile(_: ProfileResult, form: FormData): Promise<Pro
 
 /** 로그아웃 — 설정 페이지가 없어져 '나' 화면 아래 메뉴에서 부른다(2026-10-01). */
 export async function logout(): Promise<void> {
+  const user = await currentUser()
+  if (user) await track(user.id, 'logout')
   await destroySession()
   redirect('/home')
 }

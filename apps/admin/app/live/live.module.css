@@ -1,0 +1,80 @@
+/* 관리자 공통 main(가운데 1100px)을 벗어나 헤더 밑 화면 전체 폭을 쓴다. */
+.shell { width: 100vw; margin: -24px 0 -24px calc(50% - 50vw); padding: 20px 32px 48px; min-height: calc(100vh - 54px); background: #08080a }
+.top { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px }
+.tab { padding: 6px 12px; border-radius: 6px; color: var(--muted); font-size: 13px }
+.tab:hover { color: var(--text); background: var(--elevated) }
+.tabOn { composes: tab; color: var(--text); background: var(--elevated) }
+.conn { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted) }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; background: #52525b }
+.online { background: #3ecf8e; box-shadow: 0 0 0 3px rgba(62, 207, 142, .15); animation: pulse 2s ease-in-out infinite }
+.idle { background: #e5a54b }
+.offline { background: #52525b }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(62, 207, 142, 0) } }
+
+.h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px }
+.sub { color: var(--muted); font-size: 12px; margin: 0 0 20px }
+.h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; gap: 8px }
+.h2 small { color: var(--muted); font-weight: 400 }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px }
+.kpi span { display: block; color: var(--muted); font-size: 12px }
+.kpi strong { display: block; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; transition: color .4s }
+.bump { color: #3ecf8e !important }
+
+.grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr } }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-width: 0 }
+.panel + .panel { margin-top: 16px }
+.grid .panel + .panel, .split .panel + .panel { margin-top: 0 }
+
+.tableWrap { overflow-x: auto }
+.table td, .table th { padding: 8px 10px; white-space: nowrap }
+.table tbody tr { transition: background .6s }
+.table tbody tr:hover { background: var(--elevated) }
+.who { display: flex; align-items: center; gap: 8px; font-weight: 500 }
+.muted { color: var(--muted) }
+.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px }
+.badge { font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted) }
+.new { animation: flash 1.6s ease-out }
+@keyframes flash { from { background: rgba(62, 207, 142, .14) } to { background: transparent } }
+
+.feed { list-style: none; margin: 0; padding: 0 }
+.feed li { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--border); font-size: 13px }
+.feed li:last-child { border-bottom: 0 }
+.feed time { color: var(--muted) }
+.cat { display: inline-block; width: 6px; height: 6px; border-radius: 2px; margin-right: 6px; vertical-align: middle }
+.cat_auth { background: #7aa2f7 } .cat_page { background: #52525b } .cat_create { background: #bb9af7 } .cat_chat { background: #3ecf8e }
+.cat_payment { background: #e5a54b } .cat_error { background: #f7768e } .cat_other { background: #a1a1a8 }
+
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px }
+.chip { padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer }
+.chipOn { composes: chip; color: var(--text); border-color: #52525b; background: var(--elevated) }
+
+.empty { padding: 28px 8px; text-align: center; color: var(--muted); font-size: 13px }
+.warn { background: rgba(229, 165, 75, .08); border: 1px solid rgba(229, 165, 75, .3); color: #e5a54b; border-radius: 8px; padding: 10px 12px; font-size: 12px; margin-bottom: 16px }
+
+.bars { display: flex; align-items: flex-end; gap: 3px; height: 140px; padding-top: 8px }
+.barCol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0 }
+.bar { width: 100%; background: #3f3f46; border-radius: 3px 3px 0 0; min-height: 1px; transition: height .5s cubic-bezier(.2, .8, .2, 1) }
+.barCol:hover .bar { background: #3ecf8e }
+.readout { display: flex; align-items: baseline; gap: 8px; min-height: 30px }
+.readout strong { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums }
+.readout span { color: var(--muted); font-size: 12px }
+.barLabel { font-size: 10px; color: var(--muted); margin-top: 4px; white-space: nowrap }
+.barVal { font-size: 10px; color: var(--muted); margin-bottom: 2px; font-variant-numeric: tabular-nums }
+
+.timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 1px solid var(--border) }
+.timeline li { position: relative; padding: 6px 0 6px 12px; font-size: 13px }
+.timeline li::before { content: ''; position: absolute; left: -18px; top: 13px; width: 7px; height: 7px; border-radius: 50%; background: #3f3f46 }
+.timeline time { color: var(--muted); margin-right: 10px }
+.dayHead { color: var(--muted); font-size: 11px; letter-spacing: .08em; margin: 14px 0 4px -14px }
+
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 16px }
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 13px; margin: 0 }
+.kv dt { color: var(--muted) }
+.kv dd { margin: 0 }
+.ratio { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #27272b; margin: 10px 0 6px }
+.ratio div:first-child { background: #3ecf8e }
+.ratio div:last-child { background: #7aa2f7 }

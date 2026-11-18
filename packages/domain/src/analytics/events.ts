@@ -9,6 +9,8 @@ export const ANALYTICS_EVENTS = [
   // 11/9 웹소설 — 대화방이 결말에 닿음(AI 의 결말 표식).
   'story_ending',
   'archive_opened', 'session_archived', 'session_deleted', 'report_submitted', 'account_deleted',
+  // 11/18 관리자 실시간 현황 — 로그인·로그아웃, 화면 이동(접속 신호가 주소가 바뀔 때만 남긴다, props: anonId·path·device).
+  'login', 'logout', 'page_viewed',
   // Closed Alpha 퍼널 — 로그인 없는 체험. userId 는 null, props.alphaSession 으로 묶는다.
   'landing_view', 'experience_start', 'first_message_sent', 'third_message_sent',
   'wow_event_triggered', 'reality_message_seen', 'waitlist_view', 'waitlist_complete',
