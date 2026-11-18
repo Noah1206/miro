@@ -12,7 +12,7 @@ import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, REPLY_TYPING_PACE, replyTypingB
 import { UnveilCover } from '@/components/unveil-badge'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
-import { ENDING_VIEW, REROLL, useTurns } from './turns'
+import { ENDING_VIEW, UNDO, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
@@ -190,15 +190,15 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
             {(m.role === 'character' || m.role === 'narrator') && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open />}
             {(() => {
               const settledReply = m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
-              // 11/19 사용자: 카드 맨 아래 줄 — 사진 아이콘 옆에 '다시 받기'(마지막 답에만, 무료 리롤).
-              const canReroll = theme === 'miro' && settledReply && rerollInput !== undefined && m.id === lastSettled?.id
+              // 11/19 사용자: 카드 맨 아래 줄 — 사진 아이콘 옆에 '되돌리기'(마지막 답에만, 그 턴을 지우고 보낸 말을 입력칸으로).
+              const canUndo = theme === 'miro' && settledReply && rerollInput !== undefined && m.id === lastSettled?.id
               const canPhoto = settledReply && !!photo && !!sessionId
-              return (canPhoto || canReroll) && <div className={styles.turnPhotoRow}>
+              return (canPhoto || canUndo) && <div className={styles.turnPhotoRow}>
                 {canPhoto && <PhotoButton variant="turn" sessionId={sessionId!} unveil={photo!.unveil} bundle={photo!.bundle} audience={photo!.audience} custom={photo!.scenes} />}
-                {canReroll && <button type="button" className={styles.turnPhoto} aria-label={t('다시 받기')} title={t('다시 받기')}
-                  onClick={() => window.dispatchEvent(new CustomEvent(REROLL, { detail: { replyId: m.id, input: rerollInput } }))}>
-                  <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4.5v4.5h-4.5"/></svg>
-                  <span>{t('다시 받기')}</span>
+                {canUndo && <button type="button" className={styles.turnPhoto} aria-label={t('되돌리기')} title={t('되돌리기')}
+                  onClick={() => window.dispatchEvent(new CustomEvent(UNDO, { detail: { replyId: m.id } }))}>
+                  <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+                  <span>{t('되돌리기')}</span>
                 </button>}
               </div>
             })()}

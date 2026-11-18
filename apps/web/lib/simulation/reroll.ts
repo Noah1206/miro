@@ -17,7 +17,7 @@ export type UndoResult =
  * 몇 번을 다시 받든 마지막에 남긴 답 하나만 차감된다. 공급자 원가는 사용자별 월 AI 예산과 분당 요청 한도가 막는다.
  * ponytail: 응답 뒤 기억 작업이 이 턴 때문에 바꾼 옛 기억(교체·요약 덮어쓰기)은 되살리지 않는다 — 다음 요약 작업이 다시 만든다.
  */
-export async function undoLastTurn(userId: string, sessionId: string, replyId: string): Promise<UndoResult> {
+export async function undoLastTurn(userId: string, sessionId: string, replyId: string, opts: { refund?: boolean } = {}): Promise<UndoResult> {
   return db.transaction(async (tx) => {
     // 턴 시작(beginRequest)과 같은 잠금 — 되돌리는 사이 새 턴이 끼어들지 않는다.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`conversation:${sessionId}`}))`)
@@ -52,8 +52,8 @@ export async function undoLastTurn(userId: string, sessionId: string, replyId: s
       .where(and(eq(conversationRequests.sessionId, sessionId), eq(conversationRequests.status, 'pending'), gt(conversationRequests.leaseUntil, new Date()))).limit(1)
     if (busy) return { ok: false, reason: 'busy' }
 
-    /* ---- 이 턴의 차감을 돌려준다(리롤은 무료) ---- */
-    if (b.ledgerId) await rollbackInTransaction(tx, b.ledgerId, { committed: true })
+    /* ---- 이 턴의 차감을 돌려준다(리롤은 무료). 11/19 되돌리기만 할 땐(refund:false) 돌려주지 않는다 — 읽은 답을 지워 공짜로 대화하지 못하게. ---- */
+    if (b.ledgerId && opts.refund !== false) await rollbackInTransaction(tx, b.ledgerId, { committed: true })
 
     /* ---- 이 턴이 만든 것 ---- */
     if (b.events.created.length) await tx.delete(events).where(and(eq(events.sessionId, sessionId), inArray(events.id, b.events.created)))

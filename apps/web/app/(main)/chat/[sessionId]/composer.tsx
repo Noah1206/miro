@@ -14,7 +14,8 @@ import { SuggestButton, SuggestList, type SuggestState } from './suggest-replies
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { ENDING_VIEW, REROLL, useTurns, type LiveTurn } from './turns'
+import { ENDING_VIEW, REROLL, UNDO, useTurns, type LiveTurn } from './turns'
+import { undoTurn } from './actions'
 import { useChosenThinking } from '@/components/reply-length-sheet'
 import { streamTurn } from './stream-turn'
 import { useImmersive } from './immersive'
@@ -222,6 +223,28 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }, [pending, !!live?.blocks.length])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
+  // 11/19 되돌리기: 마지막 답 카드의 되돌리기 아이콘 — 그 턴을 지우고 보낸 말을 입력칸에(쓰던 글이 있으면 그대로 둔다).
+  const undoLatest = useRef({ remove, router, toast })
+  undoLatest.current = { remove, router, toast }
+  useEffect(() => {
+    const onUndo = async (event: Event) => {
+      const { replyId } = (event as CustomEvent<{ replyId: string }>).detail
+      if (sending.current) return
+      sending.current = true
+      try {
+        const r = await undoTurn(sessionId, replyId)
+        const { remove: drop, router: nav, toast: say } = undoLatest.current
+        if (!r.ok) { say(t(r.error), 'error'); return }
+        drop(r.messageIds)
+        if (!draftNow.current.trim()) setDraft(r.input)
+        startRefresh(() => nav.refresh())
+      } catch { undoLatest.current.toast(t('이 답은 지금 되돌릴 수 없어요.'), 'error') }
+      finally { sending.current = false }
+    }
+    window.addEventListener(UNDO, onUndo)
+    return () => window.removeEventListener(UNDO, onUndo)
+  }, [sessionId, t])
+
   // 리롤(10/27): 마지막 답 아래 '다시 받기' — 지금 고른 모델로 같은 말을 다시 보낸다. 보낼 말·명령어는 서버가 되돌리기 기록에서 꺼낸다.
   const latest = useRef({ action, ready, calendarPending })
   latest.current = { action, ready, calendarPending }

@@ -14,8 +14,19 @@ import { bridgeUnveilToNormal } from '@/lib/simulation/unveil-bridge'
 import { afterResponse } from '@/lib/defer'
 import { observe } from '@/lib/observe'
 import { track } from '@/lib/analytics/track'
+import { undoLastTurn } from '@/lib/simulation/reroll'
 
 // 캐릭터챗 한 턴은 스트리밍 경로(/api/turn)로 간다(10/9) — 서버 액션은 답을 받는 대로 보낼 수 없다.
+
+/**
+ * 11/19 사용자: 마지막 턴 되돌리기 — 그 답과 보낸 말을 지우고(세계·관계·기억도 그 턴 전으로) 보낸 말은 입력창에 돌려준다.
+ * 다시 받기와 달리 차감은 돌려주지 않는다.
+ */
+export async function undoTurn(sessionId: string, replyId: string): Promise<{ ok: true; input: string; messageIds: string[] } | { ok: false; error: string }> {
+  const user = await requireUser()
+  const r = await undoLastTurn(user.id, sessionId, replyId, { refund: false })
+  return r.ok ? { ok: true, input: r.input, messageIds: r.messageIds } : { ok: false, error: msg('이 답은 지금 되돌릴 수 없어요.') }
+}
 
 export async function setStoryDate(sessionId: string, date: string, expectedDate: string | null): Promise<StoryDateResult> {
   const user = await requireUser()
