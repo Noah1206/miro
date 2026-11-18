@@ -150,6 +150,8 @@ export async function loadSession(
   if (opening) character.worldRole.startingContext = opening
   // 11/12 설정집 항목 중 다른 시작 설정 전용은 뺀다(시작 설정을 안 고른 방은 전용 항목 없이).
   if (character.worldRole.lore) character.worldRole.lore = character.worldRole.lore.filter(e => !e.scene || e.scene === row.session.openingScene)
+  // 11/19 상태창이 있는 작품: 직전 상태창을 AI 에 넘겨 값이 턴마다 이어지게(빠뜨린 턴엔 turn.ts 가 이걸 그대로 붙인다).
+  if (character.worldRole.statusFormat?.trim() && !opts.view) { const last = await lastStatus(sessionId); if (last) character.worldRole.lastStatus = last }
   const snapshot: SimulationSnapshot = {
     character,
     world: row.world as never,
@@ -213,3 +215,12 @@ export async function loadSession(
 }
 
 export { inArray }
+
+/** 이 방에서 가장 최근 상태창 글(인트로 포함). 없으면 null. */
+export async function lastStatus(sessionId: string): Promise<string | null> {
+  const [row] = await db.execute<{ text: string }>(sql`
+    SELECT b->>'text' AS text FROM messages m, jsonb_array_elements(m.blocks) b
+    WHERE m.session_id = ${sessionId}::uuid AND m.hidden_at IS NULL AND b->>'type' = 'status' AND coalesce(b->>'text', '') <> ''
+    ORDER BY m.turn_index DESC LIMIT 1`)
+  return row?.text ?? null
+}

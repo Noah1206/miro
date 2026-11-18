@@ -81,6 +81,8 @@ export type CharacterCore = {
     loreLimit?: number
     /** 상태창 형식(11/10) — 매 답변 끝에 이 틀을 채워 붙인다. 없으면 상태창 없음. */
     statusFormat?: string
+    /** 11/19 이 방의 직전 상태창 — 대화 기록엔 상태창이 없어서, 수치·복장이 이어지도록 따로 넘긴다. */
+    lastStatus?: string
     /** 스탯(11/10) — 대화방마다 값이 움직이는 수치. */
     stats?: CharacterStat[]
     /** 엔딩(11/10) — 조건이 충족되면 결말 표식을 남긴다. */

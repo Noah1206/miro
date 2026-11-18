@@ -284,7 +284,7 @@ async function executeTurn(opts: {
     const actualTokens = reservation ? Math.min(Math.min(Math.max(costTokens, model.floorTokens), maximumTokens) + (voiceOn ? voiceTokens(transition.blocks as Array<Record<string, unknown>>) : 0), reservation.cost) : free ? 0 : costTokens
     const responseText = renderBlocks(transition.blocks)
     // 11/19 사용자: 상태창 형식이 있는 작품은 매 턴 상태창이 꼭 보인다 — AI 가 status 를 빠뜨리면 이 방의 직전 상태창을 그대로 잇는다.
-    const status = transition.status?.trim() || (loaded.snapshot.character.worldRole.statusFormat?.trim() ? await lastStatus(sessionId) : null)
+    const status = transition.status?.trim() || (loaded.snapshot.character.worldRole.lastStatus ?? null)
     // 상황별 사진 — 11/18 바베챗식: 답을 쓰는 AI 가 지금 장면의 사진 코드를 직접 고른다(images, 한 답에 최대 2장, 같은 사진 재사용 가능).
     // 예전엔 답 뒤에 분류 AI 를 한 번 더 불러 한 장만, 방에서 한 번 띄운 사진은 다시 안 썼다. 순번·허용(언베일 전용)은 엔진 검증기가 이미 걸렀다.
     const sceneImages = charSettings?.situationImages ?? []
@@ -407,15 +407,6 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
     await failRequest(request.requestId)
     return { ok: false, reason: 'generation' }
   }
-}
-
-/** 이 방에서 가장 최근 상태창 글(인트로 포함). 없으면 null. */
-async function lastStatus(sessionId: string): Promise<string | null> {
-  const [row] = await db.execute<{ text: string }>(sql`
-    SELECT b->>'text' AS text FROM messages m, jsonb_array_elements(m.blocks) b
-    WHERE m.session_id = ${sessionId}::uuid AND m.hidden_at IS NULL AND b->>'type' = 'status' AND coalesce(b->>'text', '') <> ''
-    ORDER BY m.turn_index DESC LIMIT 1`)
-  return row?.text ?? null
 }
 
 /**

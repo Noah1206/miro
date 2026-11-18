@@ -12,6 +12,7 @@
 import { randomUUID } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
 import { SEEDS as SEEDS_1, type Seed } from './bl-characters.data.mts'
+import { STATUS_FORMATS } from './status-formats.data.mts'
 import { SEEDS_2 } from './bl-characters-2.data.mts'
 import { SEEDS_3 } from './bl-characters-3.data.mts'
 import { SEEDS_4_TIGER } from './bl-characters-4-tiger.data.mts'
@@ -211,7 +212,7 @@ for (const s of SEEDS) {
     relationshipKeywords: s.relationshipKeywords, startingContext: s.startingContext, startingTime: s.startingTime,
     sampleDialogue: keepSceneImages(s.sampleDialogue, exists?.dialogue ?? []), lore: s.lore, initialRelationship: s.initialRelationship,
     personaGuide: s.personaGuide ?? '', coverUnveil: s.coverUnveil ?? false,
-    statusFormat: s.statusFormat ?? '', stats: s.stats ?? [],
+    statusFormat: s.statusFormat ?? STATUS_FORMATS[s.slug] ?? '', stats: s.stats ?? [],   // 11/19 남성향 상태창 표(status-formats.data.mts)
     playGuide: s.playGuide ?? '', firstReplies: s.firstReplies ?? [], endings: s.endings ?? [],
     ...(s.voice ? { voiceId: s.voice } : {}), ...(s.ensembleVoices ? { ensembleVoices: s.ensembleVoices } : {}),
   }
