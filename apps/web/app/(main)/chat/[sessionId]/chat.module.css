@@ -742,3 +742,16 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/19 사용자(스크린샷): 기본 테마의 기다리는 말풍선은 왼쪽 가장자리에(한 덩어리 글 카드와 같은 줄), 꼬리 없이 둥글게, 양옆 여백 16 → 12px. */
 :global([data-chat-theme='miro']) .typingBubble { margin-left: 0; padding: 12px; border-radius: 16px; }
 :global([data-chat-theme='miro']) .typingBubble::before { display: none; }
+/* 11/19 사용자: 답 한 턴 카드 — 옅은 회색 카드가 글·상태창·사진 아이콘을 함께 감싼다(사진 아이콘은 맨 아래, 글자 없이). */
+.turnPlain { display: contents; }
+.turnCard { display: grid; gap: 12px; padding: 14px 12px 8px; border-radius: 16px; background: #262728; }
+.turnCard .flow { padding: 0; border-radius: 0; background: none; }
+.turnCard .statusCard { margin: 0; border: 0; border-radius: 10px; background: #1b1b1c; }
+.turnCard .turnPhotoRow { padding-left: 0; margin-top: -4px; }
+.turnCard .turnPhoto { width: 32px; height: 32px; padding: 0; justify-content: center; border: 0; border-radius: 8px; color: #b8b8bd; }
+.turnCard .turnPhoto:hover { background: #ffffff10; color: #fff; }
+.turnCard .turnPhoto svg { width: 20px; height: 20px; }
+.turnCard .turnPhoto span { display: none; }
+/* 11/19 사용자: 카드 맨 아래 아이콘 줄(사진·다시 받기)은 붙여서 나란히, 상태창은 카드의 회색 여백 안에 들어앉는다(사방 12px, 안쪽 여백도 고르게). */
+.turnCard .turnPhotoRow { gap: 4px; }
+.turnCard .statusCard summary { padding: 10px 12px 6px; }

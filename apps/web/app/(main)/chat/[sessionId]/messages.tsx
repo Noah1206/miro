@@ -43,6 +43,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
   const t = useT()
   const { appended, quiet, playbackKeys, live, removed } = useTurns()
+  const { theme } = useChatTheme()
   const voice = useImmersive()
   const known = new Set(server.map((m) => m.id))
   // 오고 있는 답(스트리밍)은 맨 뒤에 — 보낸 말과 지금까지 받은 블록. 저장된 답이 오면 사라지고 그 자리를 저장본이 채운다.
@@ -181,12 +182,27 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} data-fresh={m.role === 'user' && !initialKeys.current!.has(keyOf(m)) || undefined} layout={false} {...(quiet.has(m.id) || m.role === 'user' || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
+            {/* 11/19 사용자: 기본 테마는 답 한 턴 = 카드 하나 — 글·상태창·사진 아이콘(맨 아래)이 같은 카드 안. 메신저 테마는 전처럼 카드 없이. */}
+            <div className={theme === 'miro' && (m.role === 'character' || m.role === 'narrator') && m.kind === 'text' ? styles.turnCard : styles.turnPlain}>
             <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b]) && !endingReady([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }}
               inline={inline.get(m.id)} renderPhoto={p => <Message key={p.id} m={p} characterName={characterName} veil={veilPhotos ? sessionId : undefined} onGrow={follow} />} />
-            {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
-              && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
             {(m.role === 'character' || m.role === 'narrator') && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open />}
+            {(() => {
+              const settledReply = m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
+              // 11/19 사용자: 카드 맨 아래 줄 — 사진 아이콘 옆에 '다시 받기'(마지막 답에만, 무료 리롤).
+              const canReroll = theme === 'miro' && settledReply && rerollInput !== undefined && m.id === lastSettled?.id
+              const canPhoto = settledReply && !!photo && !!sessionId
+              return (canPhoto || canReroll) && <div className={styles.turnPhotoRow}>
+                {canPhoto && <PhotoButton variant="turn" sessionId={sessionId!} unveil={photo!.unveil} bundle={photo!.bundle} audience={photo!.audience} custom={photo!.scenes} />}
+                {canReroll && <button type="button" className={styles.turnPhoto} aria-label={t('다시 받기')} title={t('다시 받기')}
+                  onClick={() => window.dispatchEvent(new CustomEvent(REROLL, { detail: { replyId: m.id, input: rerollInput } }))}>
+                  <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4.5v4.5h-4.5"/></svg>
+                  <span>{t('다시 받기')}</span>
+                </button>}
+              </div>
+            })()}
+            </div>
             {sessionId && endingIds.has(m.id) && <aside className={styles.endingCard}>
               {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
                 return <>
