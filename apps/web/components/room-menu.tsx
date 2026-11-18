@@ -6,7 +6,7 @@ import type { CharacterEntry } from '@/lib/character-entry'
 import type { AccountProfile } from '@/lib/account-profile'
 import { useAccountProfile } from '@/components/account-profile-provider'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
-import { LogoMark, useToast } from '@/components/ui'
+import { Button, LogoMark, Sheet, useToast } from '@/components/ui'
 import { CharacterPhoto } from '@/components/character-visual'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { InstallAppButton } from '@/components/pwa-install'
@@ -22,6 +22,7 @@ import { RoomVoicePanel, type RoomVoice } from '@/components/room-voice'
 import { RoomGallery } from '@/components/room-gallery'
 import { ReplyLengthSheet } from '@/components/reply-length-sheet'
 import styles from './room-menu.module.css'
+import sheetStyles from './push-subscribe.module.css'
 
 type Panel = 'persona' | 'theme' | 'model' | 'memory' | 'note'
 type IconName = Panel | 'length' | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
@@ -72,16 +73,49 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const tiles: Panel[] = ['persona', 'model', 'memory', 'note']   // 11/19 사용자: 채팅방 테마 고르기 삭제(늘 기본 테마)
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
-  const voiceToggle = () => { if (!on) toast(t('음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요')); toggle() }
+  // 11/19 사용자: 이 계정에서 음성 모드를 처음 켜면 토스트 대신 안내 시트(무엇이 되는지·비용·끄는 곳). 두 번째부터는 토스트.
+  const [voiceIntro, setVoiceIntro] = useState(false)
+  const voiceToggle = () => {
+    if (!on) {
+      const key = `miro:voice-intro:${profile.userId}`
+      let seen = true
+      try { seen = localStorage.getItem(key) === '1'; localStorage.setItem(key, '1') } catch { /* 저장소를 막은 브라우저 — 토스트로 */ }
+      if (seen) toast(t('음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요'))
+      else setVoiceIntro(true)
+    }
+    toggle()
+  }
   return <>
+    <Sheet open={voiceIntro} onClose={() => setVoiceIntro(false)} label={t('음성 모드가 켜졌어요')} compact>
+      <div className={sheetStyles.stack}>
+        <div className={sheetStyles.center}>
+          <svg className={sheetStyles.icon} aria-hidden="true" viewBox="0 0 64 64" width="64" height="64">
+            <circle cx="32" cy="32" r="32" fill="#111"/>
+            <g transform="translate(14 14) scale(1.5)" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11.2 5.3 7.4 8.6H5.2a1.7 1.7 0 0 0-1.7 1.7v3.4a1.7 1.7 0 0 0 1.7 1.7h2.2l3.8 3.3a.7.7 0 0 0 1.15-.53V5.83a.7.7 0 0 0-1.15-.53Z" fill="#fff" stroke="none"/>
+              <path d="M15.7 9.3a3.8 3.8 0 0 1 0 5.4M18.4 6.8a7.4 7.4 0 0 1 0 10.4"/>
+            </g>
+          </svg>
+          <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{t('음성 모드가 켜졌어요')}</h2>
+          <p>{t('이제 캐릭터가 대사를 목소리로 읽어 줘요. 읽는 대사 100자마다 10토큰이 더 들고, 헤더의 스위치로 언제든 끌 수 있어요.')}</p>
+        </div>
+        <div className={sheetStyles.actions}>
+          <Button variant="primary" full pressScale={0.94} onClick={() => setVoiceIntro(false)}
+            style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t('좋아요')}</Button>
+          <Button variant="ghost" size="sm" full onClick={() => { setVoiceIntro(false); if (on) toggle() }} style={{ color: 'var(--color-text-primary)' }}>{t('다시 끄기')}</Button>
+        </div>
+      </div>
+    </Sheet>
     {/* 11/16 사용자: 헤더에서도 음성 모드를 켠다 — 메뉴 버튼과 같은 크기의 스피커 아이콘, 켜면 라벤더색에 소리 물결. */}
-    {available && <button type="button" role="switch" aria-checked={on} aria-label={t('음성 모드')} title={t('음성 모드')} className={`${styles.trigger} ${styles.voiceIcon}`} onClick={voiceToggle}>
-      {/* 11/19 사용자: 음성 버튼 다듬기 — 채운 스피커, 꺼짐은 작은 ×, 켜짐은 라벤더 바탕에 물결 두 겹이 번갈아 숨 쉰다. */}
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11.2 5.3 7.4 8.6H5.2a1.7 1.7 0 0 0-1.7 1.7v3.4a1.7 1.7 0 0 0 1.7 1.7h2.2l3.8 3.3a.7.7 0 0 0 1.15-.53V5.83a.7.7 0 0 0-1.15-.53Z" fill="currentColor" stroke="none"/>
-        <g className={styles.voiceWaves}><path d="M15.7 9.3a3.8 3.8 0 0 1 0 5.4"/><path d="M18.4 6.8a7.4 7.4 0 0 1 0 10.4"/></g>
-        <g className={styles.voiceMute}><path d="m16.5 9.8 4.2 4.4M20.7 9.8l-4.2 4.4"/></g>
-      </svg>
+    {available && <button type="button" role="switch" aria-checked={on} aria-label={t('음성 모드')} title={t('음성 모드')} className={styles.voiceSwitch} onClick={voiceToggle}>
+      {/* 11/19 사용자(레퍼런스): 음성 버튼 = 알약 스위치 — 꺼짐은 어두운 바탕·흰 손잡이 왼쪽(꺼진 스피커), 켜짐은 흰 바탕·검은 손잡이 오른쪽(물결). */}
+      <span className={styles.voiceKnob} aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11.2 5.3 7.4 8.6H5.2a1.7 1.7 0 0 0-1.7 1.7v3.4a1.7 1.7 0 0 0 1.7 1.7h2.2l3.8 3.3a.7.7 0 0 0 1.15-.53V5.83a.7.7 0 0 0-1.15-.53Z" fill="currentColor" stroke="none"/>
+          <g className={styles.voiceWaves}><path d="M15.7 9.3a3.8 3.8 0 0 1 0 5.4"/><path d="M18.4 6.8a7.4 7.4 0 0 1 0 10.4"/></g>
+          <g className={styles.voiceMute}><path d="m16.5 9.8 4.2 4.4M20.7 9.8l-4.2 4.4"/></g>
+        </svg>
+      </span>
     </button>}
     <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>

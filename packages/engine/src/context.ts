@@ -528,7 +528,7 @@ function statusRules(c: SimulationSnapshot['character']): string[] {
   if (!format && !stats.length) return []
   return [
     '', '## 상태창·스탯',
-    format ? `- 매 응답마다 최상위 status 칸에 아래 형식을 이번 장면 기준으로 빠짐없이 채워 씁니다. 줄 구조·기호·순서는 형식 그대로, 값만 바꿉니다. 대괄호 안의 안내문은 실제 값으로 바꿉니다. 상태창 내용을 rp.blocks 본문에 다시 쓰지 않습니다.\n형식:\n${format}` : null,
+    format ? `- 매 응답마다 최상위 status 칸에 아래 형식을 이번 장면 기준으로 빠짐없이 채워 씁니다. 줄 구조·기호·순서는 형식 그대로, 값만 바꿉니다. 대괄호 안의 안내문은 실제 값으로 바꿉니다. 상태창 내용을 rp.blocks 본문에 다시 쓰지 않습니다. status 칸은 어떤 답에서도 비우지 않습니다(짧은 답·장면 전환·거절에 가까운 답도 포함).\n형식:\n${format}` : null,
     stats.length ? `- 스탯: 이번 장면에서 실제로 일어난 일만큼만 바꾸고, 최상위 statValues 칸에 { 스탯 이름: 새 값 } 으로 모든 스탯의 새 값을 냅니다(안 바뀐 스탯은 지금 값 그대로). 한 턴에 크게 튀지 않게 합니다.\n${stats.map(st => `  · ${st.name}${st.hidden ? ' [숨은 수치]' : ''} (${st.min}~${st.max}${st.unit ?? ''}, 기본 ${st.default}): ${st.description}${st.stages?.length ? ` 구간별 행동: ${[...st.stages].sort((x, y) => x.from - y.from).map(g => `${g.from}부터 — ${g.behavior}`).join(' / ')}` : ''}`).join('\n')}` : null,
     stats.some(st => st.stages?.length) ? '- 구간별 행동이 있는 스탯은 지금 값이 들어간 구간의 행동을 이번 장면의 말투·몸짓·선택에 자연스럽게 드러냅니다. 구간이 바뀌면 한 번에 뒤집지 말고 몇 턴에 걸쳐 스며들게 합니다.' : null,
     // 11/13 아카 설계탭(「너와 나의 봄」): 수치가 많아도 서사에 절대 노출하지 않는다 — 구간 이름·수치 대신 행동으로만.
