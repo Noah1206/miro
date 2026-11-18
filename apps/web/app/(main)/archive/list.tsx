@@ -12,6 +12,16 @@ import { useLanguage, useT } from '@/lib/i18n/client'
 import emptyStyles from './empty.module.css'
 import styles from './list.module.css'
 import { coverTitle } from '@/lib/editorial/cover-title'
+import { INTL_LOCALE } from '@/lib/i18n'
+
+/** '3분 전'·'1일 전' — 마지막 대화 시각(서버와 브라우저 시각이 달라 그 칸만 수화 경고를 끈다). */
+function ago(at: Date, locale: string): string {
+  const sec = (Date.now() - new Date(at).getTime()) / 1000
+  if (sec < 60) return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(0, 'second')
+  const rtf = new Intl.RelativeTimeFormat(locale)
+  for (const [unit, n] of [['year', 31_536_000], ['month', 2_592_000], ['day', 86_400], ['hour', 3_600]] as const) if (sec >= n) return rtf.format(-Math.floor(sec / n), unit)
+  return rtf.format(-Math.floor(sec / 60), 'minute')
+}
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -94,30 +104,33 @@ export function ArchiveList({ initialPage, channel='chat' }: {
         </button>}
         </div>
       </header>
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
+      {/* 11/19 사용자: 목록 한 줄 = 둥근 사진 60px + 세 줄(제목·마지막 말·아랫줄과 시간). */}
+      <ul className={styles.list}>
         <AnimatePresence initial={false}>
         {items.map((s) => {
           const portrait = s.characterImage
+          const title = coverTitle({ slug: s.characterSlug, name: s.characterName })
           return (
           <motion.li key={s.id} data-session-row data-status={s.status} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12, transition: tween.exit }} transition={spring.default}
-            style={{ position: 'relative', padding: '8px 0' }}>
-            <TransitionLink href={s.href ?? `/chat/${s.id}`} style={{ display: 'flex', gap: 12, alignItems: 'center', minHeight: 52 }}>
-              <div aria-hidden style={{ width: 44, height: 44, borderRadius: 14, overflow: 'hidden', flexShrink: 0, background: 'var(--color-surface-2)', display: 'grid', placeItems: 'center' }}>
+            style={{ position: 'relative' }}>
+            <TransitionLink href={s.href ?? `/chat/${s.id}`} className={styles.row}>
+              <div aria-hidden className={styles.avatar}>
                 {portrait
-                  ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="44px" width={44} height={44}
+                  ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="60px" width={60} height={60}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span className="t-name" style={{ fontSize: 22, color: s.accentA ?? 'var(--color-text-tertiary)', opacity: 0.8 }}>{coverTitle({ slug: s.characterSlug, name: s.characterName }).slice(0, 1)}</span>}
+                  : <span className="t-name" style={{ fontSize: 24, color: s.accentA ?? 'var(--color-text-tertiary)', opacity: 0.8 }}>{title.slice(0, 1)}</span>}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <h2 className="t-name" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 16, lineHeight: 1.35 }}>
-                    {coverTitle({ slug: s.characterSlug, name: s.characterName })}
-                  </h2>
+              <div className={styles.body}>
+                <div className={styles.titleRow}>
+                  <h2 className={styles.title}>{title}</h2>
+                  {s.unread > 0 && <span data-unread aria-label={t('안 읽은 메시지 {n}개', { n: s.unread })} className={styles.unread}>{s.unread}</span>}
                 </div>
-                {s.storyTitle && <p className="t-micro" style={{ marginTop: 3, color: 'var(--color-text-tertiary)' }}>{s.storyTitle} · {t('{n}회차', { n: s.runNo! })}</p>}
-                <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : channel==='dm'?t('아직 주고받은 메시지가 없어요.'):s.characterStatus ?? s.location}</p>
+                <p className={styles.preview}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : channel==='dm'?t('아직 주고받은 메시지가 없어요.'):s.characterStatus ?? s.location}</p>
+                <p className={styles.meta}>
+                  {s.storyTitle && <span className={styles.metaText}>{s.storyTitle} · {t('{n}회차', { n: s.runNo! })}</span>}
+                  <span className={styles.time} suppressHydrationWarning>{ago(s.lastInteractionAt, INTL_LOCALE[language])}</span>
+                </p>
               </div>
-              {s.unread > 0 && <span data-unread aria-label={t('안 읽은 메시지 {n}개', { n: s.unread })} className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 21, height: 21, padding: '0 6px', borderRadius: 11, background: 'var(--color-danger)', color: 'var(--color-white)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
             </TransitionLink>
             {managing && !s.storyTitle && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>

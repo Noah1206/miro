@@ -13,3 +13,19 @@
 .channel[aria-current='page'] { color: var(--color-text-primary); }
 .channel:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { .channel { transition: none; } }
+
+/* 11/19 사용자: 대화 목록 한 줄 — 둥근 사진 60px, 제목 16/600 흰색, 마지막 말 14px 회색 한 줄, 아랫줄 14px 더 옅은 회색 + 오른쪽 시간 12px. */
+.list { list-style: none; padding: 0; margin: 0 -12px; display: grid; gap: 4px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; color: #fff; transition: background-color .15s; -webkit-tap-highlight-color: transparent; }
+.row:hover { background: #ffffff0a; }
+.row:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.avatar { width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: #363636; display: grid; place-items: center; }
+.body { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+.title { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; line-height: 24px; font-weight: 600; color: #fff; }
+.unread { flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--color-danger); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
+.preview { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 21px; color: #acacac; }
+.meta { display: flex; align-items: center; gap: 8px; margin: 0; padding-right: 16px; font-size: 14px; line-height: 21px; color: #848484; }
+.metaText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.time { flex-shrink: 0; margin-left: auto; font-size: 12px; line-height: 18px; color: #898989; }
+@media (prefers-reduced-motion: reduce) { .row { transition: none; } }
