@@ -2424,5 +2424,17 @@
   "내 초대 링크 공유": "Share my invite link",
   "미로 — 음성 캐릭터챗": "Miro — voice character chat",
   "초대 링크를 복사했어요": "Invite link copied",
-  "캐릭터 대사를 목소리로 듣는 미로! 이 링크로 들어오면 무료 토큰을 받아요.": "Hear your characters speak on Miro! Join with this link to get free tokens."
+  "캐릭터 대사를 목소리로 듣는 미로! 이 링크로 들어오면 무료 토큰을 받아요.": "Hear your characters speak on Miro! Join with this link to get free tokens.",
+  "8MB 이하 음악만 올릴 수 있어요.": "Only music files up to 8MB can be uploaded.",
+  "BGM 추가 ({n}/{max})": "Add BGM ({n}/{max})",
+  "mp3·m4a·ogg·wav 파일만 올릴 수 있어요.": "Only mp3, m4a, ogg and wav files can be uploaded.",
+  "mp3·m4a·ogg·wav, 한 곡 8MB까지. 저작권이 있는 음악은 올리지 마세요.": "mp3, m4a, ogg, wav — up to 8MB per track. Don't upload copyrighted music.",
+  "곡마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 채팅방에서 그 음악이 흘러요. 상황을 비운 곡은 기본 음악이에요.": "Describe the situation for each track, and it plays in the chat when the conversation reaches that moment. A track with no situation is the default music.",
+  "배경음악 끄기": "Turn off background music",
+  "배경음악 켜기": "Turn on background music",
+  "상황별 BGM · 선택": "Situation BGM · Optional",
+  "어떤 상황에 틀까요? 예) 쫓기거나 급박한 순간 · 비워 두면 기본 음악": "When should it play? e.g. Being chased, a tense moment · Leave empty for default music",
+  "음악": "Music",
+  "음악 파일을 고르지 못했어요.": "Couldn't select the music file.",
+  "음악을 올리지 못했어요.": "Couldn't upload the music."
 }

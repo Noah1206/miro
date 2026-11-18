@@ -10,6 +10,9 @@ import { requireUser } from '@/lib/auth'
 import { msg } from '@/lib/i18n'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages, uploadCharacterImage } from '@/lib/storage/images'
+import { randomUUID } from 'crypto'
+import { PUBLIC_BUCKET, publicMediaUrl, writeMedia } from '@/lib/storage/media'
+import { BGM_LIMITS, BGM_TYPES } from '@/lib/bgm'
 import { parseCharacterForm } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
@@ -115,6 +118,19 @@ export async function uploadSituationImage(form: FormData): Promise<{ url: strin
   if (!(file instanceof File) || file.size === 0) return { error: msg('사진을 고르지 못했어요.') }
   const r = await uploadCharacterImage(file, user.id)
   return r.ok ? { url: r.url } : { error: r.error }
+}
+
+/** 11/19 상황별 BGM 파일 하나 올리기 — 사진과 같은 서버 디스크(공개 읽기). */
+export async function uploadBgm(form: FormData): Promise<{ url: string } | { error: string }> {
+  const user = await requireUser()
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size === 0) return { error: msg('음악 파일을 고르지 못했어요.') }
+  const ext = BGM_TYPES[file.type] ?? ({ mp3: 'mp3', m4a: 'm4a', aac: 'aac', ogg: 'ogg', wav: 'wav' } as Record<string, string>)[file.name.split('.').pop()?.toLowerCase() ?? '']
+  if (!ext) return { error: msg('mp3·m4a·ogg·wav 파일만 올릴 수 있어요.') }
+  if (file.size > BGM_LIMITS.bytes) return { error: msg('8MB 이하 음악만 올릴 수 있어요.') }
+  const path = `${user.id}/${randomUUID()}.${ext}`
+  try { await writeMedia(PUBLIC_BUCKET, path, new Uint8Array(await file.arrayBuffer())) } catch { return { error: msg('음악을 올리지 못했어요.') } }
+  return { url: publicMediaUrl(path) }
 }
 
 /** 11/12 설정집 불러오기 — 내가 만든 다른 작품의 설정집 항목(베이비챗 '불러오기'). 본인 작품만. */

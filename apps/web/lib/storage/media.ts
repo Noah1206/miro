@@ -9,7 +9,8 @@ import { dirname, extname, resolve, sep } from 'path'
  */
 export const PUBLIC_BUCKET = 'character-images'
 const root = () => resolve(process.env.MIRO_MEDIA_DIR || resolve(homedir(), 'miro-media'))
-const TYPES: Record<string, string> = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.heic': 'image/heic', '.heif': 'image/heif' }
+const TYPES: Record<string, string> = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.heic': 'image/heic', '.heif': 'image/heif',
+  '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.aac': 'audio/aac', '.ogg': 'audio/ogg', '.wav': 'audio/wav' }   // 11/19 상황별 BGM
 
 /** 버킷 안의 파일 경로. 버킷 밖으로 나가는 이름(..)은 null. */
 export function mediaPath(bucket: string, name: string): string | null {

@@ -1,6 +1,7 @@
 import type { CastProfile } from '@miro/domain'
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
 import { normalizeSituationImages } from '@/lib/situation-images'
+import { normalizeBgm, type Bgm } from '@/lib/bgm'
 import { normalizeCustomScenes } from '@/lib/photo-scenes'
 import { normalizePresetPersonas, type CharacterEnding, type CharacterStat } from '@miro/domain'
 import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
@@ -110,6 +111,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   let situationImages: ReturnType<typeof normalizeSituationImages> = []
   try { situationImages = normalizeSituationImages(JSON.parse(s('situationImages') || '[]')) } catch { /* 빈 배열 */ }
+  let bgm: Bgm[] = []
+  try { bgm = normalizeBgm(JSON.parse(s('bgm') || '[]')) } catch { /* 빈 배열 */ }
   let photoScenes: ReturnType<typeof normalizeCustomScenes> = []
   try { photoScenes = normalizeCustomScenes(JSON.parse(s('photoScenes') || '[]')) } catch { /* 빈 배열 */ }
   let presetPersonas: ReturnType<typeof normalizePresetPersonas> = []
@@ -165,6 +168,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]').map((e, n) => (n === 0 && s('introStatus').trim() ? { ...e, status: s('introStatus').trim().slice(0, 2000) } : e)), ...extraScenes(form)],
     lore, loreLimit: loreLimit(Number(s('loreLimit') || NaN)),
     situationImages,
+    bgm,
     photoScenes,
     presetPersonas,
     personaGuide: s('personaGuide').slice(0, 300),

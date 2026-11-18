@@ -22,5 +22,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ path: st
   }
   const bytes = type ? await readMedia(PUBLIC_BUCKET, name) : null
   if (!bytes || !type) return new Response(null, { status: 404, headers: { 'cache-control': 'public, max-age=60' } })
-  return new Response(new Uint8Array(bytes), { headers: { ...HEADERS, 'content-type': type, 'content-length': String(bytes.length) } })
+  // 11/19 BGM — Safari 는 음악을 바이트 범위(206)로만 재생한다.
+  const range = type.startsWith('audio/') ? /^bytes=(\d*)-(\d*)$/.exec(req.headers.get('range') ?? '') : null
+  if (range && (range[1] || range[2])) {
+    const start = range[1] ? Number(range[1]) : Math.max(0, bytes.length - Number(range[2])), end = range[1] && range[2] ? Math.min(Number(range[2]), bytes.length - 1) : bytes.length - 1
+    if (start > end || start >= bytes.length) return new Response(null, { status: 416, headers: { 'content-range': `bytes */${bytes.length}` } })
+    return new Response(new Uint8Array(bytes.subarray(start, end + 1)), { status: 206, headers: { ...HEADERS, 'content-type': type, 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${bytes.length}`, 'content-length': String(end - start + 1) } })
+  }
+  return new Response(new Uint8Array(bytes), { headers: { ...HEADERS, 'content-type': type, 'content-length': String(bytes.length), ...(type.startsWith('audio/') ? { 'accept-ranges': 'bytes' } : {}) } })
 }

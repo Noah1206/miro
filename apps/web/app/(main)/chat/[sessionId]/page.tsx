@@ -29,6 +29,7 @@ import { getT } from '@/lib/i18n/server'
 import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
 import { ImmersiveProvider, VoiceStatus } from './immersive'
+import { ChatBgm } from './bgm'
 import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
 import { RoomMenu } from '@/components/room-menu'
 import { feature, voicePaused } from '@miro/config'
@@ -67,7 +68,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     sessionMedia(sessionId, user.id),
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
-    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, playGuide: characters.playGuide, firstReplies: characters.firstReplies, endings: characters.endings, ensemblePhotos: characters.ensemblePhotos, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
+    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, playGuide: characters.playGuide, firstReplies: characters.firstReplies, endings: characters.endings, ensemblePhotos: characters.ensemblePhotos, ensembleVoices: characters.ensembleVoices, bgm: characters.bgm, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
     // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
     getPersona(user.id),
     // 첫 대화 전 세계관 카드(11/4) — 이 방의 '나'를 적기 전에는 입력창 대신 카드가 뜬다.
@@ -128,6 +129,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <Back href="/archive" />
           <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{/* 11/12 사용자: 헤더에 작품·캐릭터 사진 없이 이름만 */}<h1 className={styles.title}>{coverTitle({ slug: loaded.characterSlug, name: loaded.characterName })}</h1></div></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
+          {(rec?.bgm?.length ?? 0) > 0 && <ChatBgm sessionId={sessionId} />}
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} roomVoice={roomVoice} />
         </header>
         <VoiceStatus />

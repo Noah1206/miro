@@ -252,6 +252,8 @@ export const characters = pgTable('characters', {
   ensemblePhotos: jsonb('ensemble_photos').$type<Record<string, string>>().notNull().default({}),
   /** 11/11 다인 작품 인물별 설정(만들기에서 주인공 아래로 추가한 캐릭터) — AI 지시문의 '함께 나오는 인물'. 이름은 ensemble_voices 키와 같다. */
   ensembleCast: jsonb('ensemble_cast').$type<CastProfile[]>().notNull().default([]),
+  /** 11/19 상황별 BGM — 만든 사람이 곡마다 상황을 적어 두면 대화가 그 상황일 때 채팅방에서 반복 재생(lib/bgm). 상황이 빈 곡은 기본 곡. */
+  bgm: jsonb('bgm').$type<Array<{ url: string; situation: string; name?: string }>>().notNull().default([]),
   situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string; situation?: string; adult?: true }>>().notNull().default([]),
   /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
   /** 이용 대상(10/28) — true 면 언베일(성인 인증·켬)을 연 사람에게만 보인다. */

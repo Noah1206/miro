@@ -28,6 +28,10 @@ SESSION_PREFIXES = 24   # 이어 붙인 상태까지 읽어 둔 모델 상태(�
 # 11/12 사용자: "말의 빠르기를 올리는 게 나을 것 같다" — 만든 소리를 음높이 그대로 조금 빠르게 내보낸다(ffmpeg atempo). 모델·기억·고장 판별은 원래 빠르기 그대로라 목소리는 안 바뀐다.
 # 1.0 이면 끔. /speak(미리 듣기·견본)는 원래 빠르기.
 TEMPO = 1.1
+# 11/19 사용자: "급박할 때와 당황스러운 상황에 맥락에 맞춰 말의 빠르기가 달라야 한다" — 감정 지시(EMOTION_TAGS)는 목소리를 바꿔서 못 쓰니,
+# 줄마다 앱이 붙인 delivery 로 만든 소리의 빠르기·크기만 바꾼다(음높이·음색 그대로). 빠르기가 다른 줄끼리는 따로 만든다(turn_batches).
+PACE_TEMPO = {'slow': 0.95, 'normal': TEMPO, 'fast': 1.3}
+GAIN = {'soft': 0.8, 'normal': 1.0, 'strong': 1.3}
 # 11/17 사용자: 긴 답(읽을 글 2,000자)도 끝까지, 속마음도 읽되 조금 다르게.
 # 한 번에 만드는 길이는 프레임 상한(4096 ≈ 190초 ≈ 800자)에 걸린다 — 읽을 글이 BATCH_CHARS 를 넘으면 줄 경계에서 나눠 차례로 만든다(짧은 턴은 예전처럼 한 번에).
 BATCH_CHARS = 500
@@ -100,10 +104,17 @@ def rest_after(text, seconds, pace=4.2):
     return ''
 
 def turn_batches(lines):
-    """한 목소리 턴을 차례로 만들 묶음 [(속마음인가, [줄…])] — 속마음과 말은 따로, 같은 종류는 BATCH_CHARS 까지 이어 붙인다. 한 줄이 그보다 길면 문장 끝에서 나눈다."""
+    """한 목소리 턴을 차례로 만들 묶음 [((속마음인가, 빠르기, 크기), [줄…])] — 속마음과 말은 따로, 빠르기·크기가 같은 것끼리 BATCH_CHARS 까지 이어 붙인다.
+    11/19 한 줄(같은 사람이 이어 한 말) 안에서도 대사마다 빠르기가 다를 수 있어 parts(대사 하나씩)로 펼친다. 한 줄이 BATCH_CHARS 보다 길면 문장 끝에서 나눈다."""
     import re
     pieces = []
+    flat = []
     for l in lines:
+        parts = l.get('parts') or []
+        if parts and ' '.join(p['text'] for p in parts) == l['text']:
+            flat += [{**l, 'text': p['text'], 'delivery': p.get('delivery') or {}, 'parts': []} for p in parts]
+        else: flat.append(l)
+    for l in flat:
         text = l['text']
         if len(text) <= BATCH_CHARS: pieces.append(l); continue
         cur = ''
@@ -113,10 +124,32 @@ def turn_batches(lines):
         if cur.strip(): pieces.append({**l, 'text': cur.strip(), 'parts': []})
     out = []
     for l in pieces:
-        inner = bool(l.get('inner'))
-        if out and out[-1][0] == inner and sum(len(x['text']) + 1 for x in out[-1][1]) + len(l['text']) <= BATCH_CHARS: out[-1][1].append(l)
-        else: out.append((inner, [l]))
+        key = (bool(l.get('inner')), *feel(l.get('delivery'), l['text']))
+        if out and out[-1][0] == key and sum(len(x['text']) + 1 for x in out[-1][1]) + len(l['text']) <= BATCH_CHARS: out[-1][1].append(l)
+        else: out.append((key, [l]))
     return out
+
+def gap_after(line):
+    """앞 묶음 뒤의 쉼(초) — 그 대사의 pauseAfterMs(급할수록 AI 가 짧게 준다), 없으면 0.3초."""
+    ms = (line.get('delivery') or {}).get('pauseAfterMs')
+    return 0.3 if not isinstance(ms, (int, float)) else min(1.5, max(0.12, ms / 1000))
+
+def feel(delivery, text):
+    """줄의 (빠르기, 크기) — 놀람·화남이 세게 나온 줄은 빠르기를 따로 안 골랐어도 빠르게, 신음 줄은 크게(11/19 사용자: 신음 강도를 더)."""
+    d = delivery if isinstance(delivery, dict) else {}
+    pace, intensity = d.get('pace', 'normal'), d.get('intensity', 'normal')
+    if pace == 'normal' and intensity == 'strong' and d.get('emotion') in ('anxious', 'angry'): pace = 'fast'
+    if '[moaning' in text: intensity = 'strong'
+    return PACE_TEMPO.get(pace, TEMPO), GAIN.get(intensity, 1.0)
+
+def louder(chunks, gain):
+    """PCM16 조각 흐름의 크기 — 키울 땐 tanh 로 눌러 깨지지 않게."""
+    import numpy as np
+    if gain == 1.0: yield from chunks; return
+    for c in chunks:
+        x = np.frombuffer(c[: len(c) // 2 * 2], '<i2').astype('float32') / 32768
+        y = np.tanh(x * gain) if gain > 1 else x * gain
+        yield (np.clip(y, -1, 1) * 32767).astype('<i2').tobytes()
 
 def inner_voice(chunks, rate):
     """속마음 소리 — PCM16 조각 흐름을 조금 작게, 짧은 울림 하나를 얹어 내보낸다(y[n] = g·x[n] + a·g·x[n-d])."""
@@ -542,14 +575,14 @@ class Speaker:
                 except Exception as e: print('remember failed', type(e).__name__, flush=True)
             return
 
-    def tempo(self, chunks):
-        """PCM16 조각 흐름을 음높이 그대로 TEMPO 배 빠르게 — ffmpeg 에 흘려 넣고 나오는 대로 내보낸다. ffmpeg 을 못 띄우면 원래 빠르기 그대로."""
+    def tempo(self, chunks, factor=TEMPO):
+        """PCM16 조각 흐름을 음높이 그대로 factor 배 빠르게 — ffmpeg 에 흘려 넣고 나오는 대로 내보낸다. ffmpeg 을 못 띄우면 원래 빠르기 그대로."""
         import queue, subprocess, threading
-        if TEMPO == 1.0: yield from chunks; return
+        if factor == 1.0: yield from chunks; return
         try:
             # 11/12 실측: -fflags nobuffer 는 소리를 잃었고(8.6초→3.6초), 기본값은 입력 4.8초가 쌓여야 첫 소리가 나왔다 — 입력 살펴보기를 끄면 첫 조각(0.37초)부터 바로 나오고 길이도 맞다.
             p = subprocess.Popen(['ffmpeg', '-v', 'error', '-probesize', '32', '-analyzeduration', '0', '-f', 's16le', '-ar', str(self.codec.sample_rate), '-ac', '1', '-i', 'pipe:0',
-                                  '-af', f'atempo={TEMPO}', '-f', 's16le', '-flush_packets', '1', 'pipe:1'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+                                  '-af', f'atempo={factor}', '-f', 's16le', '-flush_packets', '1', 'pipe:1'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
         except Exception as e:
             print('tempo unavailable', type(e).__name__, flush=True); yield from chunks; return
         out = queue.Queue()
@@ -620,10 +653,12 @@ class Speaker:
         if len(groups) == 1:
             voice = next(iter(groups))
             # 11/17 긴 턴·속마음: 묶음마다 차례로 만든다. 기억에는 첫 묶음만 넣는다(같은 턴의 뒤 묶음은 지난 턴 기억을 그대로 이어 받는다 — 읽어 둔 상태를 다시 쓴다).
-            for k, (inner, batch) in enumerate(turn_batches(lines)):
-                if k: yield pcm(np.zeros(int(rate * 0.3), dtype='float32'))
-                made = self.speak_stream(turn_text(batch), voice, session, turn, keep=k == 0 and not inner)
+            prev = None
+            for k, ((inner, speed, gain), batch) in enumerate(turn_batches(lines)):
+                if prev: yield pcm(np.zeros(int(rate * gap_after(prev)), dtype='float32'))
+                made = louder(self.tempo(self.speak_stream(turn_text(batch), voice, session, turn, keep=k == 0 and not inner), speed), gain)
                 yield from (inner_voice(made, rate) if inner else made)
+                prev = batch[-1]
             self.prepare_later(session, [voice])
             return
         # 11/11 첫소리를 먼저(사용자): 대화 순서대로 필요할 때 만든다 — 그 턴에 한 번만 말하는 인물은 만드는 대로 흘려보내고,
@@ -651,7 +686,8 @@ class Speaker:
             for k, i in enumerate(idx): pieces[i] = trim_tail(wave[cuts[k] : cuts[k + 1]], rate)
         for i, line in enumerate(lines):
             voice = line.get('voice') or DEFAULT_VOICE
-            said = (lambda made: inner_voice(made, rate)) if line.get('inner') else (lambda made: made)   # 11/17 속마음 줄은 울림을 얹는다
+            speed, gain = feel(line.get('delivery'), line['text'])
+            said = (lambda made: inner_voice(louder(self.tempo(made, speed), gain), rate)) if line.get('inner') else (lambda made: louder(self.tempo(made, speed), gain))   # 11/17 속마음 줄은 울림을 얹는다 · 11/19 줄마다 빠르기·크기
             if len(groups[voice]) == 1: yield from said(self.speak_stream(turn_text([line]), voice, session, turn))
             else:
                 if i not in pieces: make(voice, groups[voice])
@@ -843,7 +879,7 @@ class Speaker:
             except Exception: return Response(b'voice not found', status_code=400)
             # 11/11 밤 방 단위 기억: 앱이 방(session)과 메시지(turn) 식별자를 주면 같은 방의 지난 턴을 이어 받는다. 없으면 예전처럼 턴마다 새로.
             ident = lambda v: v if isinstance(v, str) and 0 < len(v) <= 64 and all(c.isalnum() or c in '-_' for c in v) else None
-            return StreamingResponse(self.tempo(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn')))), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
+            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn'))), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 
@@ -880,8 +916,12 @@ def turn_text(lines):
 
 if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌는 줄에만 지시 · 고장 판별
     import numpy as _np
+    _f = turn_batches([{'text': '헉! 뭐야. 아 그게', 'parts': [{'text': '헉!', 'delivery': {'pace': 'fast'}}, {'text': '뭐야.', 'delivery': {'pace': 'fast'}}, {'text': '아 그게', 'delivery': {}}]}])
+    assert [(k, [l['text'] for l in x]) for k, x in _f] == [((False, 1.3, 1.0), ['헉!', '뭐야.']), ((False, TEMPO, 1.0), ['아 그게'])], _f
+    assert feel({'emotion': 'anxious', 'intensity': 'strong'}, 'a') == (1.3, 1.3) and feel({}, '[moaning] 아') == (TEMPO, 1.3)
+    assert gap_after({'delivery': {'pauseAfterMs': 0}}) == 0.12 and gap_after({}) == 0.3
     _b = turn_batches([{'text': '가' * 300}, {'text': '나' * 300}, {'text': '속', 'inner': True}, {'text': ('다' * 99 + '. ') * 9}])
-    assert [(i, len(x)) for i, x in _b][:3] == [(False, 1), (False, 1), (True, 1)] and all(sum(len(l['text']) for l in x) <= BATCH_CHARS for _, x in _b) and ''.join(l['text'] for _, x in _b[3:] for l in x).count('다') == 891
+    assert [(k[0], len(x)) for k, x in _b][:3] == [(False, 1), (False, 1), (True, 1)] and all(sum(len(l['text']) for l in x) <= BATCH_CHARS for _, x in _b) and ''.join(l['text'] for _, x in _b[3:] for l in x).count('다') == 891
     _e = b''.join(inner_voice([(_np.ones(4410, '<i2') * 1000).tobytes()] * 3, 44100)); assert len(_e) == (4410 * 3 + int(44100 * INNER_ECHO_S)) * 2
     _t = '오늘은 날씨가 참 좋아서 산책을 다녀왔어요. 기분이 좋네요.'; _r = 44100
     _tone = lambda secs: (0.2 * _np.sin(2 * _np.pi * 220 * _np.arange(int(_r * secs)) / _r)).astype('float32')
