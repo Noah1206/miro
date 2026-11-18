@@ -29,13 +29,16 @@ export function RoomVoicePanel({ sessionId, voice }: { sessionId: string; voice:
     })
   }
   // 11/10 사용자: 음성 모드 토글 아래 캐릭터 목록 — 줄마다 지금 목소리, 누르면 그 캐릭터의 목소리 목록이 펼쳐진다.
+  // 11/19 사용자: 줄마다 따로 떠 있던 상자를 한 묶음으로 — 제목 한 줄 + 한 카드 안에 가는 구분선.
   return (
-    <div style={{ display: 'grid', gap: 6, marginBottom: 10 }}>
-      {voice.speakers.map(s => {
+    <section aria-label={t('캐릭터 목소리')} style={{ marginBottom: 10 }}>
+      <p className="t-caption" style={{ margin: '0 0 6px 4px', color: 'var(--color-text-secondary)' }}>{t('캐릭터 목소리')}</p>
+      <div style={{ borderRadius: 12, background: 'var(--color-surface-2)', overflow: 'hidden' }}>
+      {voice.speakers.map((s, i) => {
         const id = picked[s.key] ?? ''
         const label = id ? voice.options.find(o => o.id === id)?.label ?? t('자동') : s.defaultLabel ? `${t('자동')} · ${s.defaultLabel}` : t('자동')
         const expanded = open === s.key
-        return <div key={s.key || 'main'} style={{ borderRadius: 12, background: 'var(--color-surface-2)' }}>
+        return <div key={s.key || 'main'} style={i ? { borderTop: '1px solid var(--color-border)' } : undefined}>
           <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : s.key)}
             style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 46, padding: '0 14px', border: 0, background: 'transparent', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -48,7 +51,8 @@ export function RoomVoicePanel({ sessionId, voice }: { sessionId: string; voice:
           </div>}
         </div>
       })}
-      {error && <p className="t-caption" role="alert" style={{ margin: 0, color: 'var(--color-danger)' }}>{error}</p>}
-    </div>
+      </div>
+      {error && <p className="t-caption" role="alert" style={{ margin: '6px 0 0', color: 'var(--color-danger)' }}>{error}</p>}
+    </section>
   )
 }

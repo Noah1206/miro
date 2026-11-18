@@ -2436,5 +2436,6 @@
   "어떤 상황에 틀까요? 예) 쫓기거나 급박한 순간 · 비워 두면 기본 음악": "When should it play? e.g. Being chased, a tense moment · Leave empty for default music",
   "음악": "Music",
   "음악 파일을 고르지 못했어요.": "Couldn't select the music file.",
-  "음악을 올리지 못했어요.": "Couldn't upload the music."
+  "음악을 올리지 못했어요.": "Couldn't upload the music.",
+  "캐릭터 목소리": "Character voices"
 }
