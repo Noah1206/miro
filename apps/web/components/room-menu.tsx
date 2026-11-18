@@ -77,7 +77,12 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   return <>
     {/* 11/16 사용자: 헤더에서도 음성 모드를 켠다 — 메뉴 버튼과 같은 크기의 스피커 아이콘, 켜면 라벤더색에 소리 물결. */}
     {available && <button type="button" role="switch" aria-checked={on} aria-label={t('음성 모드')} title={t('음성 모드')} className={`${styles.trigger} ${styles.voiceIcon}`} onClick={voiceToggle}>
-      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><g className={styles.voiceWaves}><path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18 6.8a7.5 7.5 0 0 1 0 10.4"/></g></svg>
+      {/* 11/19 사용자: 음성 버튼 다듬기 — 채운 스피커, 꺼짐은 작은 ×, 켜짐은 라벤더 바탕에 물결 두 겹이 번갈아 숨 쉰다. */}
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11.2 5.3 7.4 8.6H5.2a1.7 1.7 0 0 0-1.7 1.7v3.4a1.7 1.7 0 0 0 1.7 1.7h2.2l3.8 3.3a.7.7 0 0 0 1.15-.53V5.83a.7.7 0 0 0-1.15-.53Z" fill="currentColor" stroke="none"/>
+        <g className={styles.voiceWaves}><path d="M15.7 9.3a3.8 3.8 0 0 1 0 5.4"/><path d="M18.4 6.8a7.4 7.4 0 0 1 0 10.4"/></g>
+        <g className={styles.voiceMute}><path d="m16.5 9.8 4.2 4.4M20.7 9.8l-4.2 4.4"/></g>
+      </svg>
     </button>}
     <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
