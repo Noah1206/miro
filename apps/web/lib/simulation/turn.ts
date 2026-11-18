@@ -1,6 +1,6 @@
 import { DEFAULT_CHARACTER_STATE, recalledFor, visibleStatValues } from '@miro/domain'
 import { receiveMessenger, MessengerError } from '@/lib/messenger/inbox'
-import { resolveChatModel } from '@/lib/ai/chat-models'
+import { freeChatTurn, resolveChatModel } from '@/lib/ai/chat-models'
 import { rankSituationImages } from '@/lib/situation-ranking'
 import { eq, and, sql } from 'drizzle-orm'
 import { db, conversationRequests, characters, messages, memories, roleplaySessions } from '@miro/db'
@@ -143,15 +143,17 @@ async function executeTurn(opts: {
     let reservation: Reservation | null = null
     const balance = await usageStatus(userId)
     const availableTokens = balance.remaining + balance.rechargeRemaining
-    // 11/10 사용자: 잔액이 500 미만이면 대화를 시작하지 않는다(하루 무료 1,500 은 자정에 다시 채워진다).
-    if (availableTokens < MIN_TURN_BALANCE && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
-    // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
-    if (opts.tokenCeiling !== undefined && (!Number.isSafeInteger(opts.tokenCeiling) || opts.tokenCeiling < 0)) return { ok: false, reason: 'model_unavailable' }
-    const maximumTokens = Math.min(Math.max(model.quote.maximumTokens * thinkScale, model.floorTokens), availableTokens, opts.tokenCeiling ?? Infinity)
     // 11/16 음성 모드 턴은 읽는 대사만큼 더 받는다 — 모델 몫(maximumTokens) 위에 음성 몫을 따로 예약한다.
     const voiceOn = !!opts.voice && feature('characterVoice') && !voicePaused()
+    // 11/19 오픈 이벤트 무료 턴 — 잔액 검사·예약·차감 없이(잔액 0 이어도 대화). 사용자별 하루 AI 호출 한도(AI_USER_DAILY_LIMIT)는 그대로 걸린다.
+    const free = !voiceOn && freeChatTurn(dialogueModelId, now.getTime())
+    // 11/10 사용자: 잔액이 500 미만이면 대화를 시작하지 않는다(하루 무료 1,500 은 자정에 다시 채워진다).
+    if (!free && availableTokens < MIN_TURN_BALANCE && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
+    // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
+    if (opts.tokenCeiling !== undefined && (!Number.isSafeInteger(opts.tokenCeiling) || opts.tokenCeiling < 0)) return { ok: false, reason: 'model_unavailable' }
+    const maximumTokens = Math.min(Math.max(model.quote.maximumTokens * thinkScale, model.floorTokens), free ? Infinity : availableTokens, opts.tokenCeiling ?? Infinity)
     const maximumUSD = Math.min(model.quote.maximumUSD * thinkScale, maximumTokens * model.pricing.revenueKRWPerToken * model.pricing.costShare / model.pricing.fxKRWPerUSD)
-    if (resolveTurnPolicy({ ...policyInput, agencyReady: false }).metered) {
+    if (!free && resolveTurnPolicy({ ...policyInput, agencyReady: false }).metered) {
       try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, tokenAmount: Math.min(maximumTokens + (voiceOn ? VOICE_TOKENS_MAX : 0), availableTokens), idempotencyKey: `turn:${opts.requestId}` })) }
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     }
@@ -277,9 +279,9 @@ async function executeTurn(opts: {
 
     turnMeter.closed = true
     const costTokens = tokensForCost(turnMeter.customerCostUSD, model.pricing)
-    if (costTokens > (reservation ? maximumTokens : 0)) { await refund(); return { ok: false, reason: 'generation' } }
+    if (costTokens > (reservation || free ? maximumTokens : 0)) { await refund(); return { ok: false, reason: 'generation' } }
     // 11/14 사용자: 한 턴 최소 차감은 모델별(floorTokens) — 검증 없는 언베일 방도 같은 모델이면 일반 방과 같은 최소(예약 안에서만).
-    const actualTokens = reservation ? Math.min(Math.min(Math.max(costTokens, model.floorTokens), maximumTokens) + (voiceOn ? voiceTokens(transition.blocks as Array<Record<string, unknown>>) : 0), reservation.cost) : costTokens
+    const actualTokens = reservation ? Math.min(Math.min(Math.max(costTokens, model.floorTokens), maximumTokens) + (voiceOn ? voiceTokens(transition.blocks as Array<Record<string, unknown>>) : 0), reservation.cost) : free ? 0 : costTokens
     const responseText = renderBlocks(transition.blocks)
     // 상황별 사진 — 11/18 바베챗식: 답을 쓰는 AI 가 지금 장면의 사진 코드를 직접 고른다(images, 한 답에 최대 2장, 같은 사진 재사용 가능).
     // 예전엔 답 뒤에 분류 AI 를 한 번 더 불러 한 장만, 방에서 한 번 띄운 사진은 다시 안 썼다. 순번·허용(언베일 전용)은 엔진 검증기가 이미 걸렀다.

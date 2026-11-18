@@ -95,8 +95,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   // 11/18 사용자: 잔액이 최소(500)보다 적으면 보내지 않고 위에서 내려오는 빨간 토스트로 알린다. 서버도 같은 기준으로 막는다(turn.ts).
   const toast = useToast()
   const lowBalanceToast = () => toast(t('토큰이 {amount}개 이상 있어야 보낼 수 있어요', { amount: MIN_TURN_BALANCE.toLocaleString() }), 'error')
-  const lowBalance = wallet ? wallet.available < MIN_TURN_BALANCE : false
   const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
+  // 11/19 오픈 이벤트 무료 모델은 잔액과 상관없이 보낸다(음성 턴은 서버가 평소대로 막는다).
+  const lowBalance = wallet && !choice?.free ? wallet.available < MIN_TURN_BALANCE : false
   // 11/10 생각 강도 — 서버가 강도만큼 턴 한도를 늘리므로(turn.ts thinkScale) 보내는 상한도 같이 늘린다.
   // 11/10: 고른 적이 없으면 보내지 않는다 — 전엔 화면 기본값(high)이 매 턴 실려 모든 턴이 깊은 생각(느림·비용)으로 돌았다.
   const thinking = useChosenThinking()

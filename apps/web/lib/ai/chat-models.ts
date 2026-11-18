@@ -2,6 +2,9 @@ import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition }
 import { POLICY, tokenPricing, tokenQuote, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
+/** 11/19 사용자: 오픈 이벤트 — 11/20~11/26(KST) 채팅방 Haiku 대화는 토큰을 깎지 않는다(음성 턴은 평소대로). ponytail: 날짜 고정, 다음 이벤트 때 env 로. */
+const FREE_CHAT = { modelId: 'claude-haiku', from: Date.parse('2026-11-20T00:00:00+09:00'), until: Date.parse('2026-11-27T00:00:00+09:00') }
+export const freeChatTurn = (modelId: string, now = Date.now()) => modelId === FREE_CHAT.modelId && now >= FREE_CHAT.from && now < FREE_CHAT.until
 /**
  * 한 턴 최소 차감 = 그 모델·길이의 자기 견적(검증 모델 몫을 뺀 것) × 이 비율.
  * 11/16: 예전엔 검증 모델(Sonnet 급)이 낀 견적의 0.125 였다 — 싼 모델도 최소 11토큰이라 원가의 5~10배가 빠졌다(운영 10일: Luna 원가 8원에 73원, Haiku 9.2배, DeepSeek 4.9배).
@@ -26,7 +29,7 @@ export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
 const TIER_OF = { short: 'short', scene: 'miro', plus: 'plus', long: 'echo', saga: 'saga' } as const
 const LENGTHS = ['short', 'scene', 'plus', 'long', 'saga'] as const
-export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; typicalTokens: number; maxOutputTokens: number; thinking?: boolean }
+export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; typicalTokens: number; maxOutputTokens: number; thinking?: boolean; free?: boolean }
 /** 11/16 생각 강도가 실제로 먹는 모델만 — Claude·GPT 5/6·Gemini 3/4(3.5 Flash 는 생각을 끈 모델). DeepSeek·Grok·Gemma 는 화면에서 막대를 숨기고 서버도 무시한다. */
 export const modelThinks = (providerModelId: string) => /(^|\/)(claude-|gpt-[56]|gemini-(3-|3\.[1678]|4-))/.test(providerModelId)
 function availableModels(adult: boolean) {
@@ -116,8 +119,8 @@ export async function chatModelOptions(_userId: string, adult = false) {
       const pricing = pricingFor(model, base)
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
-      return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
-        maximumTokens: quote.maximumTokens, typicalTokens: liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId) }
+      return { id: choiceId(key, length), name: displayName(model.providerModelId) + (freeChatTurn(model.id) ? ' · 무료' : ''), provider: model.provider, length: tier.replyLength,
+        maximumTokens: quote.maximumTokens, typicalTokens: liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId), free: freeChatTurn(model.id) }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
   } catch { return { freeReady: false, proReady: false, choices: [] as ChatModelChoice[] } }
