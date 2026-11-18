@@ -288,6 +288,8 @@ function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, on
     onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); voice.replay(m, texts) } },
   } : { className: base }
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
+  // 11/19 마지막 블록이 아직 쓰는 중(서버 stream-blocks 의 partial) — 그 문단은 끝까지 쳐도 다음으로 넘어가지 않고 글이 더 오길 기다린다.
+  const writing = (m.blocks.at(-1) as { partial?: unknown } | undefined)?.partial === true
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
   const done = useRef(onDone)
@@ -300,7 +302,7 @@ function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, on
   const line = (p: Paragraph) => typing && p.index === typed
     ? (m.opening
       ? <TypedText text={p.text} mood="neutral" pace={1} maxParagraphMs={OPENING_PARAGRAPH_MS} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
-      : <TypedText text={p.text} mood={mood} pace={REPLY_TYPING_PACE} boost={voice.live ? 1 : replyTypingBoost(backlog(p.index))} maxParagraphMs={Infinity} sentencePausesOnly
+      : <TypedText text={p.text} mood={mood} pace={REPLY_TYPING_PACE} boost={voice.live ? 1 : replyTypingBoost(backlog(p.index))} maxParagraphMs={Infinity} sentencePausesOnly open={writing && p.index === count - 1}
           endPauseMs={boxEnds.has(p.index) ? BOX_END_PAUSE_MS : 260} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />)
     : <Emphasis text={p.text} />
 

@@ -138,7 +138,8 @@ export async function runTurn(opts: {
   // 11/16 캐시 배치: 지시문(+근거 규칙)과 최근 대화는 턴마다 그대로라 앞에, 반복 금지 자료·이번 턴 지시·입력은 뒤에 — 앞부분을 공급자가 캐시한다.
   const stableSystem = context.system + '\n' + USER_GROUNDING_RULE
 
-  const draftStream = opts.stream && !communicationPreferences.length && !feature('strictConversationReview') ? blockStream(snapshot, opts.stream) : undefined
+  // 11/19 사용자(응답 속도): 말투 요청이 있는 방도 흘려 보낸다 — 예전엔 검사 뒤에 보여 주려고 통째로 기다려 첫 글이 17~23초. 검사에 걸리면 onAttempt·onReset 이 지우고 다시 쓴다.
+  const draftStream = opts.stream && !feature('strictConversationReview') ? blockStream(snapshot, opts.stream) : undefined
   const generated = opts.spokenReply !== undefined ? null : (async () => {
     let repair = ''
     for (let attempt = 0; attempt <= 2; attempt++) {

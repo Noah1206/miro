@@ -13,7 +13,7 @@ import { TYPING_MS_PER_CHAR, charsPerTick, msPerChar, pauseAfter } from './typin
  *
  * 애니메이션을 줄이는 설정(prefers-reduced-motion)이면 통째로 보여준다.
  */
-export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs, sentencePausesOnly = false, endPauseMs = 0, boost = 1 }: {
+export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs, sentencePausesOnly = false, endPauseMs = 0, boost = 1, open = false }: {
   text: string
   mood?: Mood
   onDone?: () => void
@@ -30,6 +30,8 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
   endPauseMs?: number
   /** 1 보다 크면 그 배수만큼 빨리 친다. 치는 도중에 바뀌어도 다시 시작하지 않고 다음 글자부터 따른다 — 밀린 글 따라잡기(11/16). */
   boost?: number
+  /** 11/19 아직 쓰는 중인 문단 — 끝까지 쳐도 onDone 하지 않고 글이 늘어나길 기다린다. 늘어나면 친 데서부터 이어 친다. */
+  open?: boolean
 }) {
   const reduce = useReducedMotion()
   const instant = !animate || reduce
@@ -44,11 +46,14 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
   const fast = useRef(boost)
   fast.current = Math.max(1, boost)
   useEffect(() => { grow.current?.() }, [shown])
+  // 11/19 늘어나는 글(쓰는 중인 문단)은 처음부터 다시 치지 않고 친 자리에서 이어 친다.
+  const pos = useRef(0), prev = useRef('')
 
   useEffect(() => {
     if (instant) { setShown(text.length); done.current?.(); return }
-    setShown(0)
-    let i = 0
+    let i = text.startsWith(prev.current) ? Math.min(pos.current, text.length) : 0
+    prev.current = text
+    setShown(i)
     let timer: ReturnType<typeof setTimeout>
     const { mood, pace, maxParagraphMs, sentencePausesOnly, endPauseMs } = rhythm
     const speed = msPerChar(text, mood, pace, maxParagraphMs)
@@ -58,13 +63,15 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
     const step = () => {
       const now = speed / fast.current, chunk = charsPerTick(now)
       i = Math.min(text.length, i + chunk)
+      pos.current = i
       setShown(i)
-      if (i >= text.length) { if (endPauseMs) timer = setTimeout(() => done.current?.(), endPauseMs / fast.current); else done.current?.(); return }
+      if (i >= text.length) { if (open) return; if (endPauseMs) timer = setTimeout(() => done.current?.(), endPauseMs / fast.current); else done.current?.(); return }
       timer = setTimeout(step, now * chunk + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood, sentencePausesOnly) * pace * squeeze / fast.current)
     }
+    if (i >= text.length && text.length) { if (!open) timer = setTimeout(() => done.current?.(), endPauseMs / fast.current); return () => clearTimeout(timer) }
     timer = setTimeout(step, speed / fast.current * charsPerTick(speed / fast.current))
     return () => clearTimeout(timer)
-  }, [text, instant, rhythm])
+  }, [text, instant, rhythm, open])
 
   // 자르는 위치가 **강조** 한가운데면 별표가 글자로 보인다 — 짝이 맞는 데까지만 넘긴다.
   const visible = instant ? text : trimToPair(text.slice(0, shown))

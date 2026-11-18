@@ -79,7 +79,7 @@ describe('persistent communication preference evidence', () => {
 })
 
 describe('ordinary character chat preference enforcement', () => {
-  it('rewrites an old-preference violation before streaming, while preserving authored voice', async () => {
+  it('rewrites an old-preference violation, clearing the streamed draft (11/19 streams before review), while preserving authored voice', async () => {
     const calls: Array<{ task?: string; system: string; prompt: string }> = []
     let renders = 0
     const llm: LLMProvider = {
@@ -89,15 +89,18 @@ describe('ordinary character chat preference enforcement', () => {
         if (request.task === 'agency_verify') return request.schema.parse(recordedConversationReview(request, { acceptable: renders > 1, blockIndex: 0 }))
         renders++
         const p = { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: renders === 1 ? '완벽하게 잘하셨어요!' : '두 번째 문장이 깁니다. 둘로 나눠 보세요.' }] } }
+        request.onAttempt?.()   // 실제 공급자처럼 시도마다 — 앞 시도 글을 화면에서 지운다
         request.onText?.(JSON.stringify(p))
         return request.schema.parse(p)
       },
     }
     const visible: string[][] = []
+    let resets = 0
     const result = await runTurn({ llm, snapshot: snapshot({ experienceType: 'chat', turnCount: 120, memories: [preference] }),
-      userInput: '이 문장을 봐 줘.', stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { throw new Error('Draft leaked') } } })
+      userInput: '이 문장을 봐 줘.', stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { resets++; visible.length = 0 } } })
     expect(renders).toBe(2)
-    expect(visible).toEqual([['두 번째 문장이 깁니다. 둘로 나눠 보세요.']])
+    expect(resets).toBe(1)
+    expect(visible.at(-1)).toEqual(['두 번째 문장이 깁니다. 둘로 나눠 보세요.'])
     expect(result.transition.blocks[0]!.text).toBe('두 번째 문장이 깁니다. 둘로 나눠 보세요.')
     expect(calls.filter(call => call.task === 'agency_verify')).toHaveLength(2)
     expect(calls[0]!.system).toContain('짧은 존대')
