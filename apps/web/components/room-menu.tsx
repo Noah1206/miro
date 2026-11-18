@@ -6,7 +6,6 @@ import type { CharacterEntry } from '@/lib/character-entry'
 import type { AccountProfile } from '@/lib/account-profile'
 import { useAccountProfile } from '@/components/account-profile-provider'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
-import { ChatThemeOptions } from '@/components/chat-theme'
 import { LogoMark, useToast } from '@/components/ui'
 import { CharacterPhoto } from '@/components/character-visual'
 import { ConversationPersona } from '@/components/conversation-persona'
@@ -70,7 +69,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   }, [request, refreshProfile, refreshBalance])
   const close = () => setOpen(false)
   const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('AI 모델'), theme: t('채팅방 테마'), memory: t('기억 노트'), note: t('유저노트') }
-  const tiles: Panel[] = ['persona', 'model', 'theme', 'memory', 'note']
+  const tiles: Panel[] = ['persona', 'model', 'memory', 'note']   // 11/19 사용자: 채팅방 테마 고르기 삭제(늘 기본 테마)
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   const voiceToggle = () => { if (!on) toast(t('음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요')); toggle() }
@@ -116,7 +115,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {panel && <div id={`${menuId}-detail`} role="region" aria-labelledby={`${menuId}-${panel}`} className={styles.detail}>
           <div className={styles.detailHead}><strong>{titles[panel]}</strong><button type="button" aria-label={t('상세 설정 닫기')} onClick={() => { document.getElementById(`${menuId}-${panel}`)?.focus(); setPanel(null) }}>×</button></div>
           {panel === 'persona' && <ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/>}
-          {panel === 'theme' && <ChatThemeOptions compact portrait={portrait}/>}
           {panel === 'memory' && <MemoryGraphView sessionId={sessionId} refreshKey={turnCount}/>}
           {panel === 'model' && <ChatModelOptions choices={choices}/>}
         </div>}

@@ -5,7 +5,6 @@ import type { StoryEntry } from '@miro/domain'
 import { StoryBriefing } from '@/components/stories/story-briefing'
 import { StoryPassage } from '@/components/stories/story-passage'
 import { Back, Button, Sheet, Switch, TransitionLink } from '@/components/ui'
-import { ChatThemePicker } from '@/components/chat-theme'
 import { MessengerThread } from '../../../messages/[sessionId]/thread'
 import messengerStyles from '../../../messages/[sessionId]/messages.module.css'
 import { ChatSendIcon } from '@/components/chat-input-tools'
@@ -156,7 +155,6 @@ export function StoryPlay(p: Props) {
           <h1 className={messengerStyles.title}>{names.get(tab)}</h1>
           <TransitionLink href={`/stories/play/${p.runId}`} className={messengerStyles.headerLink}>{t('이야기 이어가기')}</TransitionLink>
           <Button type="button" variant="ghost" size="sm" onClick={() => setProgressOpen(true)}>{t('진행')}</Button>
-          <ChatThemePicker />
         </header>
         <p className={messengerStyles.notice} style={{ padding: '8px 12px' }}>{p.title} · {t('{n}회차', { n: p.runNo })}</p>
         <MessengerThread characterName={names.get(tab) ?? ''} portrait={images.get(tab)} items={[

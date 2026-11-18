@@ -28,11 +28,8 @@ export function ChatTheme({ sessionId, children }: { sessionId?: string; childre
   useEffect(() => {
     const read = () => {
       try {
-        const saved = localStorage.getItem(key), shared = localStorage.getItem(DEFAULT_THEME_KEY)
-        const ownAt = Number(localStorage.getItem(`${key}:at`) ?? 0), sharedAt = Number(localStorage.getItem(`${DEFAULT_THEME_KEY}:at`) ?? 0)
-        // The latest explicit choice wins: a library choice updates existing rooms;
-        // a later choice inside one room only changes that room.
-        const current = valid(saved) && ownAt >= sharedAt ? saved : valid(shared) ? shared : DEFAULT_THEME
+        // 11/19 사용자: 테마 고르기를 없앴다 — 예전에 인스타·카톡을 골라 둔 방도 모두 기본 테마로.
+        const current = DEFAULT_THEME
         setTheme(current); rememberForPush(sessionId, current)
       } catch { setTheme(DEFAULT_THEME) }
     }
