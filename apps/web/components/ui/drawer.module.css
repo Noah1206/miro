@@ -5,5 +5,5 @@
 .panel { --color-text-primary:#f5f5f5; --color-text-secondary:#d0d0d0; --color-text-tertiary:#b5b5b5; --color-surface-1:#303032; --color-surface-2:#3c3c3f; --color-surface-3:#48484b; display:flex; flex-direction:column; flex:0 0 auto; width:min(88%,360px); height:100%; min-height:0; background:#272729; color:var(--color-text-primary); border:0; border-radius:18px 0 0 18px; pointer-events:auto; touch-action:pan-y; outline:none; color-scheme:dark; }
 .header { display:flex; align-items:center; gap:12px; flex:0 0 auto; min-height:calc(68px + env(safe-area-inset-top,0px)); padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px; border:0; touch-action:pan-y; }
 .title { margin:0; font-size:17px; font-weight:550; line-height:1.4; outline:none; }
-.content { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 18px 24px; }
+.content { flex:1; min-height:0; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; padding:0 18px 24px; }   /* 11/19 사용자: 서랍(☰) 안이 옆으로 밀리지 않게 — 가로는 숨기고 세로만 스크롤 */
 .footer { flex:0 0 auto; padding:6px 18px max(10px,env(safe-area-inset-bottom,0px)); background:#2e2e31; }

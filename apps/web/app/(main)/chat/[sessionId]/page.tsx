@@ -35,7 +35,7 @@ import { RoomMenu } from '@/components/room-menu'
 import { feature, voicePaused } from '@miro/config'
 import { castNames } from '@miro/engine'
 import { coverTitle } from '@/lib/editorial/cover-title'
-import { heroineName } from '@/lib/editorial/heroine-name'
+import { heroineName, leadName } from '@/lib/editorial/heroine-name'
 import { fillCharacterMacros } from '@miro/domain'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
 import { modalImageReady } from '@/lib/ai/modal-image'
@@ -81,8 +81,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     const names = Object.keys(rec.ensembleVoices ?? {}).sort()
     const labelOf = (id: string | null | undefined) => options.find(o => o.id === id)?.label.split(' · ')[0] ?? null
     const auto = (slot: number) => labelOf(pickAutoVoice(official, loaded!.characterId, rec.audience, slot))
-    // 11/11 사용자: 등장인물이 있는 작품은 작품 이름 줄(주 화자)을 빼고 인물만 보인다.
-    const speakers = [...(names.length ? [] : [{ key: '', name: loaded!.characterName, defaultLabel: labelOf(rec.voiceId) ?? auto(0) }]),
+    // 11/11 사용자: 등장인물이 있는 작품은 작품 이름 줄(주 화자)을 빼고 인물만 보인다. 11/19 1:1 작품도 작품 이름 대신 작품 안 인물 이름(leadName).
+    const speakers = [...(names.length ? [] : [{ key: '', name: leadName({ name: loaded!.characterName, secret: loaded!.snapshot.character.personality.secret, personality: loaded!.snapshot.character.personality.personality, cast: loaded!.snapshot.character.worldRole.cast }), defaultLabel: labelOf(rec.voiceId) ?? auto(0) }]),
       ...names.map((n, i) => ({ key: n, name: n, defaultLabel: labelOf(rec.ensembleVoices![n]) ?? auto(i + 1) }))]
     return { speakers, options, overrides: ov?.o ?? {} }
   })() : undefined
