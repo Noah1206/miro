@@ -36,7 +36,8 @@ export function Emphasis({ text }: { text: string }) {
   if (spans.length === 1 && spans[0]!.style === 'plain') return <>{text}</>
   return <>{spans.map((s, i) => (
     <Fragment key={i}>
-      {s.style === 'bold' ? <strong>{s.text}</strong> : s.style === 'italic' ? <em>{s.text}</em> : s.text}
+      {/* 11/19: 섞인 줄의 보통 글자도 span 으로 — 글자만 있으면 CSS 가 뒤의 *상황*을 em:last-child 로 봐서 대사와의 한 칸 여백을 지웠다. */}
+      {s.style === 'bold' ? <strong>{s.text}</strong> : s.style === 'italic' ? <em>{s.text}</em> : <span>{s.text}</span>}
     </Fragment>
   ))}</>
 }

@@ -87,6 +87,9 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   // 이미 화면에 있던 메시지는 다시 치지 않는다. 처음 열 때 전부 다시 치면 대화가 재생된다.
   const seen = useRef<Set<string> | null>(null)
   if (seen.current === null) seen.current = new Set(items.map(keyOf))
+  // 11/19 사용자: 보낸 말풍선은 살짝 올라오며 붙는다 — 방을 열 때 이미 있던 줄은 움직이지 않게 처음 목록을 따로 기억한다.
+  const initialKeys = useRef<Set<string> | null>(null)
+  if (initialKeys.current === null) initialKeys.current = new Set(items.map(keyOf))
   for (const id of quiet) if (!voice.held(id)) seen.current.add(playbackKeys.get(id) ?? id)
   const last = items[items.length - 1]
   // 치는 중인 메시지는 한 번 정해지면 다음 메시지가 올 때까지 바뀌지 않는다 — 백그라운드 refresh 로 목록이 갈려도 타이핑이 끊기지 않는다.
@@ -177,7 +180,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       } : undefined}>
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
-          <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
+          <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} data-fresh={m.role === 'user' && !initialKeys.current!.has(keyOf(m)) || undefined} layout={false} {...(quiet.has(m.id) || m.role === 'user' || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b]) && !endingReady([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }}
               inline={inline.get(m.id)} renderPhoto={p => <Message key={p.id} m={p} characterName={characterName} veil={veilPhotos ? sessionId : undefined} onGrow={follow} />} />

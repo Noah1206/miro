@@ -710,3 +710,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .flowText, .flowText .flowLine, .flowText .thought { font-size: 14px; line-height: 21px; letter-spacing: -.2px; }
 .flowText p + p { margin-top: 8px; }
 :global([data-chat-theme='miro']) .userBubble { font-size: 14px; line-height: 21px; }
+/* 11/19 사용자: 보낸 말풍선이 아래에서 살짝 올라오며 붙는다(새로 보낸 줄만, data-fresh). */
+.messageLine[data-fresh] .userBubble { animation: userRise 320ms cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes userRise { from { opacity: .3; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .messageLine[data-fresh] .userBubble { animation: none; } }
+/* 11/19 사용자: 입력창 위쪽 여백을 8px 줄이고(카드 위 6→4, 입력 줄 위 6→0) 그만큼 글 칸을 늘린다 — 카드 전체 높이는 그대로. */
+:global([data-chat-theme]) .composerForm.composerForm { padding-top: 4px; }
+.inputRow, :global([data-chat-theme]) .inputRow { padding-top: 0; }
+.inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height: 72px; }
+@media (max-width: 767px) { .inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height: 52px; } }
