@@ -739,3 +739,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .typingBubble { background: linear-gradient(100deg, rgba(255,255,255,.06) 35%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.06) 65%) 0 0 / 250% 100%; animation: bubbleShimmer 1.8s linear infinite; }
 @keyframes bubbleShimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
 @media (prefers-reduced-motion: reduce) { .typingDots i { animation: none; background: var(--dot-2); transform: none; } :global([data-chat-theme='miro']) .typingBubble { animation: none; } }
+/* 11/19 사용자(스크린샷): 기본 테마의 기다리는 말풍선은 왼쪽 가장자리에(한 덩어리 글 카드와 같은 줄), 꼬리 없이 둥글게, 양옆 여백 16 → 12px. */
+:global([data-chat-theme='miro']) .typingBubble { margin-left: 0; padding: 12px; border-radius: 16px; }
+:global([data-chat-theme='miro']) .typingBubble::before { display: none; }
