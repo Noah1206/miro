@@ -17,6 +17,9 @@ PROMPTS = {
     'wet-2': 'wet squelching sounds, sticky slippery friction, steady rhythmic pumping, close-up foley, no music',
     # 11/17 사용자: 흐르는 느낌 말고 쏟아져 나오는 느낌으로 다시
     'wet-3': 'thick wet squelching with liquid suddenly gushing and spurting out in bursts, sloppy splashing squirts, rhythmic, close-up foley, no music',
+    # 11/19 사용자: 오랄 때 빠는 소리가 없다 — 침 섞인 흡입·쪽쪽·목 깊이 넣을 때 헛구역질 숨
+    # 헛구역질(억억)은 이 모델이 사람 목소리로 못 낸다 — 캐릭터 목소리가 낸다. 효과음은 침·흡입·입술 소리만.
+    'suck': 'wet sloppy sucking and slurping, lots of saliva, lips popping and smacking, suction, rhythmic, close-up foley, no voice, no music',
     'slap': 'rhythmic skin slapping, flesh clapping against flesh, steady pace, close-up foley, no music',
 }
 VARIANTS, SECONDS = 4, 8.0
