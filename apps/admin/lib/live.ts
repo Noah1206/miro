@@ -27,7 +27,7 @@ const EVENTS: Record<string, [string, Category]> = {
   login: ['로그인', 'auth'], logout: ['로그아웃', 'auth'], signup: ['가입', 'auth'], account_deleted: ['계정 삭제', 'auth'],
   page_viewed: ['화면 이동', 'page'], archive_opened: ['보관함 열기', 'page'], upgrade_viewed: ['요금제 보기', 'page'],
   character_created: ['캐릭터 만들기', 'create'], character_selected: ['캐릭터 선택', 'chat'], rp_started: ['채팅 시작', 'chat'],
-  rp_message_sent: ['메시지 전송', 'chat'], ai_ok: ['AI 응답 수신', 'chat'], scene_changed: ['장면 전환', 'chat'], event_triggered: ['이야기 사건', 'chat'],
+  rp_message_sent: ['메시지 전송', 'chat'], ai_ok: ['AI 응답 수신', 'chat'], ai_pending: ['AI 응답 생성 중', 'chat'], scene_changed: ['장면 전환', 'chat'], event_triggered: ['이야기 사건', 'chat'],
   story_ending: ['결말 도달', 'chat'], unveil_enabled: ['언베일 켜기', 'chat'], photo: ['사진 생성', 'create'],
   call_started: ['통화 시작', 'chat'], call_completed: ['통화 종료', 'chat'], call_unanswered: ['통화 못 받음', 'chat'],
   reality_contact_sent: ['캐릭터가 먼저 연락', 'chat'], reality_contact_opened: ['먼저 온 연락 열기', 'chat'],
@@ -76,7 +76,7 @@ export async function events(opts: { since?: Date; limit?: number; userId?: stri
       from analytics_events e left join characters c on c.id::text = e.props->>'characterId'
       where e.created_at >= ${since} and e.event <> 'home_viewed'
       union all
-      select 'a:' || a.id, a.created_at, a.user_id, null, case when a.ok then 'ai_ok' else 'ai_error' end,
+      select 'a:' || a.id, a.created_at, a.user_id, null, case when a.ok then 'ai_ok' when a.status = 'reserved' then 'ai_pending' else 'ai_error' end, -- reserved = 시작 때 미리 넣는 줄(ok=false·0초), 실패가 아니다
         a.task || ' · ' || a.model || ' · ' || round(a.latency_ms / 1000.0, 1) || '초'
       from ai_usage a where a.created_at >= ${since} and a.user_id is not null and a.task not like 'agency%'
       union all
