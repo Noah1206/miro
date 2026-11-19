@@ -121,7 +121,8 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
     <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
-      <RoomGallery sessionId={sessionId} open={open}/>
+      {/* 11/19 사용자: 채팅방 메뉴에서는 갤러리를 뺀다 — 문자방 메뉴에는 그대로. */}
+      {messenger && <RoomGallery sessionId={sessionId} open={open}/>}
       <section className={styles.account} aria-label={t('내 프로필')}>
         <TransitionLink href="/my" className={styles.identity} aria-label={t('내 프로필')} onClick={close}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <span className="avatar-default"><LogoMark size={20} label=""/></span>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></TransitionLink>
         <div className={styles.wallet} aria-label={t('보유 토큰')}>
