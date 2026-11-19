@@ -12,7 +12,7 @@ export default async function LanguagePage() {
   if (!user) redirect('/login')
   const [current, t] = await Promise.all([getLanguage(), getT()])
   return (
-    <SettingsPage title={t('언어')}>
+    <SettingsPage title={t('언어')} back="/my/settings">
       <div className="stack" style={{ gap: 8 }}>
         {(Object.keys(LANGUAGES) as Language[]).map((l) => (
           // 옅게는 폼에 — 버튼(Pressable)이 제 불투명도를 스스로 다룬다.

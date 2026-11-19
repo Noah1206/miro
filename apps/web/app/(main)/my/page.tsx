@@ -1,24 +1,19 @@
 import { redirect } from 'next/navigation'
-import { and, eq, isNull, sql } from 'drizzle-orm'
-import { db, messages, roleplaySessions } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { Page, TransitionLink } from '@/components/ui'
 import { accountProfile } from '@/lib/account-profile'
 import { walletSnapshot } from '@/lib/wallet/service'
-import { LANGUAGES } from '@miro/domain'
 import { getLanguage, getT } from '@/lib/i18n/server'
 import { OPERATOR } from '@/lib/legal/operator'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { SiteFooter } from '@/components/site-footer'
 import { logout } from './actions'
-import { MenuItemContent, MenuRow, MenuSection } from './menu'
+import { MenuRow, MenuSection } from './menu'
 import { CreditCard } from './credit-card'
 import { AttendanceCard } from './attendance-card'
 import { attendanceStatus } from '@/lib/attendance'
 import { ProfileIdentity } from './profile-editor'
-import { InstallAppButton } from '@/components/pwa-install'
 import { ProfileIcon } from './profile-icon'
-import { VerificationSheet } from './verify/verification-sheet'
 import { faqList } from '@/lib/faq'
 import styles from './my.module.css'
 
@@ -30,43 +25,27 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   const coupon = (await searchParams).coupon?.trim().slice(0, 40) || null
   if (coupon) redirect(`/my/subscription?coupon=${encodeURIComponent(coupon)}`)
   if (!user) redirect('/login?next=/my')
-  const [t, language] = await Promise.all([getT(), getLanguage()])
+  // 11/20 본인인증 줄은 설정 페이지로 옮겼다 — 인증을 마치고 돌아오는 예전 주소는 그리로 넘긴다.
   const { verify, r } = await searchParams
+  if (verify === '1') redirect(`/my/settings?verify=1${r ? `&r=${encodeURIComponent(r)}` : ''}`)
+  const [t, language] = await Promise.all([getT(), getLanguage()])
 
-  const [[sessions], [talk], profile, wallet, attendance] = await Promise.all([
-    // 만난 캐릭터 = 대화방을 연 캐릭터 수, 대화 중 = 이어지는 대화방 수(지운 방 제외).
-    db.select({
-      met: sql<number>`count(distinct ${roleplaySessions.characterId})::int`,
-      active: sql<number>`(count(*) filter (where ${roleplaySessions.status} = 'active'))::int`,
-    }).from(roleplaySessions).where(and(eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt))),
-    // 총 대화량 = 내가 보낸 말 수.
-    db.select({ n: sql<number>`count(*)::int` }).from(messages)
-      .innerJoin(roleplaySessions, eq(roleplaySessions.id, messages.sessionId))
-      .where(and(eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), eq(messages.role, 'user'))),
+  // 11/20 사용자: 만난 캐릭터·대화 중·총 대화량 숫자 줄을 뺐다(그 조회도 함께).
+  const [profile, wallet, attendance] = await Promise.all([
     accountProfile(user),
     walletSnapshot(user.id),
     attendanceStatus(user.id),
   ])
-  // 닉네임 = 온보딩에서 받은 이름(내 페르소나 이름, 캐릭터가 나를 부르는 이름). 없던 예전 계정은 계정 이름.
-  const stats = [
-    { label: t('만난 캐릭터'), value: sessions?.met ?? 0 },
-    { label: t('대화 중'), value: sessions?.active ?? 0 },
-    { label: t('총 대화량'), value: talk?.n ?? 0 },
-  ]
-
   return (
     <Page wide className={styles.page}>
       <div className={styles.content}>
       <header className={styles.header}>
         <h1>{t('프로필')}</h1>
-        <a href="#profile-settings" className={styles.settingsButton} aria-label={t('설정으로 이동')}><ProfileIcon name="settings" size={24} /></a>
+        <TransitionLink href="/my/settings" className={styles.settingsButton} aria-label={t('설정')}><ProfileIcon name="settings" size={24} /></TransitionLink>
       </header>
       <section className={styles.identity} aria-label={t('내 프로필')}>
       <ProfileIdentity initial={profile} email={user.email} />
 
-      <dl className={styles.stats}>
-        {stats.map((s) => <div key={s.label}><dt>{s.label}</dt><dd>{s.value.toLocaleString()}</dd></div>)}
-      </dl>
       </section>
 
       <CreditCard initial={wallet} />
@@ -77,12 +56,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href="/my/characters" label={t('내가 만든 캐릭터')} icon="characters" />
           <MenuRow href="/my/likes" label={t('좋아요한 캐릭터')} icon="heart" />
           <MenuRow href="/persona?next=/my" label={t('페르소나')} icon="persona" />
-        </MenuSection>
-        <MenuSection title={t('앱 설정')} id="profile-settings">
-          <InstallAppButton className={styles.row}><MenuItemContent label={t('홈 화면에 추가')} icon="download" /></InstallAppButton>
-          <MenuRow href="/my/language" label={t('언어')} end={LANGUAGES[language]} icon="globe" />
-          <VerificationSheet initiallyVerified={!!user.adultVerifiedAt} autoOpen={verify === '1'} result={r} />
-          <MenuRow href="/my/permissions" label={t('알림·접근 권한')} icon="bell" />
         </MenuSection>
         <MenuSection title={t('고객지원')}>
           <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} icon="help" />{/* 11/12 사용자: 이메일 주소는 표시하지 않음(누르면 메일 앱) */}

@@ -31,7 +31,7 @@ export default async function PermissionsPage() {
     { kind: 'image' as const, label: t('이미지 업로드'), why: t('Face Cast 참고 이미지로만 사용하며, 실존 인물 기반 성적 표현에는 사용하지 않습니다.'), at: s?.imageUploadConsentAt },
   ]
   return (
-    <SettingsPage title={t('권한')}>
+    <SettingsPage title={t('권한')} back="/my/settings">
       <Stagger className="stack" style={{ gap: 10 }}>
         {/* 알림: 캐릭터가 앱 밖에서 먼저 연락하는 길. 이 기기에서 켜고, 켠 기기 전부에 확인용 알림을 보내 볼 수 있다 (2026-09-29). */}
         <StaggerItem>

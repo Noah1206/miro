@@ -25,7 +25,6 @@ export function ProfileIdentity({ initial, email }: { initial: AccountProfile; e
       <p className={styles.name}>{profile.name}</p>
       {email && <p className={styles.email}>{email}</p>}
     </div>
-    <ProfileEditor nickname={profile.name} avatarUrl={profile.avatarUrl} />
   </div>
 }
 
