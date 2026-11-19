@@ -11,7 +11,9 @@ export const UNDO = 'miro:undo'
 export const ENDING_VIEW = 'miro:ending-view'
 
 /** 지금 오고 있는 답(10/9 스트리밍) — 보낸 말과, 저장 전에 받은 블록. 저장된 답이 오면 그것으로 바뀐다. */
-export type LiveTurn = { input: string; blocks: Array<Record<string, unknown>>; playbackId?: string }
+export type LiveTurn = { input: string; blocks: Array<Record<string, unknown>>; playbackId?: string
+  /** 11/20 오고 있는 답의 상황 사진 — after: 보이는 블록 몇 개 뒤(null = 답 끝). */
+  photos?: Array<{ url: string; after: number | null }> }
 type Turns = {
   appended: Msg[]
   /** quiet: 이미 스트리밍으로 보여 준 답 — 다시 타이핑하지 않는다. */

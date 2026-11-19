@@ -37,7 +37,9 @@ export async function POST(req: Request): Promise<Response> {
       const live = /^[0-9a-f-]{36}$/i.test(sessionId) ? beginLive(sessionId, user.id, mode, String(form.get('input') ?? '').trim()) : null
       try {
         state = await turnFromForm(user.id, form, { mode, path: (id) => mode === 'messenger' ? `/messages/${id}` : `/chat/${id}`,
-          stream: { onBlocks: (blocks) => { live?.blocks(blocks); send({ type: 'blocks', blocks }) }, onReset: () => { live?.reset(); send({ type: 'reset' }) } },
+          stream: { onBlocks: (blocks) => { live?.blocks(blocks); send({ type: 'blocks', blocks }) }, onReset: () => { live?.reset(); send({ type: 'reset' }) },
+            // 11/20 상황 사진 — 자리가 정해진 것부터 보낸다(화면은 글이 그 자리에 오면 바로 띄운다).
+            onPhotos: (photos) => send({ type: 'photos', photos: photos.flatMap(p => p.url ? [{ url: p.url, after: p.after }] : []) }) },
           // 리롤: 옛 턴을 되돌린 순간 알린다 — 화면이 옛 답을 지우고 새 답을 기다린다.
           onUndone: (ids) => send({ type: 'undone', ids }) })
       } catch {

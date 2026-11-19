@@ -12,7 +12,9 @@ export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null)
   // visual playback must not inherit a failed stream's already-seen rows.
   const playback = `${requestId}:${crypto.randomUUID()}`
   let attempt = 0
-  const live = (blocks: LiveTurn['blocks']): LiveTurn => ({ input, blocks, playbackId: `${playback}:${attempt}` })
+  // 11/20 오고 있는 답의 상황 사진(자리 포함) — 블록과 따로 와서 마지막 블록과 함께 넘긴다.
+  let blocks: LiveTurn['blocks'] = [], photos: NonNullable<LiveTurn['photos']> = []
+  const live = (next: LiveTurn['blocks']): LiveTurn => { blocks = next; return { input, blocks, photos, playbackId: `${playback}:${attempt}` } }
   // 액션 안에서 첫 await 전의 상태 변경은 액션이 끝날 때까지 미뤄진다 — 한 박자 넘겨 보낸 말이 바로 보이게.
   await Promise.resolve()
   if (input) onLive(live([]))
@@ -27,9 +29,10 @@ export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null)
     for (let nl = buffer.indexOf('\n'); nl >= 0; nl = buffer.indexOf('\n')) {
       const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1)
       if (!line.trim()) continue
-      const event = JSON.parse(line) as { type: 'blocks'; blocks: LiveTurn['blocks'] } | { type: 'reset' } | { type: 'undone'; ids: string[] } | { type: 'done'; state: TurnState }
+      const event = JSON.parse(line) as { type: 'blocks'; blocks: LiveTurn['blocks'] } | { type: 'photos'; photos: NonNullable<LiveTurn['photos']> } | { type: 'reset' } | { type: 'undone'; ids: string[] } | { type: 'done'; state: TurnState }
       if (event.type === 'blocks') onLive(live(event.blocks))
-      else if (event.type === 'reset') { attempt++; onLive(live([])) }
+      else if (event.type === 'photos') { photos = event.photos; onLive(live(blocks)) }
+      else if (event.type === 'reset') { attempt++; photos = []; onLive(live([])) }
       else if (event.type === 'undone') onUndone?.(event.ids)
       else {
         // The persisted result completes a turn. A proxy may keep the transport open afterwards.

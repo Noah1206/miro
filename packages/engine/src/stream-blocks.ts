@@ -1,10 +1,18 @@
 import { RpBlock, type SimulationProposal } from './proposal.schema'
-import { allowedBlocks } from './validator'
+import { allowedBlocks, sceneImages } from './validator'
 import type { SimulationSnapshot } from './context'
 
 export type StreamBlock = SimulationProposal['rp']['blocks'][number]
+/** 11/20 스트리밍 중 상황 사진 — index: 상황 사진 순번, after: 그 사진이 들어갈 자리(보이는 블록 몇 개 뒤, null = 답 끝). url 은 웹이 채운다. */
+export type StreamPhoto = { index: number; after: number | null; url?: string }
 /** 대사 스트리밍(10/9)을 받는 쪽 — 지금까지 다 닫힌 블록 전체, 그리고 새 시도가 시작돼 앞에서 보여 준 것을 지워야 할 때. */
-export type TurnStream = { onBlocks(blocks: StreamBlock[]): void; onReset(): void; onFirstText?(): void }
+export type TurnStream = { onBlocks(blocks: StreamBlock[]): void; onReset(): void; onFirstText?(): void; onPhotos?(photos: StreamPhoto[]): void }
+
+/** 11/20 AI 가 rp 앞에 먼저 쓴 images 배열(다 닫혔을 때만) — 코드 목록. 아직 없으면 null. */
+function earlyImageCodes(text: string): string[] | null {
+  const m = /"images"\s*:\s*\[([^\]]*)\]/.exec(text)
+  return m ? [...m[1]!.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map(x => x[1]!) : null
+}
 
 /**
  * 아직 다 오지 않은 대사 JSON 에서 rp.blocks 의 다 닫힌 항목만 꺼낸다. 문자열 안의 괄호는 세지 않는다.
@@ -62,13 +70,28 @@ function scanBlocks(text: string): { done: unknown[]; open: string | null } {
  * 늘었을 때만 넘긴다. 아직 검증 전 답이다 — 최종본은 저장 뒤에 따로 간다. dropWorld: 자율성 경로는 npc·world 블록을 걷어 낸다.
  */
 export function blockStream(snapshot: SimulationSnapshot, stream: TurnStream, opts: { dropWorld?: boolean } = {}) {
-  let shown = 0, started = false, openLen = 0, openAt = 0
+  let shown = 0, started = false, openLen = 0, openAt = 0, picks: ReturnType<typeof sceneImages> | null = null, sentPhotos = ''
   const keep = (b: StreamBlock) => !opts.dropWorld || (b.type !== 'npc' && b.type !== 'world')
+  // 11/20 사용자: 사진은 글이 그 자리에 왔을 때 바로 — AI 가 rp 앞에 고른 사진을, 자리를 알 수 있게 된 것부터 보낸다(자리 계산은 검증기와 같은 규칙).
+  const photos = (parsed: StreamBlock[]) => {
+    if (!picks || !stream.onPhotos) return
+    const out: StreamPhoto[] = []
+    for (const p of picks) {
+      if (p.fill || p.after === null) { out.push({ index: p.index, after: p.after }); continue }
+      if (parsed.length < p.after) continue   // 아직 그 블록까지 안 왔다
+      const kept = allowedBlocks(parsed.slice(0, p.after), snapshot).length
+      out.push({ index: p.index, after: kept >= 1 ? kept : null })
+    }
+    const key = JSON.stringify(out)
+    if (key !== sentPhotos) { sentPhotos = key; stream.onPhotos(out) }
+  }
   return {
-    onAttempt() { if (shown || openLen) stream.onReset(); shown = 0; openLen = 0 },
+    onAttempt() { if (shown || openLen) stream.onReset(); shown = 0; openLen = 0; picks = null; sentPhotos = '' },
     onText(text: string) {
       if (!started && text) { started = true; stream.onFirstText?.() }
       const parsed = completedBlocks(text).flatMap(raw => { const r = RpBlock.safeParse(raw); return r.success ? [r.data] : [] }).filter(keep)
+      if (!picks && stream.onPhotos) { const codes = earlyImageCodes(text); if (codes) picks = sceneImages(snapshot, codes) }
+      photos(parsed)
       const blocks = allowedBlocks(parsed, snapshot)
       // 11/19 쓰는 중인 블록도 붙인다(partial 표시, 화면은 늘어나는 대로 이어 친다). 글이 늘었을 때만, 120ms 에 한 번 — 매 조각마다 전체를 보내지 않게.
       const raw = openBlock(text), open = raw && typeof raw.text === 'string' && raw.text.trim() ? RpBlock.safeParse(raw) : null

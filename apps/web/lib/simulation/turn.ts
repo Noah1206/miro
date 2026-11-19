@@ -205,7 +205,10 @@ async function executeTurn(opts: {
       const ranking = await Promise.race([situationRanking, new Promise<null>(r => setTimeout(() => r(null), 1500))])
       if (ranking) prepared.snapshot.situationRanking = ranking
       marks.model = at()
-      const stream = opts.stream && { ...opts.stream, onFirstText: () => { marks.firstText ??= at() }, onBlocks: (blocks: Parameters<TurnStream['onBlocks']>[0]) => { marks.firstBlock ??= at(); opts.stream!.onBlocks(blocks) } }
+      // 11/20 스트리밍 사진 — 엔진은 순번만 안다, 주소는 여기서 붙인다.
+      const photoUrl = (i: number) => charSettings?.situationImages?.[i]?.image
+      const stream = opts.stream && { ...opts.stream, onFirstText: () => { marks.firstText ??= at() }, onBlocks: (blocks: Parameters<TurnStream['onBlocks']>[0]) => { marks.firstBlock ??= at(); opts.stream!.onBlocks(blocks) },
+        onPhotos: (photos: Parameters<NonNullable<TurnStream['onPhotos']>>[0]) => opts.stream!.onPhotos?.(photos.flatMap(p => { const url = photoUrl(p.index); return url ? [{ ...p, url }] : [] })) }
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
         () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context) }))
@@ -290,6 +293,8 @@ async function executeTurn(opts: {
     const sceneImages = charSettings?.situationImages ?? []
     // 11/18 사용자: 답 중간, AI 가 고른 블록 바로 뒤에(after = 저장 블록의 1부터 센 번호, null 이면 답 끝).
     const situationImages = (transition.images ?? []).flatMap((i, k) => { const url = sceneImages[i]?.image; return url ? [{ url, after: transition.imagesAfter?.[k] ?? null }] : [] })
+    // 11/20 저장 전 마지막으로 확정 자리를 한 번 더 — 스트리밍 중 못 정한 사진(답 끝 등)도 저장본과 같은 자리에 미리 뜬다.
+    opts.stream?.onPhotos?.((transition.images ?? []).map((index, k) => ({ index, after: transition.imagesAfter?.[k] ?? null, url: sceneImages[index]?.image })).filter(p => p.url))
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,
       providerMode: result.providerMode, characterState: result.characterState, firedRules: result.firedRules,

@@ -214,9 +214,11 @@ const text = (description?: string) => ({ type: 'string', ...(description ? { de
  * 자율성 경로의 대사가 실제로 쓰는 칸만 공급자에게 강제한다(Gemini responseJsonSchema). 나머지 칸(사건·NPC·선연락·기억)은 그 경로가 어차피
  * 걷어 내므로 받지 않는다. 10/17 기준표: 형식 오류($:invalid_type·rp.blocks:too_small)가 대사 호출의 약 9% — 다시 쓰느라 그 턴이 늦었다.
  * 11/3: 블록 설명의 분량 하한(650자·서술 80자)은 뺐다 — 사용자 결정(하한 없음).
- * 칸 순서가 출력 순서다 — rp 가 먼저 와야 첫 블록이 바로 화면에 나간다(10/17 직접 측정: 순서 유지, 첫 조각 시간 차이 없음).
+ * 칸 순서가 출력 순서다 — rp 가 먼저 와야 첫 블록이 바로 화면에 나간다(10/17 직접 측정: 순서 유지, 첫 조각 시간 차이 없음). 11/20 예외: 짧은 images 칸만 rp 앞(아래).
  */
 export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 'object', properties: {
+  // 11/20 사용자: 사진은 글이 그 자리에 왔을 때 바로 — 사진 코드를 rp 보다 먼저 쓰게 맨 앞 칸(스트리밍이 자리를 미리 안다). 코드 몇 개라 첫 글자가 늦는 건 아주 조금.
+  images: { type: 'array', description: 'Write this FIRST, before rp. Only when the card lists scene photos: plan the scene, then give codes of the listed photos that fit it, at least 3 and at most 5 (all if fewer are listed), each as "code:N" = shown right after rp block N (1-based) — then write rp so block N is that moment, e.g. "p3:4". Otherwise [].', items: { type: 'string' } },
   rp: { type: 'object', properties: { blocks: { type: 'array', description: 'Follow the length rule (분량) in the system prompt: a standard scene is about 12 to 18 items; short replies only when that rule says so. Up to 30 items.', items: { type: 'object', properties: {
     type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('name of the person speaking or acting for dialogue/action/thought (in a multi-heroine card, that heroine — never the card title); omit for narrative'),
     text: text('narrative: 2-4 sentences. action: 1-3 sentences. dialogue: 1-4 sentences. thought: one or two short colloquial lines.'),
@@ -233,7 +235,6 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
   sceneDelta: { type: 'object', properties: { location: text('only a place the user moved to in this input'), time: text(), mood: text(), weather: text() } },
   status: text('Only when the card defines a status window format: that format filled in for this scene. Otherwise omit.'),
   statValues: { type: 'object', description: 'Only when the card defines stats: { stat name: new number } for every stat. Otherwise omit.', additionalProperties: { type: 'number' } },
-  images: { type: 'array', description: 'Only when the card lists scene photos: codes of the listed photos closest to this scene, at least 3 and at most 5 (all if fewer are listed), each as "code:N" = shown right after rp block N (1-based), e.g. "p3:4". Otherwise [].', items: { type: 'string' } },
 }, required: ['rp'] }
 
 /** 11/11 음성 모드가 꺼진 방 — 대사 블록에 숨은 음성 칸(delivery·speech)이 없는 같은 스키마. 그 출력이 답 분량(토큰)을 깎았다. */

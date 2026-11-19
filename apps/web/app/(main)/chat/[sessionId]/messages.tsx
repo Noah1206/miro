@@ -66,6 +66,15 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     anchored.add(m.id)
     inline.set(reply.id, [...(inline.get(reply.id) ?? []), { block, photo: m }])
   })
+  // 11/20 사용자: 오고 있는 답에도 사진이 그 자리에 바로 — 블록이 그 자리까지 오면(쓰는 중인 블록 말고) 그 뒤에, 자리가 없거나 아직 못 오면 답 끝(타이핑이 끝나야 보임).
+  if (live?.photos?.length && live.blocks.length && !voice.live) {
+    const id = `${liveKey}:reply`
+    live.photos.forEach((p, k) => {
+      const at = p.after ? live.blocks[p.after - 1] : undefined
+      const block = at && !at.partial ? at : {}
+      inline.set(id, [...(inline.get(id) ?? []), { block, photo: { id: `${liveKey}:photo:${k}`, role: 'character', kind: 'photo', content: p.url, blocks: [] } }])
+    })
+  }
   const settled = merged.filter((m) => !anchored.has(m.id))
   const items = [...settled, ...liveItems]
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
