@@ -26,7 +26,6 @@ import type { UserPersona } from '@miro/domain'
 import type { CustomPhotoScene } from '@/lib/photo-scenes'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink, useToast } from '@/components/ui'
-import { TestChat } from './test-chat'
 import { VoiceList, type VoiceOption } from './voice-list'
 import { CastProfiles, CastVoices, MBTI_TYPES, castJson, castPhotosJson, castProfilesJson, type CastMember } from './cast-editor'
 import { CommandEditor } from './command-editor'
@@ -214,7 +213,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
       window.removeEventListener('pagehide', save)
     }
   }, [storageKey])
-  const [previewMode, setPreviewMode] = useState('detail')
   const [snap, setSnap] = useState<Snapshot | null>(null)
   const refreshSnap = () => { if (formRef.current) setSnap((prev) => { if (prev) [prev.photo, ...prev.gallery].forEach(url => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url) }); return snapshot(formRef.current!) }) }
   const openTab = (next: CreateTab) => {
@@ -587,11 +585,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* ── 소개 페이지 ── */}
         {tab !== 'preview' && <StepNav tab={tab} onTab={openTab} />}
         <Panel id="preview" show={tab === 'preview' || (desktop && tab !== 'intro')}>
-          <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: t('소개 페이지') }, { value: 'chat', label: t('테스트 채팅') }]} /></div>
-          {/* 테스트 채팅(10/19) — 미리보기를 연 시점의 인트로를 깔고, 보낼 때마다 폼을 다시 읽어 지금 설정으로 답한다. */}
-          {previewMode === 'detail' ? <DetailPreview d={snap} can={can} experienceType={experienceType} />
-            : snap && <TestChat key={snap.name} form={() => formRef.current} name={snap.name}
-                intro={introDialogue(snap.settings.character.sampleDialogue).map(turn => ({ role: turn.role as 'character' | 'narrator', text: turn.text }))} />}
+          {/* 11/19 사용자: 테스트 채팅 버튼을 뺐다 — 미리보기는 소개 페이지만. */}
+          <DetailPreview d={snap} can={can} experienceType={experienceType} />
         </Panel>
 
       </form>
