@@ -203,7 +203,7 @@ export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   /** 11/10 스탯 새 값 { 이름: 값 } — 서버가 작품 스탯 정의·범위로 자른다. */
   statValues: z.record(z.number()).optional().catch(undefined),
   // 11/18 바베챗식 사진 — 상황별 사진 코드(p1…), 답 중간에 넣을 땐 'p3:2'(2번째 블록 뒤).
-  images: z.array(z.string().max(12)).max(4).optional().catch(undefined),
+  images: z.array(z.string().max(12)).max(8).optional().catch(undefined),
 }))
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>
@@ -233,7 +233,7 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
   sceneDelta: { type: 'object', properties: { location: text('only a place the user moved to in this input'), time: text(), mood: text(), weather: text() } },
   status: text('Only when the card defines a status window format: that format filled in for this scene. Otherwise omit.'),
   statValues: { type: 'object', description: 'Only when the card defines stats: { stat name: new number } for every stat. Otherwise omit.', additionalProperties: { type: 'number' } },
-  images: { type: 'array', description: 'Only when the card lists scene photos: codes of photos whose situation is happening in this scene now, max 2, each as "code:N" = shown right after rp block N (1-based), e.g. "p3:4". Otherwise [].', items: { type: 'string' } },
+  images: { type: 'array', description: 'Only when the card lists scene photos: codes of the listed photos closest to this scene, at least 3 and at most 5 (all if fewer are listed), each as "code:N" = shown right after rp block N (1-based), e.g. "p3:4". Otherwise [].', items: { type: 'string' } },
 }, required: ['rp'] }
 
 /** 11/11 음성 모드가 꺼진 방 — 대사 블록에 숨은 음성 칸(delivery·speech)이 없는 같은 스키마. 그 출력이 답 분량(토큰)을 깎았다. */

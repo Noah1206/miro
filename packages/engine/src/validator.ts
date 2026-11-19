@@ -1,4 +1,4 @@
-import { castNames } from './context'
+import { castNames, relevantSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
@@ -68,7 +68,9 @@ export function validateProposal(
     statValues: snapshot.character.worldRole.stats?.length ? clampStatValues(snapshot.character.worldRole.stats, snapshot.statValues ?? {}, proposal.statValues) : null,
     images: photos.map(p => p.index),
     // AI 가 센 블록 번호는 검증 전 블록 기준 — 그 앞까지를 같은 규칙으로 걸러 남은 수가 저장될 자리다. 끝이거나 번호가 없으면 답 끝.
-    imagesAfter: photos.map(p => {
+    imagesAfter: photos.map((p, k) => {
+      // 서버가 채운 사진은 답 사이사이에 고르게(k 번째 → 블록 수를 장수+1 로 나눈 자리)
+      if (p.fill) { const at = Math.round(((k + 1) * blocks.length) / (photos.length + 1)); return at >= 1 && at < blocks.length ? at : null }
       if (p.after === null) return null
       const kept = allowedBlocks(proposal.rp.blocks.slice(0, p.after), snapshot).length
       return kept >= 1 && kept < blocks.length ? kept : null
@@ -300,16 +302,26 @@ function validateNpcActions(
 
 export type { SimulationEvent }
 
-/** 11/18 AI 가 고른 사진 코드(p1… 또는 'p3:4' = 4번째 블록 뒤) → 순번·자리. 목록 밖·언베일 아닌 방의 언베일 전용 사진·중복은 버리고 최대 2장. */
-function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null }> {
+/**
+ * 11/18 AI 가 고른 사진 코드(p1… 또는 'p3:4' = 4번째 블록 뒤) → 순번·자리. 목록 밖·언베일 아닌 방의 언베일 전용 사진·중복은 버리고 최대 5장.
+ * 11/19 사용자: 한 턴에 최소 3장 — AI 가 덜 고르면 지금 대화와 가까운 순(relevantSituationImages)으로 채운다(fill).
+ */
+const MIN_PHOTOS = 3, MAX_PHOTOS = 5
+function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null; fill?: boolean }> {
   const list = s.character.worldRole.situationImages ?? []
-  const out: Array<{ index: number; after: number | null }> = []
+  const out: Array<{ index: number; after: number | null; fill?: boolean }> = []
   for (const code of codes ?? []) {
     const m = /^p(\d{1,4})\s*(?:[:@>]\s*(\d{1,3}))?$/i.exec(code.trim())
     const i = Number(m?.[1]) - 1
     if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.some(o => o.index === i)) continue
     out.push({ index: i, after: m?.[2] ? Number(m[2]) : null })
-    if (out.length === 2) break
+    if (out.length === MAX_PHOTOS) break
+  }
+  if (out.length < MIN_PHOTOS && list.length) {
+    for (const e of relevantSituationImages(s)) {
+      if (out.length >= MIN_PHOTOS) break
+      if (!out.some(o => o.index === e.i)) out.push({ index: e.i, after: null, fill: true })
+    }
   }
   return out
 }
