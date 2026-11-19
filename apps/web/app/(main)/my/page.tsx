@@ -3,8 +3,7 @@ import { currentUser } from '@/lib/auth'
 import { Page, TransitionLink } from '@/components/ui'
 import { accountProfile } from '@/lib/account-profile'
 import { walletSnapshot } from '@/lib/wallet/service'
-import { getLanguage, getT } from '@/lib/i18n/server'
-import { OPERATOR } from '@/lib/legal/operator'
+import { getT } from '@/lib/i18n/server'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { SiteFooter } from '@/components/site-footer'
 import { logout } from './actions'
@@ -14,7 +13,6 @@ import { AttendanceCard } from './attendance-card'
 import { attendanceStatus } from '@/lib/attendance'
 import { ProfileIdentity } from './profile-editor'
 import { ProfileIcon } from './profile-icon'
-import { faqList } from '@/lib/faq'
 import styles from './my.module.css'
 
 /** Account overview: identity, real wallet balance, activity, settings and support. */
@@ -28,7 +26,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   // 11/20 본인인증 줄은 설정 페이지로 옮겼다 — 인증을 마치고 돌아오는 예전 주소는 그리로 넘긴다.
   const { verify, r } = await searchParams
   if (verify === '1') redirect(`/my/settings?verify=1${r ? `&r=${encodeURIComponent(r)}` : ''}`)
-  const [t, language] = await Promise.all([getT(), getLanguage()])
+  const t = await getT()
 
   // 11/20 사용자: 만난 캐릭터·대화 중·총 대화량 숫자 줄을 뺐다(그 조회도 함께).
   const [profile, wallet, attendance] = await Promise.all([
@@ -57,19 +55,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href="/my/likes" label={t('좋아요한 캐릭터')} icon="heart" />
           <MenuRow href="/persona?next=/my" label={t('페르소나')} icon="persona" />
         </MenuSection>
-        <MenuSection title={t('고객지원')}>
-          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} icon="help" />{/* 11/12 사용자: 이메일 주소는 표시하지 않음(누르면 메일 앱) */}
-          <MenuRow href="/my/ai-data" label={t('AI 개선 참여')} icon="data" />
-        </MenuSection>
-        {/* 11/13 사용자: 홈에 있던 자주 묻는 질문을 프로필 섹션으로. 원문 한국어라 한국어 화면에서만. */}
-        {language === 'ko' && <MenuSection title="자주 묻는 질문">
-          {faqList().map(([q, a]) => (
-            <details key={q} className={styles.faq}>
-              <summary className={styles.row}><span className={styles.rowCopy}><span className={styles.rowLabel}>{q}</span></span><span className={styles.chevron}><ProfileIcon name="chevron" size={16} /></span></summary>
-              <p>{a}</p>
-            </details>
-          ))}
-        </MenuSection>}
       </div>
       <div className={styles.accountActions}>
         <form action={logout}><SubmitButton variant="ghost" size="sm" style={{ color: 'var(--profile-muted)', fontSize: 13, fontWeight: 450, padding: '8px 0' }}>{t('로그아웃')}</SubmitButton></form>

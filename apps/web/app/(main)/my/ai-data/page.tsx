@@ -19,6 +19,6 @@ export default async function AIDataPage() {
   const user = await requireUser()
   const [u] = await db.select().from(users).where(eq(users.id,user.id))
   const t = await getT()
-  return <SettingsPage title={t('AI 개선 참여')}>
+  return <SettingsPage title={t('AI 개선 참여')} back="/my/settings">
     <ConsentForm save={save} initial={{ allowTraining: !!u?.allowTraining, allowEvaluation: !!u?.allowEvaluation }} /></SettingsPage>
 }
