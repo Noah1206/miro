@@ -71,7 +71,8 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       {/* 11/20 사용자: 프로필(사진·이름)과 보유 토큰을 한 카드로. */}
       <div className={styles.profileCard}>
         <section className={styles.identity} aria-label={t('내 프로필')}>
-          <ProfileIdentity initial={profile} email={user.email} />
+          {/* 11/20 사용자: 이메일은 표시하지 않는다. */}
+          <ProfileIdentity initial={profile} email={null} />
         </section>
         <CreditCard initial={wallet} />
       </div>
