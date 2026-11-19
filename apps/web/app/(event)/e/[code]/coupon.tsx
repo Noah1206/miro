@@ -17,7 +17,7 @@ export function EventCoupon({ code, myCode, invited, coupon, referral }: Props) 
   const [origin, setOrigin] = useState('')
   useEffect(() => setOrigin(location.origin), [])
   const shareUrl = origin ? (myCode ? `${origin}/r/${myCode}` : `${origin}/e/${encodeURIComponent(code)}`) : ''
-  const useHref = `/my?coupon=${encodeURIComponent(code)}#coupon`
+  const useHref = `/my/subscription?coupon=${encodeURIComponent(code)}#coupon`
 
   const copyText = async (text: string) => {
     try { await navigator.clipboard.writeText(text); return true } catch {

@@ -29,11 +29,14 @@
 .balance img { display: block; flex-shrink: 0; }
 .balance > span:not(:global(.sr-only)) { overflow-wrap: anywhere; }
 .chargeButton { min-width: 96px; flex-shrink: 0; }
-.balanceDetails { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; padding-top: 15px; border-top: 1px solid var(--profile-divider); }
-.balanceDetails > div { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
-.balanceDetails > div + div { border-left: 1px solid var(--profile-divider); padding-left: 16px; }
-.balanceDetails dt { color: var(--profile-muted); font-size: 12px; }
-.balanceDetails dd { margin: 0; max-width: 100%; font-size: 14px; font-weight: 550; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* 11/19 토스식 누름 — 상자·줄을 누르면 살짝 작아졌다가 돌아온다. 안의 버튼·입력칸을 누를 땐 상자는 그대로(버튼만 줄어듦). */
+.pressCard, .row, .credit { transition: transform 160ms cubic-bezier(.2, .8, .2, 1), opacity 160ms, background-color 160ms; -webkit-tap-highlight-color: transparent; }
+.pressCard { cursor: pointer; }
+.pressCard:active:not(:has(a:active, button:active)) { transform: scale(.975); }
+.credit:not(.pressCard):active:not(:has(a:active, button:active, input)) { transform: scale(.985); }
+.row:active { transform: scale(.97); opacity: .8; }
+.tokenVars { --profile-surface: #262626; --profile-control: #303030; --profile-text: #f7f7f7; --profile-muted: #aaa; --profile-divider: #ffffff0e; color: var(--profile-text); }
+@media (prefers-reduced-motion: reduce) { .pressCard:active, .credit:active, .row:active { transform: none !important; } }
 
 .sections { display: flex; flex-direction: column; gap: 26px; margin-top: 28px; }
 .menu { scroll-margin-top: 24px; }

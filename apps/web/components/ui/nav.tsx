@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { LoginProvider } from './social-button'
 import { DesktopChats } from './desktop-chats'
 import { usePathname } from 'next/navigation'
@@ -42,6 +42,15 @@ const ITEMS = [
  */
 export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; providers?: LoginProvider[] }) {
   const [collapsed, setCollapsed] = useState(false)
+  // 보이는 화면(visualViewport)이 fixed 기준(innerHeight)보다 아래로 길면 그만큼 탭을 내린다. 키보드로 줄어들 땐 0(올리지 않음).
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const root = document.documentElement
+    const fit = () => root.style.setProperty('--vv-shift', `${Math.max(0, Math.round(vv.height + vv.offsetTop - window.innerHeight))}px`)
+    fit(); vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); window.addEventListener('scroll', fit, { passive: true })
+    return () => { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); window.removeEventListener('scroll', fit) }
+  }, [])
   const pathname = usePathname()
   const t = useT()
   const askLogin = useLoginSheet()

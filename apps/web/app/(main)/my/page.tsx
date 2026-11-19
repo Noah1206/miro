@@ -14,9 +14,7 @@ import { logout } from './actions'
 import { MenuItemContent, MenuRow, MenuSection } from './menu'
 import { CreditCard } from './credit-card'
 import { AttendanceCard } from './attendance-card'
-import { CouponCard } from './coupon-card'
 import { attendanceStatus } from '@/lib/attendance'
-import { myReferral } from '@/lib/referral'
 import { ProfileIdentity } from './profile-editor'
 import { InstallAppButton } from '@/components/pwa-install'
 import { ProfileIcon } from './profile-icon'
@@ -28,12 +26,14 @@ import styles from './my.module.css'
 export default async function MyPage({ searchParams }: { searchParams: Promise<{ verify?: string; r?: string; coupon?: string }> }) {
   const user = await currentUser()
   // 11/18 이벤트 페이지의 '미로에서 쓰러 가기'(/my?coupon=…) — 로그인 뒤 쿠폰 칸이 채워진 채로 돌아오게.
+  // 11/19 쿠폰 칸은 토큰 페이지(/my/subscription)로 옮겼다 — 예전 링크는 그리로 넘긴다.
   const coupon = (await searchParams).coupon?.trim().slice(0, 40) || null
-  if (!user) redirect(`/login?next=${encodeURIComponent(`/my${coupon ? `?coupon=${encodeURIComponent(coupon)}` : ''}`)}`)
+  if (coupon) redirect(`/my/subscription?coupon=${encodeURIComponent(coupon)}`)
+  if (!user) redirect('/login?next=/my')
   const [t, language] = await Promise.all([getT(), getLanguage()])
   const { verify, r } = await searchParams
 
-  const [[sessions], [talk], profile, wallet, attendance, referral] = await Promise.all([
+  const [[sessions], [talk], profile, wallet, attendance] = await Promise.all([
     // 만난 캐릭터 = 대화방을 연 캐릭터 수, 대화 중 = 이어지는 대화방 수(지운 방 제외).
     db.select({
       met: sql<number>`count(distinct ${roleplaySessions.characterId})::int`,
@@ -46,7 +46,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
     accountProfile(user),
     walletSnapshot(user.id),
     attendanceStatus(user.id),
-    myReferral(user.id),
   ])
   // 닉네임 = 온보딩에서 받은 이름(내 페르소나 이름, 캐릭터가 나를 부르는 이름). 없던 예전 계정은 계정 이름.
   const stats = [
@@ -72,7 +71,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
 
       <CreditCard initial={wallet} />
       <AttendanceCard initial={attendance} />
-      <CouponCard referral={referral} initialCode={coupon} />
 
       <div className={styles.sections}>
         <MenuSection title={t('내 활동')}>
