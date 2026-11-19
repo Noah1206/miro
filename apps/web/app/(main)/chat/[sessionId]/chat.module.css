@@ -757,3 +757,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .turnCard .statusCard summary { padding: 10px 12px 6px; }
 /* 11/19 사용자: 기다리는 말풍선 왼쪽 끝을 답 카드와 한 줄에 — 입력창 바깥 여백(8px)과 대화 여백(16px)의 차이만큼 민다. */
 :global([data-chat-theme='miro']) .typingBubble { margin-left: 8px; }
+/* 11/19 사용자: 긴 제목이 음성 토글 밑으로 지나갔다 — 제목 줄 안에서 줄어들지 않던 제목(flex:none)을 줄어들게 해 토글 앞에서 말줄임. */
+.headerTitleRow .title { flex: 0 1 auto; min-width: 0; }
