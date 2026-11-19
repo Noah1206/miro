@@ -68,12 +68,13 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         <h1>{t('프로필')}</h1>
         <TransitionLink href="/my/settings" className={styles.settingsButton} aria-label={t('설정')}><ProfileIcon name="settings" size={24} /></TransitionLink>
       </header>
-      <section className={styles.identity} aria-label={t('내 프로필')}>
-      <ProfileIdentity initial={profile} email={user.email} />
-
-      </section>
-
-      <CreditCard initial={wallet} />
+      {/* 11/20 사용자: 프로필(사진·이름)과 보유 토큰을 한 카드로. */}
+      <div className={styles.profileCard}>
+        <section className={styles.identity} aria-label={t('내 프로필')}>
+          <ProfileIdentity initial={profile} email={user.email} />
+        </section>
+        <CreditCard initial={wallet} />
+      </div>
       <AttendanceCard initial={attendance} />
 
       <div className={styles.sections}>

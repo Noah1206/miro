@@ -89,3 +89,7 @@
 .rowIcon svg { width: 20px; height: 20px; }
 .row > .chevron { display: none; }
 .faq > summary > .chevron { display: flex; }
+/* 11/20 사용자: 프로필과 보유 토큰을 한 카드로 — 카드 하나에 프로필 줄, 얇은 선, 토큰 줄. */
+.profileCard { border-radius: 14px; background: var(--profile-surface); overflow: hidden; }
+.profileCard .identity { margin: 0; padding: 18px 20px 16px; }
+.profileCard .credit { border-radius: 0; background: transparent; border-top: 1px solid var(--profile-divider); }
