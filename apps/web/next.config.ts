@@ -60,7 +60,6 @@ const config: NextConfig = {
       // /api/cron 은 제외 — pg_cron(Supabase)이 옛 주소로 부르는데 308 을 따라가지 않아 크론이 멈췄다(10/5 21:30~).
       { source: '/:path((?!api/cron).*)', has: [{ type: 'host', value: 'miro-web-ashen.vercel.app' }], destination: 'https://miroapp.app/:path', permanent: true },
       ...['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })),
-      { source: '/my/settings', destination: '/my', permanent: false },
     ]
   },
 }
