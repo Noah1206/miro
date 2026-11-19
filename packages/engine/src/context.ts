@@ -845,7 +845,7 @@ NPC action: {npcId:existing id,action:string,basedOn:string[]}; max 3.
 Reality intent: {channel:message|push|photo|voice_message|status|missed_call|voice_call|video_call,reason:string,urgency:0..1}.`
 
 const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
-{"rp":{"blocks":[{BLOCKS}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
+{"images":[],"rp":{"blocks":[{BLOCKS}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
 Block type: dialogue|action|narrative|npc|world|thought; speaker is a name or null (thought: this character's own unspoken inner voice). text: 1..2000 characters.
 World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
 Scene: {location?:string,time?:string,mood?:string,weather?:string}.${LEGACY_STATE_CONTRACT}`
