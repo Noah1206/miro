@@ -81,3 +81,11 @@
 .camera { position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
   background: var(--color-white); color: var(--color-black); border: 2px solid var(--color-surface-2); }
 .personaLink { position: relative; align-self: center; font-size: 13px; color: var(--color-text-tertiary); text-decoration: underline; text-underline-offset: 3px; }
+/* 11/20 사용자: 메뉴 줄을 참고 화면처럼 — 줄 사이 선 없이, 아이콘은 어두운 둥근 네모 칸 안에, 오른쪽 화살표는 펼치는 줄에만. */
+.menuItems { padding: 6px 14px; border-radius: 14px; }
+.row { gap: 14px; min-height: 56px; padding: 8px 0; }
+.row + .row, .faq + .faq { border-top: 0; }
+.rowIcon { width: 38px; height: 38px; border-radius: 10px; background: var(--profile-bg, #1c1c1c); color: #9a9a9a; }
+.rowIcon svg { width: 20px; height: 20px; }
+.row > .chevron { display: none; }
+.faq > summary > .chevron { display: flex; }

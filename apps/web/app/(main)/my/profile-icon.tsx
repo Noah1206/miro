@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type ProfileIconName = 'settings' | 'chat' | 'characters' | 'heart' | 'persona' | 'globe' | 'shield' | 'bell' | 'download' | 'help' | 'data' | 'chevron'
+export type ProfileIconName = 'settings' | 'chat' | 'characters' | 'heart' | 'persona' | 'globe' | 'shield' | 'bell' | 'download' | 'help' | 'data' | 'logout' | 'trash' | 'chevron'
 
 const paths: Record<ProfileIconName, ReactNode> = {
   settings: <><path d="m9.5 3-.7 2.3-2 .9-2.2-.6-2 3.4 1.6 1.7v2.6l-1.6 1.7 2 3.4 2.2-.6 2 .9.7 2.3h4.9l.7-2.3 2-.9 2.2.6 2-3.4-1.6-1.7v-2.6l1.6-1.7-2-3.4-2.2.6-2-.9-.7-2.3z" /><circle cx="12" cy="12" r="3" /></>,
@@ -14,6 +14,8 @@ const paths: Record<ProfileIconName, ReactNode> = {
   download: <><path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4" /></>,
   help: <><path d="M4 13v-2a8 8 0 0 1 16 0v2M20 16v2a3 3 0 0 1-3 3h-3" /><rect x="3" y="11" width="4" height="7" rx="2" /><rect x="17" y="11" width="4" height="7" rx="2" /></>,
   data: <><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8ZM19 16v5m-2.5-2.5h5" /></>,
+  logout: <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9" />,
+  trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
   chevron: <path d="m9 5 7 7-7 7" />,
 }
 

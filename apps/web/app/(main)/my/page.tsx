@@ -4,7 +4,6 @@ import { Page, TransitionLink } from '@/components/ui'
 import { accountProfile } from '@/lib/account-profile'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { getT } from '@/lib/i18n/server'
-import { SubmitButton } from '@/components/ui/submit-button'
 import { SiteFooter } from '@/components/site-footer'
 import { logout } from './actions'
 import { MenuRow, MenuSection } from './menu'
@@ -55,10 +54,12 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href="/my/likes" label={t('좋아요한 캐릭터')} icon="heart" />
           <MenuRow href="/persona?next=/my" label={t('페르소나')} icon="persona" />
         </MenuSection>
-      </div>
-      <div className={styles.accountActions}>
-        <form action={logout}><SubmitButton variant="ghost" size="sm" style={{ color: 'var(--profile-muted)', fontSize: 13, fontWeight: 450, padding: '8px 0' }}>{t('로그아웃')}</SubmitButton></form>
-        <span aria-hidden="true">·</span><TransitionLink href="/my/delete">{t('계정 삭제')}</TransitionLink>
+        {/* 11/20 사용자: 로그아웃·계정 삭제를 한 블록으로 — 누르면 아래로 두 줄이 펼쳐진다. */}
+        <details className={`${styles.menuItems} ${styles.faq}`}>
+          <summary className={styles.row}><span className={styles.rowIcon}><ProfileIcon name="persona" /></span><span className={styles.rowCopy}><span className={styles.rowLabel}>{t('계정')}</span></span><span className={styles.chevron}><ProfileIcon name="chevron" size={16} /></span></summary>
+          <form action={logout}><button type="submit" className={styles.row}><span className={styles.rowIcon}><ProfileIcon name="logout" /></span><span className={styles.rowCopy}><span className={styles.rowLabel}>{t('로그아웃')}</span></span></button></form>
+          <TransitionLink href="/my/delete" className={styles.row}><span className={styles.rowIcon}><ProfileIcon name="trash" /></span><span className={styles.rowCopy}><span className={styles.rowLabel}>{t('계정 삭제')}</span></span></TransitionLink>
+        </details>
       </div>
       <footer className={styles.legal}>
         <div className={styles.legalLinks}>

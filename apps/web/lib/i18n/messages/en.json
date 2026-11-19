@@ -2441,5 +2441,6 @@
   "이제 캐릭터가 대사를 목소리로 읽어 줘요. 읽는 대사 100자마다 10토큰이 더 들고, 헤더의 스위치로 언제든 끌 수 있어요.": "Characters will now read their lines aloud. Every 100 characters read costs 10 more tokens, and you can turn it off anytime with the switch in the header.",
   "다시 끄기": "Turn off",
   "되돌리기": "Undo",
-  "이 답은 지금 되돌릴 수 없어요.": "This reply can't be undone right now."
+  "이 답은 지금 되돌릴 수 없어요.": "This reply can't be undone right now.",
+  "계정": "Account"
 }
