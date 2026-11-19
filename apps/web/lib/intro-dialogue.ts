@@ -1,3 +1,5 @@
+import { isStoredImageUrl } from './situation-images'
+
 /** Intro entries share the existing JSON storage, with an explicit discriminator.
  * Unmarked legacy samples stay samples; they never become chat history implicitly.
  */
@@ -45,8 +47,8 @@ export function parseIntroDialogue(raw: string): DialogueEntry[] {
     if ((role !== 'character' && role !== 'narrator') || typeof text !== 'string' || !text.trim() || text.trim().length > 500) throw new Error('INTRO_INVALID')
     total += text.trim().length
     if (total > 2000) throw new Error('INTRO_TOO_LONG')
-    // 편집기를 거쳐도 시드가 붙인 장면 사진이 사라지지 않게 — https 주소만 받는다.
-    return { role, text: text.trim(), purpose: 'intro', ...(typeof image === 'string' && image.startsWith('https://') ? { image } : {}) }
+    // 편집기를 거쳐도 시드가 붙인 장면 사진이 사라지지 않게 — https 또는 우리 공개 사진 주소(11/20: /media/… 도)만 받는다.
+    return { role, text: text.trim(), purpose: 'intro', ...(isStoredImageUrl(image) ? { image } : {}) }
   })
 }
 /** Keep authored second-person narration. Persona names are character forms of address, not a spectator viewpoint. */

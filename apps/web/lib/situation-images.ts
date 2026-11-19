@@ -12,12 +12,20 @@ export type SituationImage = { keywords: string[]; image: string; situation?: st
 // 11/18 100→1000장 — 대화 지시문에는 지금 대화와 가까운 30장만 싣는다(engine relevantSituationImages).
 export const SITUATION_LIMITS = { entries: 1000, keywords: 5, keywordLength: 20, situationLength: 120 } as const
 
-/** 폼 JSON → 저장할 목록. 상황 설명도 키워드도 없는 줄·https 가 아닌 사진은 버린다. */
+/**
+ * 11/20 받아 줄 사진 주소 — https 외부 주소 또는 우리 공개 사진(/media/character-images/…).
+ * 11/12 맥 호스팅으로 옮긴 뒤 올리기가 /media/… 를 돌려주는데 https 만 받아서, 만들기에서 올린 상황·인트로 사진이 저장 때 전부 빠졌다.
+ * (lib/storage/media.ts 는 서버 전용이라 같은 규칙을 글자로 본다 — 클라이언트 편집기도 이 파일을 읽는다.)
+ */
+export const isStoredImageUrl = (u: unknown): u is string =>
+  typeof u === 'string' && u.length <= 1000 && (u.startsWith('https://') || (u.startsWith('/media/character-images/') && !u.includes('..')))
+
+/** 폼 JSON → 저장할 목록. 상황 설명도 키워드도 없는 줄·받지 않는 주소의 사진은 버린다. */
 export function normalizeSituationImages(input: unknown): SituationImage[] {
   if (!Array.isArray(input)) return []
   return input.flatMap((raw) => {
     const o = (raw ?? {}) as { keywords?: unknown; image?: unknown; situation?: unknown; adult?: unknown }
-    const image = typeof o.image === 'string' && o.image.startsWith('https://') ? o.image : ''
+    const image = isStoredImageUrl(o.image) ? o.image : ''
     const keywords = Array.isArray(o.keywords)
       ? [...new Set(o.keywords.filter((k): k is string => typeof k === 'string').map(k => k.trim().slice(0, SITUATION_LIMITS.keywordLength)).filter(Boolean))].slice(0, SITUATION_LIMITS.keywords)
       : []
