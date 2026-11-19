@@ -51,10 +51,33 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
     if (!vv) return
     const root = document.documentElement
     const fit = () => root.style.setProperty('--vv-shift', `${Math.max(0, Math.round(vv.height + vv.offsetTop - window.innerHeight))}px`)
+    // 11/20 사용자(iOS 크롬): 키보드가 닫히거나 화면을 옮긴 뒤 탭이 화면 한가운데 떠 있고 그 아래가 안 그려졌다 — iOS 는 키보드가 닫혀도
+    // 크기 이벤트를 안 줄 때가 있어 fixed 기준이 키보드 열린 높이에 멈춘다. 입력칸에서 포커스가 빠지거나 화면이 바뀌면 닫히는 애니메이션이
+    // 끝날 때쯤 몇 번 더 재고, 입력 중이 아니면 문서를 1px 건드렸다 되돌려 브라우저가 화면 크기를 다시 잡게 한다.
+    const timers = new Set<number>()
+    const editing = () => document.activeElement instanceof HTMLElement && document.activeElement.matches('input, textarea, [contenteditable]')
+    const nudge = () => {
+      fit()
+      if (editing() || window.innerHeight >= vv.height * vv.scale - 1) return
+      const y = window.scrollY
+      window.scrollTo(0, y + 1); window.scrollTo(0, y); fit()
+    }
+    const settle = () => { for (const ms of [350, 800, 1500]) { const id = window.setTimeout(() => { timers.delete(id); nudge() }, ms); timers.add(id) } }
+    const focusOut = (e: FocusEvent) => { if (e.target instanceof HTMLElement && e.target.matches('input, textarea, [contenteditable]')) settle() }
+    const shown = () => { if (document.visibilityState === 'visible') settle() }
     fit(); vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); window.addEventListener('scroll', fit, { passive: true })
-    return () => { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); window.removeEventListener('scroll', fit) }
+    window.addEventListener('resize', fit); window.addEventListener('orientationchange', settle); window.addEventListener('pageshow', settle)
+    window.addEventListener('miro:viewport-settle', settle); document.addEventListener('focusout', focusOut); document.addEventListener('visibilitychange', shown)
+    return () => {
+      timers.forEach(clearTimeout)
+      vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); window.removeEventListener('scroll', fit)
+      window.removeEventListener('resize', fit); window.removeEventListener('orientationchange', settle); window.removeEventListener('pageshow', settle)
+      window.removeEventListener('miro:viewport-settle', settle); document.removeEventListener('focusout', focusOut); document.removeEventListener('visibilitychange', shown)
+    }
   }, [])
   const pathname = usePathname()
+  // 화면이 바뀔 때마다 한 번 더 잰다 — 키보드가 열린 채 나온 화면(채팅·검색)의 높이가 다음 화면에 남지 않게.
+  useEffect(() => { window.dispatchEvent(new Event('miro:viewport-settle')) }, [pathname])
   const t = useT()
   const askLogin = useLoginSheet()
   const activePath = /^\/search(?:\/|$)/.test(pathname) ? '/explore' : pathname
