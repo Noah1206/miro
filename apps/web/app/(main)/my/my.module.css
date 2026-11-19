@@ -93,3 +93,6 @@
 .profileCard { border-radius: 14px; background: var(--profile-surface); overflow: hidden; }
 .profileCard .identity { margin: 0; padding: 18px 20px 16px; }
 .profileCard .credit { border-radius: 0; background: transparent; border-top: 1px solid var(--profile-divider); }
+/* 11/20 로그인 전 프로필: 카드 전체를 덮는 투명 버튼 — 어디를 눌러도 로그인 시트. */
+.guestCard { position: relative; }
+.guestTap { position: absolute; inset: 0; z-index: 1; border: 0; border-radius: inherit; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
