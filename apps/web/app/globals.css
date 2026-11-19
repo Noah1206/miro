@@ -553,3 +553,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* 11/12 사용자: 초점 링을 어디에서도 그리지 않는다(개별 컴포넌트의 :focus-visible outline 포함). */
 *:focus-visible, *:focus { outline: none !important; }
+/* 11/20 안드로이드 대비: dvh 를 모르는 브라우저(예전 삼성 인터넷·오래된 앱 안 웹뷰)에선 100dvh 선언이 통째로 버려져 화면 높이가 사라진다 — 그때만 vh 로. */
+@supports not (height: 100dvh) {
+  .page, .app-shell, .chat-layout, .chat-main { min-height: 100vh; }
+}

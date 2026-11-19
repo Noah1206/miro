@@ -759,3 +759,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .typingBubble { margin-left: 8px; }
 /* 11/19 사용자: 긴 제목이 음성 토글 밑으로 지나갔다 — 제목 줄 안에서 줄어들지 않던 제목(flex:none)을 줄어들게 해 토글 앞에서 말줄임. */
 .headerTitleRow .title { flex: 0 1 auto; min-width: 0; }
+/* 11/20 안드로이드 대비: dvh 를 모르는 브라우저에선 채팅방 높이(100dvh)가 버려져 방이 무너진다 — 그때만 vh 로. */
+@supports not (height: 100dvh) { .main { height: 100vh; } }

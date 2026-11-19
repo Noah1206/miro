@@ -46,7 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   }
 }
-export const viewport: Viewport = { themeColor: '#1c1c1c', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
+// 11/20 interactiveWidget: 키보드가 떠도 화면 배치(fixed 기준)는 그대로 두고 보이는 영역만 줄인다 — 크롬 기본값이지만 삼성 인터넷·파이어폭스는 배치까지 줄여 하단 탭이 키보드 위로 올라온다. 채팅방은 보이는 영역(visualViewport)에 맞춘다.
+export const viewport: Viewport = { themeColor: '#1c1c1c', width: 'device-width', initialScale: 1, viewportFit: 'cover', interactiveWidget: 'resizes-visual' }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const needsConsent = !(await currentUser()) && !(await visitorConsent())
