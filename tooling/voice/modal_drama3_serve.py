@@ -976,6 +976,13 @@ class Voices:
             Speaker().warm.spawn()
             return {'ok': True}
 
+        @api.post('/hold')
+        def hold(request: Request, active: int = 1):
+            """11/19 웹 서버가 부른다 — 듣는 방이 있으면 음성 서버 대기 20분, 없으면 1분(서버가 스스로 꺼진다). 서버를 켜지 않는다."""
+            if not authed(request): return Response(status_code=401)
+            Speaker().update_autoscaler(scaledown_window=1200 if active else 60)
+            return {'ok': True}
+
         @api.post('/voices')
         async def add(request: Request):
             if not authed(request): return Response(status_code=401)

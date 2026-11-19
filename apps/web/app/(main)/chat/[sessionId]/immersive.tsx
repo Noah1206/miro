@@ -119,6 +119,14 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // 11/6: 음성 모드가 켜지면(토글·다시 들어옴) 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간을 기다리지 않게.
   useEffect(()=>{if(on)void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true,sessionId}),keepalive:true}).catch(()=>{})},[on,sessionId])
+  // 11/19 음성 모드가 켜져 있고 화면이 보이는 동안 1분마다 '아직 듣는 중' — 신호가 끊기면 서버가 몇 분 안에 꺼진다(api/tts route).
+  useEffect(()=>{
+    if(!on)return
+    const beat=()=>{if(document.visibilityState==='visible')void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({beat:true}),keepalive:true}).catch(()=>{})}
+    const id=setInterval(beat,60_000)
+    document.addEventListener('visibilitychange',beat)
+    return()=>{clearInterval(id);document.removeEventListener('visibilitychange',beat)}
+  },[on])
   // Voice is opt-in for every character, including those originally created as text.
   useEffect(() => { try { setOn(localStorage.getItem(key) === '1') } catch { setOn(false) } }, [key])
   const unlock = () => { audio.current ??= new Audio(); audio.current.src = SILENT; audio.current.play().catch(() => {}); (player.current ??= new VoiceStreamPlayer()).unlock() }

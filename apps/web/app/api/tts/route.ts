@@ -21,15 +21,37 @@ export const runtime = 'nodejs'
 export const maxDuration = 600
 
 /**
- * 11/19 사용자: 음성 서버를 마지막 요청 뒤 30분 켜 둔다(11/17 25분에서). 합성 서버(Modal)의 대기 상한이 20분이라, 마지막 요청 10분 뒤에 한 번 더 깨워 합쳐서 30분.
- * ponytail: 이 웹 서버 프로세스의 타이머 하나 — 그 사이 웹 서버가 다시 뜨면 그 방은 20분에 꺼진다.
+ * 11/19 사용자: 대기 시간은 줄이지 않고, 아무도 안 들을 때만 빨리 끈다.
+ * 음성 모드가 켜진 채팅방(화면이 보이는 동안)이 1분마다 beat 를 보낸다. 신호가 오는 동안은 예전처럼 켜 두고(Modal 대기 20분 + 10분마다 다시 깨움),
+ * 방을 나가거나 음성을 끄거나 화면을 닫아 신호가 3분 끊기면 Modal 대기를 1분으로 낮춰 서버가 스스로 꺼지게 한다
+ * (update_autoscaler — 강제로 끄는 게 아니라서 꺼진 서버를 괜히 켤 일이 없다). 다시 쓰면 대기를 20분으로 되돌린다.
+ * 홈에서 깨운 것(방 없이)은 예전처럼 30분 켜 두되, 그 뒤 방에서 쓰기 시작하면 방 기준으로 바뀐다. 마지막 실제 사용(깨우기·합성)에서 30분이 상한.
+ * ponytail: 이 웹 서버 프로세스 안 숫자(맥 한 대) — 웹 서버가 다시 뜨면 상태가 비어 1분 안에 대기를 낮춘다(다음 요청이 되돌린다).
  */
-let voiceHold: ReturnType<typeof setTimeout> | undefined
-function holdVoiceServer() {
-  clearTimeout(voiceHold)
-  voiceHold = setTimeout(() => { void resolveTts()?.warm?.(AbortSignal.timeout(60_000))?.catch(() => {}) }, 10 * 60_000)
-  voiceHold.unref?.()
+const MIN = 60_000
+const voice = { lastUse: 0, lastBeat: 0, lastWarm: 0, homeUntil: 0, released: false }
+const keepVoiceUntil = () => Math.min(Math.max(voice.lastBeat + 3 * MIN, voice.lastUse + 3 * MIN, voice.homeUntil), voice.lastUse + 30 * MIN)
+function holdVoice(active: boolean) {
+  const url = process.env.MIRO_VOICE_UPLOAD_URL?.replace(/\/$/, ''), key = process.env.MIRO_TTS_API_KEY
+  if (!url) return
+  void fetch(`${url}/hold?active=${active ? 1 : 0}`, { method: 'POST', headers: key ? { authorization: `Bearer ${key}` } : {}, signal: AbortSignal.timeout(30_000) })
+    .then(r => { if (r.ok) voice.released = !active }).catch(() => {})
 }
+/** 깨우기·합성 요청 — home: 방 없이 홈에서 깨운 것. */
+function voiceUsed(home = false) {
+  const now = Date.now()
+  voice.lastUse = voice.lastWarm = now
+  voice.homeUntil = home ? now + 30 * MIN : 0
+  if (voice.released) holdVoice(true)
+}
+const g = globalThis as { miroVoiceTimer?: ReturnType<typeof setInterval> }
+g.miroVoiceTimer ??= setInterval(() => {
+  const now = Date.now()
+  if (now > keepVoiceUntil()) { if (!voice.released) holdVoice(false); return }
+  // Modal 대기 상한이 20분이라, 듣는 방이 있는 동안 10분마다 한 번 깨워 꺼지지 않게.
+  if (now - voice.lastWarm > 10 * MIN) { voice.lastWarm = now; void resolveTts()?.warm?.(AbortSignal.timeout(60_000))?.catch(() => {}) }
+}, MIN)
+g.miroVoiceTimer.unref?.()
 
 /** Only owner-authorized, committed character dialogue can trigger synthesis.
  * plan=true returns the utterance order without generating audio.
@@ -62,15 +84,21 @@ export async function POST(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
-  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; stream?: unknown; turn?: unknown } | null
+  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; beat?: unknown; stream?: unknown; turn?: unknown } | null
+  // 11/19 음성 모드가 켜진 방이 보이는 동안 1분마다 — '아직 듣고 있다'는 신호(서버를 깨우지 않는다, 대기 판단만).
+  if (body?.beat === true) {
+    voice.lastBeat = Date.now()
+    if (voice.released && Date.now() < voice.lastUse + 30 * MIN) holdVoice(true)
+    return new Response(null, { status: 204 })
+  }
   // 11/6: 음성 모드를 켜면 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간(24~33초)을 기다리지 않게. 글·대화 없이 상태 확인만.
   // 11/10 깨우기는 회원당 5분에 한 번(GPU 를 계속 켜 두지 못하게).
   if (body?.wake === true) {
     if (!(await takeVoiceWake(user.id))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
     // 11/12 방을 함께 주면 그 방의 목소리 기억도 미리 불러온다(본인 방인지는 따로 보지 않는다 — 기억을 읽어 둘 뿐 아무것도 돌려주지 않는다).
     const room = typeof body.sessionId === 'string' && /^[0-9a-f-]{36}$/i.test(body.sessionId) ? body.sessionId : undefined
+    voiceUsed(!room)
     const known = await resolveTts()?.warm?.(AbortSignal.timeout(60_000), room)
-    holdVoiceServer()
     // 11/16 사용자: 처음부터 이어 말하는 목소리 — 이 방의 목소리 기억이 비어 있으면 지난 답 두 개를 뒤에서 미리 읽혀 기억을 만든다(소리는 버린다).
     if (room && known === 0) after(() => primeRoomVoice(user.id, room))
     return new Response(null, { status: 204 })
@@ -113,7 +141,7 @@ export async function POST(req: Request) {
   // 11/11 감정은 줄마다(parts) — 서버가 바뀌는 줄 앞에 지시를 끼운다. 목소리 결은 한 번에 합성해 그대로.
   const release = takeVoiceSlot()
   if (!release) return voiceBusy()
-  holdVoiceServer()
+  voiceUsed()
   if (body?.turn === true && tts.speakTurn) {
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
     const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
