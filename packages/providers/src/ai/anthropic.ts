@@ -27,6 +27,21 @@ export function claudeSchema(schema: unknown): unknown {
   if (out.type === 'object') out.additionalProperties = false
   return out
 }
+/**
+ * 11/19 도구 입력에서 객체·배열 칸이 JSON 문자열로 온 것을 푼다 — Claude 는 큰 스키마에서 가끔 안쪽 칸을 문자열로 감싸 보낸다.
+ * 운영: agency_plan 의 18%가 객체·배열 칸만 골라 invalid_type 이었고(appraisal·candidates·newGoals·goalChanges) 출력 길이는 성공한 답과 같았다.
+ * 스키마가 객체·배열이라고 한 칸의 문자열만 푼다. 풀리지 않으면 그대로 둔다(검증은 호출한 쪽 zod).
+ */
+export function unstring(value: unknown, schema: unknown): unknown {
+  const s = (schema ?? {}) as { type?: unknown; properties?: Record<string, unknown>; items?: unknown }
+  const wants = (t: string) => s.type === t || (Array.isArray(s.type) && s.type.includes(t))
+  if (typeof value === 'string' && (wants('object') || wants('array'))) {
+    try { value = JSON.parse(value) } catch { return value }
+  }
+  if (Array.isArray(value)) return value.map(v => unstring(v, s.items))
+  if (value && typeof value === 'object' && s.properties) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, unstring(v, s.properties![k])]))
+  return value
+}
 /** 11/10 캐릭터·규칙 앞부분을 캐시한다(같은 방의 다음 턴은 캐시 읽기 단가). 이번 턴 지시는 캐시 뒤 블록으로. */
 function systemBlocks(system: string, prefix?: number): string | Anthropic.Beta.BetaTextBlockParam[] {
   if (!prefix || prefix <= 0 || prefix > system.length) return system
@@ -79,7 +94,7 @@ export class AnthropicProvider implements AIProvider {
     const submitted = response.content.find((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === 'tool_use' && b.name === 'submit')
     return {
       blocked: response.stop_reason === 'refusal',
-      text: submitted ? JSON.stringify(submitted.input) : response.content.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('').trim(),
+      text: submitted ? JSON.stringify(unstring(submitted.input, schema)) : response.content.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('').trim(),
       provider: 'anthropic', model: response.model,
       inputTokens: response.usage.input_tokens + (response.usage.cache_read_input_tokens ?? 0) + (response.usage.cache_creation_input_tokens ?? 0),
       cachedInputTokens: response.usage.cache_read_input_tokens ?? 0,

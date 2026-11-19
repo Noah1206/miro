@@ -38,6 +38,20 @@ function rateLimitProvider(key: string, backoffMs: number): void {
   const load = providerLoad.get(key)
   if (load) load.retryAfter = Math.max(load.retryAfter, Date.now() + backoffMs)
 }
+/**
+ * 11/19 한도 소진 차단기 — 같은 모델이 429 를 연달아 3번 내면(중간에 성공 없음) 그 모델을 잠깐 건너뛴다(15초부터 두 배씩, 최대 10분).
+ * 운영: Gemini 3.8 Flash 가 한도 소진으로 17시간 내내 429 였는데 호출마다 먼저 찔러 보고 예비로 넘어가 실패 기록만 하루 190건 쌓였다.
+ * 모델 단위다 — 같은 공급자의 다른 모델(Flash-Lite)은 한도가 따로라 멀쩡했다. 쉬는 시간이 끝나면 한 번 찔러 보고, 성공하면 푼다.
+ * ponytail: 프로세스 메모리(운영은 맥 한 대). 서버가 여러 대가 되면 ai_provider_leases 옆 표로.
+ */
+const quotaBreaker = new Map<string, { strikes: number; until: number }>()
+const QUOTA_STRIKES = 3, QUOTA_BASE_MS = 15_000, QUOTA_MAX_MS = 600_000
+function quotaStrike(key: string): void {
+  const b = quotaBreaker.get(key) ?? { strikes: 0, until: 0 }
+  b.strikes++
+  if (b.strikes >= QUOTA_STRIKES) b.until = Date.now() + Math.min(QUOTA_MAX_MS, QUOTA_BASE_MS * 2 ** (b.strikes - QUOTA_STRIKES))
+  quotaBreaker.set(key, b)
+}
 export type OrchestratorOptions = {
   chain: AIProvider[]; registry?: ModelRegistry; resolveModel?: (m: ModelDefinition) => AIProvider
   timeoutMs?: number; maxRetries?: number; rateLimitBackoffMs?: number; onUsage?: (r: AIUsageRecord) => void | Promise<void>
@@ -104,7 +118,7 @@ export class AIOrchestrator implements LLMProvider {
       // (끝을 알리지 않는 공급자의 답은 채우지 않는다).
       const parsed = opts.schema.safeParse(extractJson(text, { closeUnclosed: truncated === false }))
       // Schema paths and issue codes only, never output text: enough to see which field a model keeps breaking.
-      if (!parsed.success) throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}`).join(' ')}`)
+      if (!parsed.success) throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}${i.code === 'invalid_type' ? `(${i.received})` : ''}`).join(' ')}`)
       return parsed.data
     }, opts.maxRetries, onAttempt)
     const shadow = this.opts.shadow
@@ -172,6 +186,9 @@ export class AIOrchestrator implements LLMProvider {
         || (process.env.MIRO_AI_DB_LEASES === '1' && !this.opts.leaseGuard))) {
         throw new AIBudgetDeniedError('production_guard_required')
       }
+      const quotaKey = `${providerKey}/${model.providerModelId}`
+      // 한도 소진으로 쉬는 모델은 부르지 않고 다음 후보로(기록도 남기지 않는다).
+      if (Date.now() < (quotaBreaker.get(quotaKey)?.until ?? 0)) { last = 'provider_overloaded'; continue }
       let transientLeft = TRANSIENT_RETRIES, transientFailures = 0
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
         if (transientFailures > 0 && TRANSIENT.test(last)) {
@@ -281,7 +298,8 @@ export class AIOrchestrator implements LLMProvider {
         let result: GenerationResult | undefined, output: T | undefined, ok = false
         // 11/10: 생각하는 동안은 글이 안 나온다 — 생각 강도만큼 조용한 시간 한도를 늘린다(운영: '높음'이 20초에 끊겨 턴 실패).
         const thinkFactor = request.thinking === 'max' ? 5 : request.thinking === 'xhigh' ? 4 : request.thinking === 'high' ? 3 : request.thinking === 'medium' ? 2 : 1
-        const timeoutMs = (model.timeoutMs ?? this.timeoutMs) * thinkFactor
+        // 11/19 뒤에서 도는 일(설정 컴파일 등)은 기다리는 사람이 없다 — 한도를 3배로. 운영: 예비 gpt-6.1-terra 의 컴파일이 20초에 79/79 끊겼고 Claude 도 최대 18초였다.
+        const timeoutMs = (model.timeoutMs ?? this.timeoutMs) * thinkFactor * (context.workload === 'background' ? 3 : 1)
         try {
           // 시도마다 처음부터 — 받는 대로 보던 쪽은 앞 시도의 글을 버린다(재시도·다시 묻기·예비 모델).
           onAttempt?.()
@@ -324,7 +342,7 @@ export class AIOrchestrator implements LLMProvider {
           // Never log provider response bodies, keys, prompts or private reasoning.
           const message = e instanceof Error ? e.message : ''
           last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${timeoutMs}ms` : result?.truncated && message.startsWith('invalid_schema') ? 'max_tokens' : message.startsWith('invalid_schema') || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
-          if (last === 'provider_http_429') rateLimitProvider(providerKey, this.rateLimitBackoffMs)
+          if (last === 'provider_http_429') { rateLimitProvider(providerKey, this.rateLimitBackoffMs); quotaStrike(quotaKey) }
         } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null
         const usage: AIUsageRecord = { task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
@@ -339,6 +357,7 @@ export class AIOrchestrator implements LLMProvider {
         if (result?.blocked) throw new AIContentBlockedError()
         if (last === 'cancelled' || last === 'lease_lost' || last === 'lease_hold_expired') throw new AIUnavailableError(attempts, last)
         if (ok) {
+          quotaBreaker.delete(quotaKey)
           this.info.mode = provider.info.mode
           this.lastModelId = model.id; this.lastPromptVersion = req.promptVersion ?? `${req.task}:v1`; this.lastFallbackUsed = index > 0
           return output as T
