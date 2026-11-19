@@ -72,11 +72,12 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
       <Sheet open={open} onClose={() => setOpen(false)} label={t('MIRO 로그인')} snap={{ half: 0.7, full: 0.82 }}>
         <div data-login-sheet style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 22px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* 11/20 사용자: 모바일에서는 로고·한 줄 소개를 빼고 가입 선물부터(login-sheet-brand, globals.css) */}
+            <div className="login-sheet-brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <LogoMark size={32} />
               <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span>
             </div>
-            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+            <p className="t-caption login-sheet-brand" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
               {t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}
             </p>
             <WelcomeTicket plain />

@@ -253,6 +253,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .row-scroll--flush > * { flex: 0 0 min(150px, calc((100% - 24px) / 3.2)); }
 /* 11/6 요청: 휴대폰에서는 한 화면에 2장 반 — 셋째 카드가 반쯤 보여 옆으로 넘길 수 있다는 게 보인다. */
 @media (max-width: 767px) { .row-scroll--flush > * { flex-basis: calc((100% - 24px) / 2.5); } }
+/* 11/20 로그인 시트: 모바일에서는 MIRO 로고·한 줄 소개를 숨긴다(login-sheet.tsx) */
+@media (max-width: 767px) { .login-sheet-brand { display: none !important; } }
 /* 미로 오리지널 작품 줄은 원래 크기(150px) 그대로(10/20). */
 .row-scroll--stories > * { flex-basis: 150px; }
 
