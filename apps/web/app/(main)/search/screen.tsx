@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Button } from '@/components/ui'
+import { Back, Button } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import { MOODS, RELATIONS } from '@/lib/genres'
 import { discoveryOptionCounts, discoveryTagLabel, discoveryTags, type DiscoveryCard, type DiscoveryGroup } from '@/lib/discovery-filters'
@@ -115,7 +115,10 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     return () => request.current?.abort()
   }, [key, retry, isResults]) // Only the results route fetches catalog data; each query owns its request.
   return <div className={`${styles.screen} ${isResults ? styles.resultsScreen : ''}`}>
+    {/* 11/20 사용자: 탐색·검색은 하단 탭 없이 위쪽 화살표로 돌아간다. */}
+    {isResults && <div className={styles.backRow}><Back href={resultsPath === '/explore' ? '/home' : '/search'} /></div>}
     {!isResults && <header className={`sticky-head ${styles.header}`}>
+      <div className={styles.backRow}><Back href="/home" /></div>
       <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
         <input type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
         {draft && <button type="button" aria-label={t('검색어 지우기')} onClick={() => setDraft('')}>×</button>}

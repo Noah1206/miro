@@ -37,6 +37,8 @@ const ITEMS = [
     icon: <g fillRule="nonzero"><circle cx="12" cy="8.9" r="6.4" /><path d="M12 14.8c-5.2 0-9.4 2.9-9.4 6.1 0 .3.2.5.5.5h17.8c.3 0 .5-.2.5-.5 0-3.2-4.2-6.1-9.4-6.1z" /></g> },
 ]
 
+const SUB_PAGES = /^\/(explore|search|genre|persona|creators?|earnings|stories|recharge|archive\/delete)(?:\/|$)|^\/my\/(settings|language|permissions|ai-data|subscription|likes|delete)(?:\/|$)|^\/character\/[^/]+\/comments/
+
 /**
  * 조용한 내비게이션. 아이콘은 늘 꽉 찬 실루엣이고 색만 바뀐다 — 활성 = 주황, 비활성 = 회색.
  * 배경·점 없음. Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
@@ -61,6 +63,9 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   // 11/4: 캐릭터 상세도 컴퓨터에서는 왼쪽 대화 목록을 띄운다(휴대폰은 화면 폭 때문에 숨겨진다).
   if (/^\/(chat|messages)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname) || /^\/stories\/play\//.test(pathname)) return null
+  // 11/20 사용자: 하단 탭은 탭의 첫 화면(홈·대화·만들기·프로필)에만 — 한 단계 들어간 화면은 위쪽 화살표로 돌아간다. 컴퓨터의 왼쪽 대화 목록은 그대로.
+  // 뒤로 화살표가 있는 화면만 적는다(없는 화면에서 탭까지 빼면 나갈 길이 없다).
+  if (SUB_PAGES.test(pathname)) return <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
   return (
     // 대화 탭은 목록이 곧 사이드바 내용이라 데스크톱 사이드바를 두지 않는다(10/28).
     <>{!/^\/archive(?:\/|$)/.test(pathname) && <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />}<nav aria-label={t('주요')} className={`nav ${glass.bar}`}>

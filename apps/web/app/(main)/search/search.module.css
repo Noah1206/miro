@@ -42,3 +42,6 @@
 .recentList button span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recentList button + button { flex-shrink: 0; width: 28px; text-align: center; color: #797979; font-size: 16px; }
 @media (hover: hover) { .recentList button:hover { color: #e3e2e7; } }
+/* 11/20 탐색·검색 위쪽 뒤로 화살표 줄. */
+.backRow { display: flex; align-items: center; min-height: 32px; margin: 0 0 8px -4px; }
+.header .backRow { margin-bottom: 0; }
