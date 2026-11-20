@@ -24,7 +24,7 @@
 /* 11/20 사용자 스크린샷: 휴대폰은 떠 있는 유리 알약 대신 바닥에 붙은 진한 단색 바(위 모서리만 둥글게), 아이콘 크게·글자 아래, 지금 탭만 색. */
 @media (max-width: 1023px) {
   .bar.bar { left: 0; right: 0; bottom: calc(0px - var(--vv-shift, 0px)); width: 100%; max-width: var(--shell-w, 480px); height: auto;
-    padding: 10px 8px calc(6px + env(safe-area-inset-bottom, 0px)); border: 0; border-radius: 22px 22px 0 0;
+    padding: 10px 8px calc(18px + env(safe-area-inset-bottom, 0px)); /* 11/20 사용자: 아래 여백 더 */ border: 0; border-radius: 22px 22px 0 0;
     background: #1b1b1b; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 -6px 20px #0005; }
   .bar::before, .indicator { display: none; }
   .bar :global(.nav__item) { color: #8a8a8a !important; }
