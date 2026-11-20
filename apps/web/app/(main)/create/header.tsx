@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import { motion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { spring } from '@/lib/motion/tokens'
@@ -6,19 +7,19 @@ import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
 /** 일상·연락 탭은 관계 탭에 합쳤고, 외형도 관계 탭으로 옮기고 그 자리에 명령어 탭을 뒀다(10/19). */
-export type CreateTab = 'profile' | 'personality' | 'commands' | 'lore' | 'relationship' | 'intro' | 'status' | 'endings' | 'situations' | 'voice' | 'settings' | 'preview'
+export type CreateTab = 'profile' | 'personality' | 'commands' | 'lore' | 'relationship' | 'intro' | 'status' | 'endings' | 'situations' | 'voice' | 'settings' | 'advanced' | 'preview'
 
+/**
+ * 11/21 사용자(베이비챗식 깊이): 탭 6개 — 필수 칸이 있는 프로필·시작이 앞. 상태창은 '설정'(lore) 탭에,
+ * 명령어·먼저 연락하기·엔딩은 '고급' 탭에 함께 펼친다. 칸·저장값은 그대로, 묶음과 이름만 바꿨다.
+ */
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: msg('프로필') },
-  { key: 'personality', label: msg('세계관') },
-  { key: 'commands', label: msg('명령어') },
-  { key: 'lore', label: msg('설정집') },
-  { key: 'relationship', label: msg('관계') },
-  { key: 'intro', label: msg('인트로') },
-  { key: 'status', label: msg('상태창') },
-  { key: 'endings', label: msg('엔딩') },
-  { key: 'situations', label: msg('상황별 사진') },
-  { key: 'settings', label: msg('분류·설정') },
+  { key: 'intro', label: msg('시작') },
+  { key: 'lore', label: msg('설정') },
+  { key: 'situations', label: msg('사진·음악') },
+  { key: 'settings', label: msg('등록') },
+  { key: 'advanced', label: msg('고급') },
   { key: 'preview', label: msg('미리보기') },
 ]
 
@@ -43,6 +44,8 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
   onBlocked?: () => void
 }) {
   const t = useT()
+  // 4개 넘게 있는 탭은 밀어서 본다 — '다음'으로 넘어간 탭이 화면 밖이면 보이는 자리로 끌어온다.
+  useEffect(() => { document.querySelector(`.create-tabs [aria-controls="panel-${tab}"]`)?.scrollIntoView({ inline: 'nearest', block: 'nearest' }) }, [tab])
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 20, margin: '0 calc(-1 * var(--gutter))',
@@ -68,15 +71,16 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
       {/* 입력 탭은 고르게 펼치고, 미리보기도 배경 없는 밑줄 탭으로 구분한다. */}
-      <div role="tablist" className="create-tabs" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
-        <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+      <div role="tablist" className="create-tabs" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)', containerType: 'inline-size' }}>
+        {/* 11/21 사용자: 처음 보이는 건 탭 4개까지, 나머지는 가로로 밀어서 — 탭 하나 = 탭 줄 폭의 1/4. */}
+        <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'flex-start', gap: 0 }}>
           {TABS.filter((x) => x.key !== 'preview' && !hidden.includes(x.key)).map((x) => {
             const active = x.key === tab
             return (
               <button key={x.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${x.key}`} onClick={() => onTab(x.key)}
                 style={{
-                  position: 'relative', flexShrink: 0, padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  position: 'relative', flex: '0 0 25cqi', padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   fontSize: 'var(--tab-font, var(--font-body-size))', fontWeight: active ? 'var(--tab-weight, var(--weight-medium))' : 'var(--tab-weight, var(--weight-regular))',
                   color: active ? 'var(--color-text-primary)' : 'var(--tab-inactive, var(--color-text-secondary))',
                 }}>

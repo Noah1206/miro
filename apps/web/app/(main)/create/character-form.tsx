@@ -183,13 +183,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ ...i.ensembleCast?.find(p => p.name === name), name, voice, ...(i.ensemblePhotos?.[name] ? { photo: i.ensemblePhotos[name] } : {}) })))
   const [castMode, setCastMode] = useState<'single' | 'multi'>(cast.length ? 'multi' : 'single')
   const [advanced, setAdvanced] = useState(false)
-  // 11/20 사용자: 엔딩은 고급 — '고급 설정'을 켜야 탭이 보인다. 엔딩이 이미 있는 작품은 켠 채로 연다. 켠 상태는 이 기기에 기억한다.
-  const [showAdvanced, setShowAdvanced] = useState(() => (initial?.endings?.length ?? 0) > 0)
-  useEffect(() => { try { if (localStorage.getItem('miro-create-advanced') === '1') setShowAdvanced(true) } catch { /* 저장소를 못 쓰면 기본값 */ } }, [])
-  const toggleAdvanced = (on: boolean) => { setShowAdvanced(on); try { localStorage.setItem('miro-create-advanced', on ? '1' : '0') } catch { /* 저장소를 못 쓰면 이번만 */ } }
-  // 세계관 탭은 11/20 사용자 결정으로 화면에서 뺐다(칸은 숨긴 채 남아 저장된 값을 보낸다).
-  const hiddenTabs: CreateTab[] = showAdvanced ? ['personality'] : ['personality', 'endings']
-  useEffect(() => { if (hiddenTabs.includes(tab)) setTab('settings') }, [showAdvanced]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 11/21 사용자: 탭은 6개(프로필·시작·설정·사진·음악·등록·고급) — 명령어·먼저 연락하기·엔딩은 '고급' 탭에, 상태창은 '설정' 탭에(header.tsx TABS).
   const [isPublic, setIsPublic] = useState(i.isPublic)
   const [linkShared, setLinkShared] = useState(!!i.linkShared)
   const [media, setMedia] = useState<CharacterMedia>(i.media)
@@ -314,7 +308,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit}
           onBlocked={() => toast(t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') }))} canDraft={!!name.trim()} pending={pending}
           missingHint={canSubmit ? (isPublic ? t('공개 게시') : linkShared ? t('링크로만 공유') : t('나만 보기')) : t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') })}
-          buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} hidden={hiddenTabs} />
+          buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
         {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{t(saveError)}</p>}
         {mode === 'create' && experienceType === 'reality' && <CreateTour tab={tab} onTab={openTab} />}
 
@@ -420,7 +414,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 명령어(10/19, 외형 자리) — 채팅에서 /이름 으로 부르는 한 턴 지시. 라이브러리에서 골라 붙이거나 직접 만들어 공개한다. ── */}
-        <Panel id="commands" show={tab === 'commands'}>
+        <Panel id="commands" show={tab === 'advanced'}>
           <Section title={t('명령어')} subtitle={t('대화 중 /이름 으로 불러 쓰는 한 턴 지시예요. 다른 사람이 공개한 것을 그대로 붙이거나, 직접 만들어 공개할 수 있어요.')}>
             <Card>
               <CommandEditor name="commands" defaultValue={i.commands} adultAllowed={adultAllowed} />
@@ -442,14 +436,14 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 외형 — 관계 탭 안에 함께 보인다(10/19). DOM 은 앞이지만 order 로 관계 내용 아래에 놓는다. ── */}
-        <Panel id="relationship-visual" show={tab === 'relationship'} order={1}>
+        <Panel id="relationship-visual" show={tab === 'advanced'} order={1}>
           {/* 11/12 외형 칸 전부 삭제(사용자: 외형은 소개 글에 적는다) — AI 와 사진 생성 모두 소개 글의 묘사를 따른다. */}
           {!can.characterVoice&&<input type="hidden" name="media" value={media}/>}
         </Panel>
 
         {/* ── 관계 ── */}
         {/* 관계 탭 — 관계 태그는 캐릭터챗도 고른다(2026-09-30). 시작 관계·관계 성격은 미로 캐릭터만. */}
-        <Panel id="relationship" show={tab === 'relationship'}>
+        <Panel id="relationship" show={tab === 'advanced'}>
           {/* 관계 성격표 편집(ProfileSettings)과 세부 감정 6개는 10/19 화면에서 뺐다 — 저장 때 AI 가 만든 표와 프리셋 값이 그대로 쓰인다. 일상·연락도 이 탭으로 합쳤다. */}
           {experienceType === 'reality' && <>
           {/* 11/20 사용자: 시작 관계·가까워지는 속도는 화면에서 뺐다 — 저장된 값은 숨은 칸으로 그대로 보낸다. */}
@@ -523,13 +517,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
-        <Panel id="status" show={tab === 'status'}>
+        <Panel id="status" show={tab === 'lore'}>
           <Section title={t('상태창 · 선택')} subtitle={t('매 답변 끝에 붙는 상태 정보의 틀이에요. 날짜·장소·스탯·아이템처럼 이야기가 어디까지 왔는지 보여 줘요. 대화 화면에선 접었다 펼 수 있는 카드로 나와요.')}>
             <StatusEditor showStats={false} defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} defaultIntroStatus={(introDialogue(i.sampleDialogue) as Array<{ status?: string }>).find(e => e.status)?.status ?? ''} />
           </Section>
         </Panel>
         {/* ── 엔딩(11/10, 크랙 엔딩 설정) — 비워 두면 엔딩 없이 이어진다. ── */}
-        <Panel id="endings" show={tab === 'endings'}>
+        <Panel id="endings" show={tab === 'advanced'}>
           <Section title={t('엔딩 · 선택')} subtitle={t('최소 턴이 지나고 조건이 이야기 속에서 이뤄지면 엔딩 카드가 떠요. 등급을 달고 힌트를 남기면 사용자가 다른 엔딩도 모으고 싶어져요.')}>
             <EndingsEditor defaultValue={i.endings ?? []} />
           </Section>
@@ -597,13 +591,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
             </div>
           </Section>
-          <Section title={t('고급 설정')}>
-            <Switch name="" checked={showAdvanced} onChange={toggleAdvanced} label={t('고급 설정 보기')} hint={t('켜면 엔딩 탭이 나타나요.')} />
-          </Section>
         </Panel>
 
         {/* ── 소개 페이지 ── */}
-        {tab !== 'preview' && <StepNav tab={tab} onTab={openTab} hidden={hiddenTabs} />}
+        {tab !== 'preview' && <StepNav tab={tab} onTab={openTab} />}
         <Panel id="preview" show={tab === 'preview' || (desktop && tab !== 'intro')}>
           {/* 11/19 사용자: 테스트 채팅 버튼을 뺐다 — 미리보기는 소개 페이지만. */}
           <DetailPreview d={snap} can={can} experienceType={experienceType} />
