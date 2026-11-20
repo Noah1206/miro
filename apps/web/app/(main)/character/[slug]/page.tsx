@@ -121,7 +121,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="detail-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 52, padding: '4px var(--gutter)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Back href="/home" bold />
-          <span style={{ fontSize: 18, fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>{t('프로필 상세')}</span>
+          {/* 11/20 사용자: '프로필 상세' 글자는 뺐다 — 뒤로 가기만. */}
         </div>
         {/* 등록한 캐릭터를 고치는 길은 여기 하나다 — 주인에게만 보인다. */}
         {user && c.ownerId === user.id && (
@@ -179,11 +179,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
         <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '32px var(--gutter) calc(10px + env(safe-area-inset-bottom))', background: 'linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0), rgba(var(--color-bg-rgb), 0.8) 40%, var(--color-bg) 75%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* 11/5: 시작 버튼 왼쪽 댓글 아이콘 — 댓글 전체 화면으로 */}
-            <TransitionLink href={`/character/${slug}/comments`} aria-label={t('댓글 {n}', { n: commentCount })}
-              style={{ flex: 'none', width: 48, height: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
-              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="var(--color-white)" stroke="var(--color-white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg>
-            </TransitionLink>
+            {/* 11/20 사용자: 시작 버튼 왼쪽 버튼을 엄지 좋아요로(전엔 댓글 화면 링크 — 댓글은 아래 댓글 칸에서 연다). */}
+            <LikeButton slug={slug} initial={likes} cta />
             <div style={{ flex: 1, minWidth: 0 }}>
               {locked
                 ? <StartWithUnveil returnTo={unlockAt.returnTo} label={t(COPY.cta.startRoleplay)} />

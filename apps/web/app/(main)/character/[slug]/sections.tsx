@@ -132,10 +132,11 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
       : <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', borderRadius: 6, height: 22, boxSizing: 'border-box', lineHeight: '18px',
-      background: 'var(--color-surface-2)', fontSize: 12, color: 'var(--color-text-secondary)',
+      // 11/20 사용자: 댓글·좋아요 칩을 옆의 남성향/여성향 태그 크기로(t-caption·6px 10px·모서리 10).
+      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 10, boxSizing: 'border-box', lineHeight: 1.5,
+      background: 'var(--color-surface-2)', fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
     }}>
-      <svg aria-hidden width="14" height="14" viewBox="0 0 24 24"
+      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24"
         fill={icon === 'book' ? 'none' : icon === 'comment' ? '#fff' : 'currentColor'}
         stroke={icon === 'book' ? 'currentColor' : 'none'} strokeWidth="1.75" strokeLinejoin="round">
         {path}
@@ -250,22 +251,30 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
 
 const day = (d: Date, locale: string) => new Date(d).toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
 
-export function LikeButton({ overlay = false, slug, initial = { count: 0, liked: false } }: { overlay?: boolean; slug?: string; initial?: { count: number; liked: boolean } }) {
+/** 11/20 사용자: 대화 시작하기 옆 버튼은 엄지 모양 좋아요(cta) — 48px 네모, 누르면 엄지가 채워진다. */
+const THUMB = <><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /></>
+
+export function LikeButton({ overlay = false, cta = false, slug, initial = { count: 0, liked: false } }: { overlay?: boolean; cta?: boolean; slug?: string; initial?: { count: number; liked: boolean } }) {
   const t = useT()
   const [state, setState] = useState(initial)
   const [pending, setPending] = useState(false)
   const toast = useToast()
   useEffect(() => setState(initial), [initial.count, initial.liked])
+  const onClick = async () => {
+    if (!slug || pending) return
+    setPending(true)
+    try { setState(await likeCharacter(slug, !state.liked)) }
+    catch { toast(t('좋아요를 저장하지 못했어요. 다시 시도해 주세요.')) }
+    finally { setPending(false) }
+  }
+  if (cta) return <button type="button" aria-label={state.liked ? t('좋아요 취소') : t('좋아요')} aria-pressed={state.liked} disabled={pending || !slug} onClick={onClick}
+    style={{ flex: 'none', width: 48, height: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-bg)', color: 'var(--color-text-primary)', cursor: pending ? 'wait' : 'pointer' }}>
+    <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={state.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{THUMB}</svg>
+  </button>
   return <button type="button" className="hit" aria-label={state.liked ? t('좋아요 취소') : t('좋아요')} aria-pressed={state.liked} disabled={pending || !slug}
-    onClick={async () => {
-      if (!slug || pending) return
-      setPending(true)
-      try { setState(await likeCharacter(slug, !state.liked)) }
-      catch { toast(t('좋아요를 저장하지 못했어요. 다시 시도해 주세요.')) }
-      finally { setPending(false) }
-    }}
-    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', height: 22, border: 0, borderRadius: 6, fontSize: 12, lineHeight: '18px', background: 'var(--color-surface-2)', color: overlay ? 'var(--color-white)' : 'var(--color-text-secondary)', cursor: pending ? 'wait' : 'pointer', ...(overlay ? { height: 36, padding: '0 12px', borderRadius: 999, background: 'rgba(0,0,0,.65)', fontSize: 14 } : {}) }}>
-    <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill={state.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+    onClick={onClick}
+    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', border: 0, borderRadius: 10, fontSize: 'var(--font-caption)', lineHeight: 1.5, background: 'var(--color-surface-2)', color: overlay ? 'var(--color-white)' : 'var(--color-text-secondary)', cursor: pending ? 'wait' : 'pointer', ...(overlay ? { height: 36, padding: '0 12px', borderRadius: 999, background: 'rgba(0,0,0,.65)', fontSize: 14 } : {}) }}>
+    <svg aria-hidden width={overlay ? 14 : 16} height={overlay ? 14 : 16} viewBox="0 0 24 24" fill={state.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
     {!overlay && `${t('좋아요')} `} {state.count}
   </button>
 }
