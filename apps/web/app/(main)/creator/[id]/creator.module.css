@@ -1,0 +1,34 @@
+/* 11/20 크리에이터 프로필(사용자 스크린샷 두 장 기준) */
+.top { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; min-height: 52px; padding: 4px var(--gutter) 0; }
+.top h2 { margin: 0; text-align: center; font-size: 17px; font-weight: 700; }
+.head { display: grid; gap: 16px; padding: 16px var(--gutter) 24px; }
+.identity { display: flex; align-items: center; gap: 16px; }
+.avatar { flex: none; width: 76px; height: 76px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--color-surface-3); font-size: 26px; font-weight: 700; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.who { display: grid; gap: 8px; min-width: 0; }
+.who h1 { margin: 0; font-size: 22px; font-weight: 750; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 4px 10px; border-radius: 8px; background: #2f2846; color: var(--color-lavender-200); font-size: 13px; font-weight: 600; }
+.stats { display: flex; gap: 16px; margin: 0; color: var(--color-text-tertiary); font-size: 15px; }
+.stats b { margin-left: 2px; color: var(--color-text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+.bio { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
+.bio a { color: var(--color-text-primary); text-decoration: underline; text-underline-offset: 3px; }
+.bioForm { display: grid; gap: 8px; }
+.bioForm textarea { width: 100%; padding: 12px; border: 1px solid var(--color-border-strong); border-radius: 12px; background: var(--color-surface-1); color: var(--color-text-primary); font: inherit; font-size: 15px; line-height: 1.6; resize: vertical; }
+.bioActions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; color: var(--color-text-tertiary); font-size: 12px; }
+.bioActions span { margin-right: auto; }
+.bioActions button { min-height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 14px; cursor: pointer; }
+.bioActions button[type="submit"] { border-color: var(--color-lavender-600); background: var(--color-lavender-600); color: #fff; font-weight: 600; }
+.actions { display: flex; gap: 10px; }
+.actions:empty { display: none; }
+.grow { flex: 1.6; min-width: 0; }
+.cheer { flex: 1; min-width: 0; }
+.editBio { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-primary); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.tabs { display: flex; gap: 24px; margin: 0 var(--gutter); border-bottom: 1px solid var(--color-border); }
+.tabs span { position: relative; padding: 8px 0 12px; font-size: 18px; font-weight: 700; }
+.tabs span::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--color-lavender-400); }
+.summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px var(--gutter) 14px; }
+.summary p { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--color-text-secondary); font-size: 15px; font-weight: 600; }
+.summary i { width: 1px; height: 14px; background: var(--color-border-strong); }
+.summary select { min-height: 36px; padding: 0 6px; border: 0; background: transparent; color: var(--color-text-tertiary); font: inherit; font-size: 14px; cursor: pointer; }
+.empty { padding: 0 var(--gutter); color: var(--color-text-tertiary); font-size: 13px; }
+.head a:focus-visible, .head button:focus-visible, .summary select:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 3px; }

@@ -11,6 +11,8 @@ export const users = pgTable('users', {
   displayName: text('display_name'),
   /** 프로필 사진 공개 URL('나' 화면 편집, 2026-09-30). 없으면 MIRO 마크. */
   avatarUrl: text('avatar_url'),
+  /** 11/20 크리에이터 페이지 소개글(본인만 고친다, 최대 300자). */
+  creatorBio: text('creator_bio').notNull().default(''),
   allowTraining: boolean('allow_training').notNull().default(false),
   allowEvaluation: boolean('allow_evaluation').notNull().default(false),
   aiConsentVersion: text('ai_consent_version'),

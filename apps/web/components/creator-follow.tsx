@@ -5,8 +5,10 @@ import { useT } from '@/lib/i18n/client'
 import { toggleFollow } from '@/app/(main)/creator/actions'
 
 /** 11/12 팔로우 버튼 — 로그인 전이면 로그인 시트. 누르는 즉시 바뀌고, 서버 값으로 맞춘다. */
-export function FollowButton({ creatorKey, following: initial, followers: initialCount, signedIn, onCount }: {
+export function FollowButton({ creatorKey, following: initial, followers: initialCount, signedIn, onCount, big = false }: {
   creatorKey: string; following: boolean; followers: number; signedIn: boolean; onCount?: (n: number) => void
+  /** 11/20 크리에이터 페이지: 폭을 채우는 큰 버튼(팔로우 = 라벤더 채움) */
+  big?: boolean
 }) {
   const t = useT(), login = useLoginSheet()
   const [following, setFollowing] = useState(initial)
@@ -21,7 +23,9 @@ export function FollowButton({ creatorKey, following: initial, followers: initia
     })
   }
   return <button type="button" onClick={press} aria-pressed={following}
-    style={{ flex: 'none', minHeight: 32, padding: '0 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+    style={big ? { width: '100%', minHeight: 48, padding: '0 16px', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: 'pointer',
+      border: following ? '1px solid var(--color-border-strong)' : '1px solid var(--color-lavender-600)',
+      background: following ? 'transparent' : 'var(--color-lavender-600)', color: following ? 'var(--color-text-secondary)' : '#fff' } : { flex: 'none', minHeight: 32, padding: '0 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
       border: following ? '1px solid var(--color-border-strong)' : '1px solid var(--color-white)',
       background: following ? 'transparent' : 'var(--color-white)', color: following ? 'var(--color-text-secondary)' : '#111015' }}>
     {following ? t('팔로잉') : t('팔로우')}

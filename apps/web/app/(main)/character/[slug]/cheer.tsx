@@ -11,7 +11,7 @@ import { cheerCreator } from './actions'
 const AMOUNTS = [100, 300, 500, 1000] as const
 
 /** 11/11 응원하기(창작 보상 2단계) — 다른 사람이 만든 공개 캐릭터의 상세 화면에서 만든 사람에게 충전한 토큰을 보낸다. 만든 사람은 70% 를 받는다. */
-export function CheerButton({ characterId, creatorName }: { characterId: string; creatorName: string }) {
+export function CheerButton({ characterId, creatorName, big = false }: { characterId: string; creatorName: string; /** 11/20 크리에이터 페이지: 팔로우 옆 큰 테두리 버튼 */ big?: boolean }) {
   const t = useT()
   const toast = useToast()
   const locale = INTL_LOCALE[useLanguage()]
@@ -33,8 +33,8 @@ export function CheerButton({ characterId, creatorName }: { characterId: string;
 
   return <>
     <button type="button" onClick={() => { setError(''); setOpen(true); void refreshBalance() }}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 10, border: 0, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-      <img src="/miro-token.svg" alt="" aria-hidden width={14} height={14} />{t('응원하기')}
+      style={big ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '0 16px', borderRadius: 12, border: '1px solid var(--color-lavender-300)', background: 'transparent', color: 'var(--color-lavender-200)', font: 'inherit', fontSize: 16, fontWeight: 600, cursor: 'pointer' } : { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 10, border: 0, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+      <img src="/miro-token.svg" alt="" aria-hidden width={big ? 18 : 14} height={big ? 18 : 14} />{t('응원하기')}
     </button>
     <Sheet open={open} onClose={() => { if (!pending) setOpen(false) }} title={t('{name}님 응원하기', { name: creatorName })} variant="choice" snap={{ half: 0.6, full: 0.9 }}>
       <div className="stack" style={{ gap: 14, padding: '0 var(--space-4) var(--space-5)' }}>
