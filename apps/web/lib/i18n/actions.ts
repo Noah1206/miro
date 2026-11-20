@@ -7,7 +7,7 @@ import { currentUser } from '@/lib/auth'
 import { LANGUAGE_COOKIE } from './index'
 
 /**
- * 언어 바꾸기(마이페이지 > 설정 > 언어). 화면은 쿠키를 읽고(로그인 전에도), 로그인했으면 설정에도 남긴다 — 앱 밖 연락처럼
+ * 언어 바꾸기(11/20 언어 메뉴·온보딩 단계 삭제 — 지금은 부르는 화면 없음). 화면은 쿠키를 읽고(로그인 전에도), 로그인했으면 설정에도 남긴다 — 앱 밖 연락처럼
  * 요청이 없는 일과 다른 기기(로그인할 때 쿠키를 다시 맞춘다)가 이 값을 읽는다. 온보딩은 서버를 거치지 않는다(useSwitchLanguage).
  */
 export async function setLanguage(language: string): Promise<void> {

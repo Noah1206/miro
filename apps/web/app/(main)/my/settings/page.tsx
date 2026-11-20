@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
 import { redirect } from 'next/navigation'
-import { LANGUAGES } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { SettingsPage } from '@/components/ui/settings-page'
 import { InstallAppButton } from '@/components/pwa-install'
@@ -25,7 +24,7 @@ export default async function SettingsHome({ searchParams }: { searchParams: Pro
       <div className={styles.sections} style={PROFILE_VARS}>
         <MenuSection title={t('앱 설정')}>
           <InstallAppButton className={styles.row}><MenuItemContent label={t('홈 화면에 추가')} icon="download" /></InstallAppButton>
-          <MenuRow href="/my/language" label={t('언어')} end={LANGUAGES[language]} icon="globe" />
+          {/* 11/20 사용자: 언어 메뉴 삭제(온보딩 언어 단계도 삭제) — 화면 언어는 기기 언어·쿠키 그대로 */}
           <VerificationSheet initiallyVerified={!!user.adultVerifiedAt} autoOpen={verify === '1'} result={r} />
           <MenuRow href="/my/permissions" label={t('알림·접근 권한')} icon="bell" />
         </MenuSection>

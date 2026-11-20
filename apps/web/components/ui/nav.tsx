@@ -37,7 +37,7 @@ const ITEMS = [
     icon: <g fillRule="nonzero"><circle cx="12" cy="8.9" r="6.4" /><path d="M12 14.8c-5.2 0-9.4 2.9-9.4 6.1 0 .3.2.5.5.5h17.8c.3 0 .5-.2.5-.5 0-3.2-4.2-6.1-9.4-6.1z" /></g> },
 ]
 
-const SUB_PAGES = /^\/(explore|search|genre|persona|creators?|earnings|stories|recharge|archive\/delete)(?:\/|$)|^\/my\/(settings|language|permissions|ai-data|subscription|likes|delete)(?:\/|$)|^\/character\/[^/]+\/comments/
+const SUB_PAGES = /^\/(explore|search|genre|persona|creators?|earnings|stories|recharge|archive\/delete)(?:\/|$)|^\/my\/(settings|permissions|ai-data|subscription|likes|delete)(?:\/|$)|^\/character\/[^/]+\/comments/
 
 /**
  * 조용한 내비게이션. 아이콘은 늘 꽉 찬 실루엣이고 색만 바뀐다 — 활성 = 주황, 비활성 = 회색.
