@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 
-export type CoachStep = { target: string; title: string; example?: string }
+/** open: 'menu' 면 그 단계를 보이기 전에 채팅방 메뉴(슬라이드)를 열고, 대상이 나타나면 짚는다(11/21). */
+export type CoachStep = { target: string; title: string; example?: string; open?: 'menu' }
 
 const GAP = 12
 const EDGE = 16
@@ -27,13 +28,14 @@ export function CoachMarks({ storageKey, steps }: { storageKey: string; steps: C
     let seen = false
     try { seen = !!localStorage.getItem(storageKey) } catch { /* 못 읽으면 보여 준다 */ }
     if (seen) return
-    const id = requestAnimationFrame(() => setList(steps.filter((s) => document.querySelector(`[data-coach="${s.target}"]`))))
+    const id = requestAnimationFrame(() => setList(steps.filter((s) => s.open || document.querySelector(`[data-coach="${s.target}"]`))))
     return () => cancelAnimationFrame(id)
   }, [storageKey, steps])
 
   const step = list[i]
   const done = useCallback(() => {
     setList([])
+    window.dispatchEvent(new Event('miro:coach-close-menu'))
     try { localStorage.setItem(storageKey, '1') } catch { /* 저장 못 해도 이번엔 닫힌다 */ }
   }, [storageKey])
   const next = useCallback(() => (i >= list.length - 1 ? done() : setI(i + 1)), [i, list.length, done])
@@ -51,10 +53,26 @@ export function CoachMarks({ storageKey, steps }: { storageKey: string; steps: C
       setRect(r)
       setBubble({ top: below ? r.bottom + GAP : r.top - GAP - h, left, caret: Math.max(18, Math.min(cx - left, w - 18)), below })
     }
-    place()
+    // 메뉴 안의 대상: 메뉴를 열고 슬라이드가 멈출 때까지 기다렸다 짚는다. 끝내 안 나타나면(음성 모드가 없는 방 등) 다음 단계로.
+    let waited = 0, timer: ReturnType<typeof setTimeout> | undefined
+    if (step.open === 'menu') {
+      setRect(null)
+      window.dispatchEvent(new Event('miro:coach-open-menu'))
+      const poll = () => {
+        waited += 100
+        if (document.querySelector(`[data-coach="${step.target}"]`) && waited >= 450) return place()
+        if (waited > 2000) return next()
+        timer = setTimeout(poll, 100)
+      }
+      timer = setTimeout(poll, 100)
+    } else {
+      window.dispatchEvent(new Event('miro:coach-close-menu'))
+      place()
+    }
     window.addEventListener('resize', place)
     window.addEventListener('scroll', place, true)
-    return () => { window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true) }
+    return () => { clearTimeout(timer); window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- next 는 단계가 바뀔 때만
   }, [step])
 
   useEffect(() => {

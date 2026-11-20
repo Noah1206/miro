@@ -68,6 +68,13 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     setPanel(request.panel); setOpen(true)
     void refreshProfile(); void refreshBalance()
   }, [request, refreshProfile, refreshBalance])
+  // 11/21 사용자: 첫 안내(코치마크)가 목소리 고르기를 짚을 때 메뉴를 열고, 안내가 끝나면 닫는다.
+  useEffect(() => {
+    const show = () => { setPanel(null); setOpen(true) }
+    const hide = () => setOpen(false)
+    window.addEventListener('miro:coach-open-menu', show); window.addEventListener('miro:coach-close-menu', hide)
+    return () => { window.removeEventListener('miro:coach-open-menu', show); window.removeEventListener('miro:coach-close-menu', hide) }
+  }, [])
   const close = () => setOpen(false)
   const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('AI 모델'), theme: t('채팅방 테마'), memory: t('기억 노트'), note: t('유저노트') }
   const tiles: Panel[] = ['persona', 'model', 'memory', 'note']   // 11/19 사용자: 채팅방 테마 고르기 삭제(늘 기본 테마)
@@ -107,7 +114,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       </div>
     </Sheet>
     {/* 11/16 사용자: 헤더에서도 음성 모드를 켠다 — 메뉴 버튼과 같은 크기의 스피커 아이콘, 켜면 라벤더색에 소리 물결. */}
-    {available && <button type="button" role="switch" aria-checked={on} aria-label={t('음성 모드')} title={t('음성 모드')} className={styles.voiceSwitch} onClick={voiceToggle}>
+    {available && <button type="button" role="switch" aria-checked={on} aria-label={t('음성 모드')} title={t('음성 모드')} className={styles.voiceSwitch} onClick={voiceToggle} data-coach="voice">
       {/* 11/19 사용자(레퍼런스): 음성 버튼 = 알약 스위치 — 꺼짐은 어두운 바탕·흰 손잡이 왼쪽(꺼진 스피커), 켜짐은 흰 바탕·검은 손잡이 오른쪽(물결). */}
       <span className={styles.voiceKnob} aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -133,7 +140,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       <section className={styles.section} aria-label={t('내 설정')}>
         <h3>{t('내 설정')}</h3>
         {/* 음성 모드(11/9 사용자: 헤더 대신 메뉴 안) — 켜면 캐릭터 답장을 목소리로 듣는다. 이 탭이 아이폰 소리 잠금도 푼다. */}
-        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={voiceToggle}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
+        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={voiceToggle} data-coach="voice-pick"><span>{t('음성 모드')}</span><i aria-hidden /></button>}
         {/* 11/12 음성 서버가 멈춘 동안: 켤 수 없는 줄로 '곧 열림' 만 알린다. */}
         {!available && soon && <button type="button" disabled className={styles.voiceRow}><span>{t('음성 모드')}</span><em>{t('곧 열림')}</em></button>}
         {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}

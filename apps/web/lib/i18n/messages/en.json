@@ -2500,5 +2500,9 @@
   "토큰 부담이 가장 적은 가벼운 모델": "The lightest model on tokens",
   "풍성한 묘사로 장면에 빠져들게 하는 모델": "Rich description that pulls you into the scene",
   "{rate}% 할인": "{rate}% off",
-  "보통 {typical} 토큰/턴, 정가 {list}에서 {rate}% 할인": "Usually {typical} tokens/turn, {rate}% off the regular {list}"
+  "보통 {typical} 토큰/턴, 정가 {list}에서 {rate}% 할인": "Usually {typical} tokens/turn, {rate}% off the regular {list}",
+  "메뉴에서 목소리도 고를 수 있어요.": "You can pick a voice from the menu, too.",
+  "음성 모드를 켜면 바로 아래에 캐릭터의 목소리 목록이 나와요.": "Turn on voice mode and the character's voices appear right below.",
+  "음성 모드를 켜면 캐릭터가 목소리로 말해요.": "Turn on voice mode and the character speaks aloud.",
+  "이 스위치로 언제든 켜고 끌 수 있어요.": "Turn it on or off anytime with this switch."
 }

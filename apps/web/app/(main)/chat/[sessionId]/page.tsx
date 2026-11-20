@@ -45,6 +45,9 @@ import { customSceneId } from '@/lib/photo-scenes'
 const CHAT_COACH: CoachStep[] = [
   { target: 'narration', title: msg('행동이나 상황을 표현하고 싶을 때 내용 앞뒤로 *를 붙여보세요.'), example: msg('예시) *수줍게 그를 바라보며* 보고싶었어…') },
   { target: 'model', title: msg('대화 방식을 바꿀 수 있어요.'), example: msg('기본 대화와 더 긴 대화 중에서 골라 보세요.') },
+  // 11/21 사용자: 음성 모드 안내 + 메뉴(슬라이드)를 자동으로 열어 목소리 고르는 곳 안내.
+  { target: 'voice', title: msg('음성 모드를 켜면 캐릭터가 목소리로 말해요.'), example: msg('이 스위치로 언제든 켜고 끌 수 있어요.') },
+  { target: 'voice-pick', open: 'menu', title: msg('메뉴에서 목소리도 고를 수 있어요.'), example: msg('음성 모드를 켜면 바로 아래에 캐릭터의 목소리 목록이 나와요.') },
 ]
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -150,7 +153,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
-        <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
+        {/* 11/21 사용자: 대화방마다 처음 들어왔을 때 무조건 한 번 — 방마다 따로 기억한다. */}
+        <CoachMarks storageKey={`miro:tour:chat:v2:${sessionId}`} steps={CHAT_COACH} />
         {/* 11/13 사용자: '이 세계에서의 나'는 선택 — 카드가 떠 있어도 입력창을 같이 보여 준다. */}
         {<ChatComposer sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies?.map(fill) : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
           persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
