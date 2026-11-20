@@ -29,3 +29,17 @@
 .metaText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .time { flex-shrink: 0; margin-left: auto; font-size: 12px; line-height: 18px; color: #898989; }
 @media (prefers-reduced-motion: reduce) { .row { transition: none; } }
+
+/* 11/20 사용자: 웹툰 앱 '최근 본' 목록 모양으로 — 촘촘한 줄, 둥근 네모 사진, 제목 아래 시간, 오른쪽 '이어하기 ›'. 위 규칙을 덮는다. */
+.list { gap: 0; }
+.row { gap: 14px; padding: 8px 12px; }
+.avatar { width: 56px; height: 56px; border-radius: 6px; }
+.body { gap: 2px; }
+.titleRow { justify-content: flex-start; gap: 6px; min-height: 22px; }
+.title { font-size: 15px; line-height: 22px; }
+.unread { min-width: 0; height: 16px; padding: 0 5px; border-radius: 8px; border: 1px solid var(--color-danger); background: transparent; color: var(--color-danger); font-size: 10px; font-weight: 700; line-height: 14px; }
+.meta { padding-right: 0; }
+.time { margin-left: 0; font-size: 12px; line-height: 18px; color: #8a8a8a; }
+.side { flex-shrink: 0; display: grid; justify-items: end; gap: 2px; }
+.resume { display: inline-flex; align-items: center; gap: 1px; font-size: 13px; font-weight: 700; line-height: 20px; color: #fff; }
+.sideSub { font-size: 12px; line-height: 18px; color: #8a8a8a; }

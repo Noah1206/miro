@@ -104,7 +104,6 @@ export function ArchiveList({ initialPage, channel='chat' }: {
         </button>}
         </div>
       </header>
-      {/* 11/19 사용자: 목록 한 줄 = 둥근 사진 60px + 세 줄(제목·마지막 말·아랫줄과 시간). */}
       <ul className={styles.list}>
         <AnimatePresence initial={false}>
         {items.map((s) => {
@@ -120,16 +119,20 @@ export function ArchiveList({ initialPage, channel='chat' }: {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span className="t-name" style={{ fontSize: 24, color: s.accentA ?? 'var(--color-text-tertiary)', opacity: 0.8 }}>{title.slice(0, 1)}</span>}
               </div>
+              {/* 11/20 사용자: 웹툰 앱 '최근 본' 목록처럼 — 둥근 네모 사진, 제목(+안 읽은 수 배지)·아래 시간, 오른쪽 '이어하기 ›'. */}
               <div className={styles.body}>
                 <div className={styles.titleRow}>
                   <h2 className={styles.title}>{title}</h2>
                   {s.unread > 0 && <span data-unread aria-label={t('안 읽은 메시지 {n}개', { n: s.unread })} className={styles.unread}>{s.unread}</span>}
                 </div>
-                <p className={styles.preview}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : channel==='dm'?t('아직 주고받은 메시지가 없어요.'):s.characterStatus ?? s.location}</p>
                 <p className={styles.meta}>
-                  {s.storyTitle && <span className={styles.metaText}>{s.storyTitle} · {t('{n}회차', { n: s.runNo! })}</span>}
                   <span className={styles.time} suppressHydrationWarning>{ago(s.lastInteractionAt, INTL_LOCALE[language])}</span>
                 </p>
+                <p className="sr-only">{s.lastMessage ? preview(s.lastMessage, s.characterName) : channel==='dm'?t('아직 주고받은 메시지가 없어요.'):s.characterStatus ?? s.location}</p>
+              </div>
+              <div aria-hidden className={styles.side}>
+                <span className={styles.resume}>{t('이어하기')}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg></span>
+                {s.storyTitle && <span className={styles.sideSub}>{t('{n}회차', { n: s.runNo! })}</span>}
               </div>
             </TransitionLink>
             {managing && !s.storyTitle && (
