@@ -45,7 +45,9 @@
 .tab[aria-selected='true'] { color: #f2f2f2; font-weight: 700; }
 .tab[aria-selected='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: #f2f2f2; }
 .tabCount { min-width: 18px; padding: 1px 6px; border-radius: 99px; background: var(--color-lavender-300); color: #1c1c1c; font-size: 11px; font-weight: 700; line-height: 1.4; text-align: center; }
-.panel { display: flex; flex-wrap: wrap; gap: 8px; }
+.panel { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter); overscroll-behavior-x: contain; }  /* 11/20 사용자: 태그는 한 줄 가로 스크롤 */
+.panel::-webkit-scrollbar { display: none; }
+.panel > .chip { flex-shrink: 0; }
 .chip { min-height: 36px; padding: 7px 12px; border: 0; border-radius: 10px; background: #333; color: #fff; font-size: 13px; line-height: 1.4; white-space: nowrap; cursor: pointer; transition: background 120ms, color 120ms; }
 .chip[aria-pressed='true'] { background: #f2f2f2; color: #202020; }
 .chip[data-empty='true']:not([aria-pressed='true']) { background: #2b2b2b; color: #fff; }  /* 11/20 사용자: 칩 글자는 모두 흰색 */

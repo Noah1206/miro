@@ -63,3 +63,9 @@
 /* 11/20 검색 화면: 한 줄 머리 아래 여백 정리 · 최근 검색어 없음 안내 */
 .header .backSearch { margin-bottom: 0; }
 .recentEmpty { margin: 20px 4px 0; color: var(--color-text-tertiary); font-size: 14px; }
+
+/* 11/20 사용자: 태그 칸 배경을 지우고(태그만), 위에 글자만 All / Rank. */
+.filters { padding: 0; border-radius: 0; background: transparent; }
+.sortTabs { display: flex; align-items: center; gap: 8px; font-size: 15px; color: #6f6f6f; }
+.sortTabs button { min-height: 32px; padding: 0; border: 0; background: none; color: #6f6f6f; font: inherit; font-weight: 600; cursor: pointer; transition: color .15s; }
+.sortTabs button[aria-selected='true'] { color: #fff; font-weight: 800; }

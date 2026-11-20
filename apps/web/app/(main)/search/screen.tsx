@@ -31,6 +31,9 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
   genres.forEach(v => canonical.append('genre', v))
   relations.forEach(v => canonical.append('relation', v))
   tags.forEach(tag => canonical.append('tag', tag))
+  // 11/20 사용자: 태그 위 All / Rank — Rank 는 대화량 순(서버 sort=ranking).
+  const rank = params.get('sort') === 'ranking'
+  if (rank) canonical.set('sort', 'ranking')
   const key = canonical.toString()
   const optionCounts = useMemo(() => filterCatalog && !genres.length && !relations.length ? discoveryOptionCounts(filterCatalog, groups, tags, query) : undefined, [filterCatalog, groups, key])
   const [draft, setDraft] = useState(query)
@@ -133,6 +136,11 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     <h1 className="sr-only">{t(resultsPath === '/explore' ? '탐색' : isResults ? '검색 결과' : '검색')}</h1>
     {isResults && <section className={styles.filters} aria-labelledby="search-filters">
       <h2 id="search-filters" className="sr-only">{t('검색 필터')}</h2>
+      <div className={styles.sortTabs} role="tablist" aria-label={t('정렬')}>
+        <button type="button" role="tab" aria-selected={!rank} onClick={() => { const next = new URLSearchParams(key); next.delete('sort'); update(next) }}>All</button>
+        <span aria-hidden>/</span>
+        <button type="button" role="tab" aria-selected={rank} onClick={() => { const next = new URLSearchParams(key); next.set('sort', 'ranking'); update(next) }}>Rank</button>
+      </div>
       <DiscoveryFilters appearance="search" groups={groups} selected={tags} counts={optionCounts} onChange={values => { const next = new URLSearchParams(key); next.delete('tag'); values.forEach(value => next.append('tag', value)); update(next) }} />
     </section>}
     <AnimatePresence initial={false}>
