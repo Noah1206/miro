@@ -16,6 +16,10 @@
 .notice button { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; margin-top: -4px; border: 0; background: transparent; color: var(--color-text-tertiary); cursor: pointer; }
 .summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin: 12px 0 8px; font-size: 12px; color: var(--color-text-tertiary); }
 .summary a { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; font-size: 13px; color: var(--color-text-secondary); }
+/* 11/20 사용자: 작품이 있을 때의 '새로 만들기'가 흐린 글자 링크라 버튼으로 — 라벤더 채움·+ 아이콘(빈 화면의 만들기 버튼과 같은 색). */
+.summary .newButton { gap: 4px; min-height: 36px; padding: 0 14px 0 11px; border-radius: 99px; background: var(--color-lavender-600); color: #fff; font-size: 14px; font-weight: 600; transition: background 160ms, transform 160ms; }
+.summary .newButton:active { transform: scale(.97); }
+@media (hover: hover) { .summary .newButton:hover { background: var(--color-lavender-700); } }
 .empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; min-height: 360px; padding: 48px 16px 64px; text-align: center; }
 .empty h2 { margin: 0; color: #e8e8eb; font-size: 22px; line-height: 1.5; font-weight: 600; letter-spacing: -.03em; text-wrap: balance; white-space: pre-line; }
 .empty p { margin: 12px 0 0; color: #aaa; font-size: 14px; line-height: 1.75; white-space: pre-line; text-wrap: balance; }

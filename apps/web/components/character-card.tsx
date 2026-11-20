@@ -49,7 +49,7 @@ export type CardCharacter = {
 /** 11/7: 카드 소개 2줄 = 상세 화면 소개 글의 앞부분([프로필] 같은 머리말은 뺀다). 없으면 한 줄 대사. */
 const cardBlurb = (c: CardCharacter) => c.blurb?.replace(/\[[^\]\n]*\]/g, ' ').replace(/[*_#]/g, '').replace(/\s+/g, ' ').trim() || (c.tagline ? `“${c.tagline}”` : '')
 
-export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: boolean; /** 11/10: 표지에 고정(홈 '미로 오리지널' 줄) */ still?: boolean }) {
+export function CharacterCard({ c, still, ratio = '1 / 1' }: { c: CardCharacter; tagsBelow?: boolean; /** 11/10: 표지에 고정(홈 '미로 오리지널' 줄) */ still?: boolean; /** 11/20 사용자: 카드 사진은 어디서나 정사각형이 기본(그 전 4 / 5) */ ratio?: string }) {
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
@@ -60,9 +60,9 @@ export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: bool
       <TransitionLink href={c.href ?? `/character/${slug}`}
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
         style={{ display: 'block', minWidth: 0 }}>
-        {/* 11/4: 사진 원본 비율(4:5)대로 — 15:16 이면 아래 제목 로고가 잘렸다. */}
+        {/* 11/4: 사진 원본 비율(4:5)대로였다. 11/20 사용자: 홈·탐색·목록 모두 정사각형 그리드로(위아래가 잘린다). */}
         <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio="4 / 5" scrim={false} />
+          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio={ratio} scrim={false} />
           {/* 11/10 사용자: 흐림은 수위 있는 표지가 보일 때만 — 넘어간 다른 사진엔 안 씌운다 */}
           {c.coverUnveil && photo === c.images[0] && <UnveilCover veiled={c.veiled} label="언베일" hideLabel={!c.veiled} />}
           {!!c.chats && <span style={{ position: 'absolute', left: 6, bottom: 6, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 7px', borderRadius: 999, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 11, fontWeight: 600, lineHeight: 1 }}>

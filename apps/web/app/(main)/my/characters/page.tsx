@@ -62,7 +62,7 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
         </section>
       ) : (
         <>
-          <div className={styles.summary}><span>{t('{n}개', { n: shown.length })}</span><TransitionLink href="/create">+ {t('새로 만들기')}</TransitionLink></div>
+          <div className={styles.summary}><span>{t('{n}개', { n: shown.length })}</span><TransitionLink href="/create" className={styles.newButton}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>{t('새로 만들기')}</TransitionLink></div>
           <div className="grid-2">{cards.map((c) => <CharacterCard key={c.id} c={c} />)}</div>
         </>
       )}
