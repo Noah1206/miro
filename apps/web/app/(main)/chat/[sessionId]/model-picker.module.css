@@ -58,3 +58,17 @@
 .trigger { gap:8px; padding:0 14px 0 10px; max-width:min(200px,100%); }
 /* 11/7 사용자: 화면 너비에 따라 반응형 — 좁은 휴대폰은 촘촘히, 넓으면 스크린샷처럼 여유 있게. */
 .trigger { gap:clamp(5px, 1.5vw, 8px); padding:0 clamp(9px, 2.8vw, 14px) 0 clamp(7px, 2vw, 10px); }
+/* 11/21 사용자: 추천 모델 → 전체 모델(옆으로 넘김). */
+.group h3 { font-size:11px; font-weight:600; color:#a9a5b1; }
+.back { display:inline-flex; align-items:center; gap:4px; min-height:36px; margin:0 0 2px; padding:6px 9px; border:0; border-radius:8px; background:transparent; color:#cfcad8; font:inherit; font-size:13px; cursor:pointer; }
+.back:hover { background:#ffffff08; }
+.back:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+/* 11/21 사용자 스크린샷: 이름 굵게 + 옆에 분홍 토큰 값, 아래 소개는 옅은 흰색. */
+.heading { flex-wrap:wrap; row-gap:2px; }
+.heading strong { font-weight:700; color:#fff; }
+.heading .price { gap:3px; color:#ff6f9c; font-size:15px; font-weight:600; }
+.heading .price img { width:14px; height:14px; }
+.description { color:rgb(255 255 255 / .55); font-size:12px; }
+/* 11/21 기간 한정 할인 표시. */
+.listPrice { margin-right:3px; color:rgb(255 255 255 / .4); font-size:13px; font-weight:400; }
+.discount { display:inline-flex; align-items:center; height:22px; padding:0 7px; border-radius:6px; background:#e5455f; color:#fff; font-size:12px; font-weight:600; line-height:1; }

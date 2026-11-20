@@ -15,6 +15,8 @@ import { RoomControlsProvider, useRoomControls } from '@/components/room-control
 import { ModelBrandIcon } from '@/components/model-brand-icon'
 import { chatModelFamily, modelPresentation, selectedChatChoice } from '@/lib/ai/model-presentation'
 
+/** 11/21 사용자: 모델 버튼을 누르면 먼저 보이는 추천 모델. */
+const RECOMMENDED = ['Claude Sonnet 5.5', 'Gemini 3.8 Flash', 'Claude Opus 5.5', 'Claude Fable 5.2']
 /** Model identity stays separate from the reply-length setting. */
 const brand = Outfit({ subsets: ['latin'], weight: ['500'], display: 'swap' })
 
@@ -58,6 +60,13 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
   const rows = families.map(family => choices.find(c => chatModelFamily(c) === family && c.length === length) ?? choices.find(c => chatModelFamily(c) === family)!)
   const providers = [...new Set(rows.map(c => modelPresentation(c).provider))]
   const [more, setMore] = useState(false)
+  const reduce = useReducedMotion()
+  // 추천 = 정해 둔 모델들(있는 것만) + 지금 고른 모델이 거기 없으면 맨 앞에.
+  const recommended = (() => {
+    const picks = RECOMMENDED.flatMap(name => rows.filter(c => c.name.replace(/ · .*$/, '') === name))
+    const current = rows.find(c => c.id === selected?.id)
+    return current && !picks.includes(current) ? [current, ...picks] : picks.length ? picks : rows.slice(0, 4)
+  })()
   return <div className={sheet.options}>
     {selected && (() => {
       const lengths = ['short', 'scene', 'plus', 'long', 'saga'] as const
@@ -68,18 +77,31 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
         <StepSlider label={t('답변 길이')} steps={lengths.map(value => ({ value, label: label(value) }))} value={length} onChange={value => pick(value as typeof lengths[number])} />
       </div>
     })()}
-    {/* 11/3: 처음엔 회사마다 대표 모델 하나(고른 모델이 있으면 그것)만, '자세히 보기'로 전체 목록. */}
-    {providers.map(provider => <section key={provider} className={sheet.group} aria-label={provider}>
-      {more && <h3>{provider}</h3>}
-      {rows.filter(c => modelPresentation(c).provider === provider).filter((c, i, list) => more || c.id === (list.find(x => x.id === selected?.id) ?? list[0])!.id).map(choice => {
-        const presentation = modelPresentation(choice)
-        return <button type="button" key={choice.id} className={sheet.option} aria-pressed={selected?.id === choice.id} onClick={() => { setModel(choice.id); onSelect?.() }}>
-          <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong></span><span className={sheet.description}>{t(presentation.description)}</span></span>
-          <span className={sheet.cost}><span className={sheet.price}><img src="/miro-token.svg" alt="" aria-hidden="true" width={11} height={11} decoding="async"/>{t('보통 {typical} 토큰/턴', { typical: choice.typicalTokens.toLocaleString(locale) })}</span><span className={sheet.check} aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></span>
-        </button>
-      })}
-    </section>)}
-    {rows.length > providers.length && <button type="button" className={sheet.more} aria-expanded={more} onClick={() => setMore(v => !v)}>{more ? t('간단히 보기') : t('자세히 보기')}</button>}
+    {/* 11/21 사용자: 처음엔 추천 모델만, '더 많은 모델 보러가기'를 누르면 옆으로 넘어가며 전체 목록(회사별). */}
+    <AnimatePresence mode="wait" initial={false} custom={more}>
+      <motion.div key={more ? 'all' : 'rec'} custom={more}
+        initial={reduce ? false : { opacity: 0, x: more ? 36 : -36 }} animate={{ opacity: 1, x: 0 }} exit={reduce ? undefined : { opacity: 0, x: more ? -36 : 36 }}
+        transition={{ duration: reduce ? 0 : .2, ease: ease.standard }}>
+        {more && <button type="button" className={sheet.back} onClick={() => setMore(false)}>‹ {t('추천 모델')}</button>}
+        {(more ? providers : [null]).map(provider => <section key={provider ?? 'rec'} className={sheet.group} aria-label={provider ?? t('추천 모델')}>
+          <h3>{provider ?? t('추천 모델')}</h3>
+          {(provider ? rows.filter(c => modelPresentation(c).provider === provider) : recommended).map(choice => {
+            const presentation = modelPresentation(choice)
+            return <button type="button" key={choice.id} className={sheet.option} aria-pressed={selected?.id === choice.id} onClick={() => { setModel(choice.id); onSelect?.() }}>
+              {/* 11/21 사용자: 이름은 굵게, 바로 옆에 한 턴 토큰(분홍)+토큰 그림, 아래 한 줄 소개는 옅은 흰색. */}
+              <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong>
+                {/* 11/21 기간 한정 할인 모델: 정가(줄 그음) · 할인가 · 'N% 할인'. */}
+                <span className={sheet.price} aria-label={choice.listTokens ? t('보통 {typical} 토큰/턴, 정가 {list}에서 {rate}% 할인', { typical: choice.typicalTokens.toLocaleString(locale), list: choice.listTokens.toLocaleString(locale), rate: Math.round((choice.discountRate ?? 0) * 100) }) : t('보통 {typical} 토큰/턴', { typical: choice.typicalTokens.toLocaleString(locale) })}>
+                  {choice.listTokens && <s className={sheet.listPrice}>{choice.listTokens.toLocaleString(locale)}</s>}{choice.typicalTokens.toLocaleString(locale)}<img src="/miro-token.svg" alt="" aria-hidden="true" width={14} height={14} decoding="async"/></span>
+                {choice.listTokens && <span className={sheet.discount} aria-hidden="true">{t('{rate}% 할인', { rate: Math.round((choice.discountRate ?? 0) * 100) })}</span>}</span>
+                <span className={sheet.description}>{t(presentation.description)}</span></span>
+              <span className={sheet.cost}><span className={sheet.check} aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></span>
+            </button>
+          })}
+        </section>)}
+        {!more && rows.length > recommended.length && <button type="button" className={sheet.more} onClick={() => setMore(true)}>{t('더 많은 모델 보러가기')} ›</button>}
+      </motion.div>
+    </AnimatePresence>
     {!choices.length && <p className={sheet.description}>{t('준비 중')}</p>}
     {choices.length > 0 && <p className={sheet.priceNote}>{t('실제 사용량만큼 차감돼요.')}</p>}
   </div>
