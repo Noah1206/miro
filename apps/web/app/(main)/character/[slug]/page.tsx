@@ -136,15 +136,15 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {c.ownerId !== user?.id && (
           <TransitionLink href={`/report?type=character&id=${c.id}`} aria-label={t('신고')} className="back-press"
             style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)' }}>
-            {/* 신고 깃발 */}
-            <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22V4" /><path d="M4 4h12l-2 4 2 4H4" /></svg>
+            {/* 신고 — 느낌표 세모(11/20 사용자: 깃발 대신, 조금 작게) */}
+            <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
           </TransitionLink>
         )}
       </div>
 
       {/* 11/3: 컴퓨터에서는 위쪽을 사진 | 이름·소개·시작 버튼 두 칸으로(globals.css .detail-top). 휴대폰은 위아래 그대로. */}
       {/* 11/12 사용자: 사진 밖 맨 위에 만든 사람(누르면 그 사람의 작품 모음)과 팔로우 */}
-      {creatorInfo && <div style={{ padding: '0 var(--gutter) 8px' }}><CreatorRow creator={creatorInfo} signedIn={!!user} /></div>}
+      {/* 11/20 사용자: 만든 사람·팔로우 줄은 사진 바로 밑(소개 칸 맨 위)으로 옮겼다. */}
       <div className="detail-top">
       <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} veil={unveil ? null : unlockAt} />
@@ -154,6 +154,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
 
       <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
+        {creatorInfo && <div style={{ marginBottom: 14 }}><CreatorRow creator={creatorInfo} signedIn={!!user} /></div>}
         {/* 11/5 사용자 스크린샷 순서: 제목 → 통계 → 배지 → 소개 → 해시태그 칩. */}
         <h1 className="t-hero t-name" style={{ marginBottom: 8 }}>{coverTitle(c)}</h1>
 
