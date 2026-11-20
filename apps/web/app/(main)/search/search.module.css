@@ -45,3 +45,5 @@
 /* 11/20 탐색·검색 위쪽 뒤로 화살표 줄. */
 .backRow { display: flex; align-items: center; min-height: 32px; margin: 0 0 8px -4px; }
 .header .backRow { margin-bottom: 0; }
+.backSearch { gap: 6px; margin-bottom: 14px; }
+.backSearch .field { flex: 1; width: auto; }

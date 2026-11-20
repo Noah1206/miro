@@ -114,15 +114,17 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     void load()
     return () => request.current?.abort()
   }, [key, retry, isResults]) // Only the results route fetches catalog data; each query owns its request.
+  const field = <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
+    <input type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
+    {draft && <button type="button" aria-label={t('검색어 지우기')} onClick={() => setDraft('')}>×</button>}
+  </form>
   return <div className={`${styles.screen} ${isResults ? styles.resultsScreen : ''}`}>
     {/* 11/20 사용자: 탐색·검색은 하단 탭 없이 위쪽 화살표로 돌아간다. */}
-    {isResults && <div className={styles.backRow}><Back href={resultsPath === '/explore' ? '/home' : '/search'} /></div>}
+    {/* 11/20 사용자: 탐색·결과 화면도 < 옆에 검색창 — 누르면 지금 필터에 검색어를 더한다. */}
+    {isResults && <div className={`${styles.backRow} ${styles.backSearch}`}><Back href={resultsPath === '/explore' ? '/home' : '/search'} />{field}</div>}
     {!isResults && <header className={`sticky-head ${styles.header}`}>
       <div className={styles.backRow}><Back href="/home" /></div>
-      <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
-        <input type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
-        {draft && <button type="button" aria-label={t('검색어 지우기')} onClick={() => setDraft('')}>×</button>}
-      </form>
+      {field}
     </header>}
     <h1 className="sr-only">{t(resultsPath === '/explore' ? '탐색' : isResults ? '검색 결과' : '검색')}</h1>
     {isResults && <section className={styles.filters} aria-labelledby="search-filters">

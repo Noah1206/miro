@@ -13,7 +13,6 @@ import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getLanguage, getT } from '@/lib/i18n/server'
 import { AudienceSelect } from './audience-select'
-import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile, HeaderProfileGuest } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
@@ -76,7 +75,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
         </div>
       </header>
 
-      <InstallAppHint />
       <HomeViewBeacon signedIn={!!user} />
       {user && feature('characterVoice') && !voicePaused() && <HomeVoiceWake />}
 
