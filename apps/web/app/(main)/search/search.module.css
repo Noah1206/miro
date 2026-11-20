@@ -58,5 +58,5 @@
 .backSearch .field { max-width: 560px; }
 .backRow svg { width: 26px; height: 26px; stroke-width: 2.5; }
 .backRow a { color: var(--color-text-primary) !important; }
-/* 11/20 사용자: 검색창 둥근 모서리·테두리 없앰(입력 중에도). */
-.field, .field:focus-within { border: 0; border-radius: 0; }
+/* 11/20 사용자: 검색창 테두리 없앰(입력 중에도). 모서리는 0 이 너무 각져 8 로. */
+.field, .field:focus-within { border: 0; border-radius: 8px; }
