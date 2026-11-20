@@ -569,3 +569,6 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 @media (hover: hover) { .back-press:hover::before { opacity: .55; transform: translate(-50%, -50%) scale(1); } }
 .back-press:focus-visible::before { opacity: .55; transform: translate(-50%, -50%) scale(1); }
 @media (prefers-reduced-motion: reduce) { .back-press::before, .back-press svg { transition: none; } .back-press:active svg { transform: none; } }
+
+/* 11/21 사용자: 인트로 미리보기의 점 세 개(유저 쪽) 말풍선은 오른쪽 위 모서리만 각지게. */
+.intro-typing { border-top-right-radius: 0; }
