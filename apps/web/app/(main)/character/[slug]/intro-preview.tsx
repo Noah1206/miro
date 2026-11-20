@@ -16,6 +16,8 @@ export type IntroScene = {
   meta: string
   context: string
   lines: Array<{ role: 'character' | 'narrator'; text: string; image?: string }>
+  /** 11/21 인트로 상태창 — 인트로 끝에 접는 카드(대화방 첫 화면과 같은 값). */
+  status?: string
 }
 
 /**
@@ -77,6 +79,10 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
             : <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />)}
         </div>
       ))}
+      {scene.status && (!longIntro || expanded) && <details open className="intro-status" style={{ margin: '4px 0 2px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)', overflow: 'hidden' }}>
+        <summary style={{ cursor: 'pointer', padding: '8px 12px', fontSize: 12, letterSpacing: '.06em', color: 'var(--color-text-secondary)', userSelect: 'none' }}>{t('상태창')}</summary>
+        <pre style={{ margin: 0, padding: '0 12px 12px', font: '12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{scene.status}</pre>
+      </details>}
       {/* 11/5: 인트로 끝에 입력 중 말풍선(…) — 11/6 사용자: 내가 적는 쪽이라 오른쪽 정렬 */}
       {(!longIntro || expanded) && <div className="intro-line" style={{ alignItems: 'flex-end' }}><div className="intro-bubble intro-typing" aria-hidden><span /><span /><span /></div></div>}
       </div>

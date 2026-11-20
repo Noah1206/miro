@@ -82,6 +82,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         text: !unveil && explicitText(d.text) ? t(VEILED_LINE) : d.role === 'narrator' ? me(d.text) : d.text,
         ...(d.image ? { image: d.image } : {}),
       })),
+      // 11/21 사용자: 상세 인트로 미리보기에도 그 장면의 인트로 상태창(대화방과 같은 값).
+      status: introDialogue(c.sampleDialogue, scene).find((d) => d.status)?.status,
     }
   })
 
