@@ -764,3 +764,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* 11/20 사용자: 대기 박스(점 세 개)는 지금 모양 그대로 왼쪽 위 모서리만 각지게. */
 :global([data-chat-theme='miro']) .typingBubble { border-top-left-radius: 0; }
+
+/* 11/21 사용자: 추천 답변 옆 연필(고쳐 쓰기) 아이콘은 빼고, 카드 회색 배경은 더 옅게. */
+.suggestEdit { display: none; }
+.suggestCard { background: rgb(255 255 255 / .045); }
+.suggestCard:hover { background: rgb(255 255 255 / .08); }
+:global([data-chat-theme='dm-light']) .suggestCard, :global([data-chat-theme='talk']) .suggestCard { background: rgb(0 0 0 / .045); }

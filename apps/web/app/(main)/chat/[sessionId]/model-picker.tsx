@@ -88,14 +88,13 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
           {(provider ? rows.filter(c => modelPresentation(c).provider === provider) : recommended).map(choice => {
             const presentation = modelPresentation(choice)
             return <button type="button" key={choice.id} className={sheet.option} aria-pressed={selected?.id === choice.id} onClick={() => { setModel(choice.id); onSelect?.() }}>
-              {/* 11/21 사용자: 이름은 굵게, 바로 옆에 한 턴 토큰(분홍)+토큰 그림, 아래 한 줄 소개는 옅은 흰색. */}
-              <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong>
-                {/* 11/21 기간 한정 할인 모델: 정가(줄 그음) · 할인가 · 'N% 할인'. */}
-                <span className={sheet.price} aria-label={choice.listTokens ? t('보통 {typical} 토큰/턴, 정가 {list}에서 {rate}% 할인', { typical: choice.typicalTokens.toLocaleString(locale), list: choice.listTokens.toLocaleString(locale), rate: Math.round((choice.discountRate ?? 0) * 100) }) : t('보통 {typical} 토큰/턴', { typical: choice.typicalTokens.toLocaleString(locale) })}>
-                  {choice.listTokens && <s className={sheet.listPrice}>{choice.listTokens.toLocaleString(locale)}</s>}{choice.typicalTokens.toLocaleString(locale)}<img src="/miro-token.svg" alt="" aria-hidden="true" width={14} height={14} decoding="async"/></span>
-                {choice.listTokens && <span className={sheet.discount} aria-hidden="true">{t('{rate}% 할인', { rate: Math.round((choice.discountRate ?? 0) * 100) })}</span>}</span>
+              {/* 11/21 사용자(시안 B): 이름은 굵게·아래 옅은 흰 소개, 값은 오른쪽 세로 칸 — 한 턴 토큰(흰색), 할인 모델은 그 아래 '−20%'·옅은 정가(줄 그음). */}
+              <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong>{selected?.id === choice.id && <span className={sheet.check} aria-hidden="true">✓</span>}</span>
                 <span className={sheet.description}>{t(presentation.description)}</span></span>
-              <span className={sheet.cost}><span className={sheet.check} aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></span>
+              <span className={sheet.side} aria-label={choice.listTokens ? t('보통 {typical} 토큰/턴, 정가 {list}에서 {rate}% 할인', { typical: choice.typicalTokens.toLocaleString(locale), list: choice.listTokens.toLocaleString(locale), rate: Math.round((choice.discountRate ?? 0) * 100) }) : t('보통 {typical} 토큰/턴', { typical: choice.typicalTokens.toLocaleString(locale) })}>
+                <span className={sheet.sidePrice}>{choice.typicalTokens.toLocaleString(locale)}<img src="/miro-token.svg" alt="" aria-hidden="true" width={16} height={16} decoding="async"/></span>
+                {choice.listTokens && <><span className={sheet.sideOff}>−{Math.round((choice.discountRate ?? 0) * 100)}%</span><s className={sheet.sideList}>{choice.listTokens.toLocaleString(locale)}</s></>}
+              </span>
             </button>
           })}
         </section>)}
