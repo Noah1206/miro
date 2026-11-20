@@ -223,6 +223,16 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }, [pending, !!live?.blocks.length])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
+  // 11/20 사용자: 보낸 뒤 답이 화면에 나오기 전까지는 입력칸을 막고, 답이 보이는 순간 다시 연다(쓰던 중이었으면 커서도 돌려준다).
+  const awaiting = pending && (!live?.blocks.length || voice.live)
+  const refocus = useRef(false)
+  const wasAwaiting = useRef(false)
+  // 막히기 직전(그리기 단계, 아직 포커스가 있을 때) 입력칸에 커서가 있었는지 기억한다 — 막힌 뒤엔 브라우저가 포커스를 뺀다.
+  if (awaiting && !wasAwaiting.current && typeof document !== 'undefined') refocus.current = document.activeElement === ta.current
+  wasAwaiting.current = awaiting
+  useEffect(() => {
+    if (!awaiting && refocus.current) { refocus.current = false; ta.current?.focus() }
+  }, [awaiting])
   // 11/19 되돌리기: 마지막 답 카드의 되돌리기 아이콘 — 그 턴을 지우고 보낸 말을 입력칸에(쓰던 글이 있으면 그대로 둔다).
   const undoLatest = useRef({ remove, router, toast })
   undoLatest.current = { remove, router, toast }
@@ -342,8 +352,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         </div>}
         <div className={styles.inputRow}>
           {/* 11/6 사용자: ✳︎(상황 묘사)는 입력칸 왼쪽 */}
-          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-          <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
+          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={awaiting || calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+          <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={awaiting || calendarPending || !ready} rows={1} required={!command} maxLength={2000}
             placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
             onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && slashQuery !== null) { e.preventDefault(); return } if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
@@ -353,7 +363,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         <div className={styles.composerRow}>
           <div className={styles.composerTools}>
             <ModelPicker {...modelOptions} place="up" disabled={pending || calendarPending || !ready}/>
-            <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+            <ChatInputMore disabled={awaiting || calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 11/4 사용자: 사진·✳︎·/·추천은 입력창 아래 도구 줄로 내렸다. 페르소나 드롭다운·마이크는 뺐다. */}
             <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
               onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
