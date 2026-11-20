@@ -64,3 +64,5 @@ export function replyTypingBoost(backlogChars: number): number {
 }
 /** 박스(서술 칸·말풍선) 안의 글을 다 친 뒤 다음 박스로 넘어가기 전의 멈칫. */
 export const BOX_END_PAUSE_MS = 450
+/** 11/21 사용자: 답 중간 사진이 뜬 뒤 다음 글을 치기 전까지 — 사진을 확인할 시간. */
+export const PHOTO_PAUSE_MS = 1800

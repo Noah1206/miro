@@ -66,17 +66,33 @@ export function validateProposal(
     intent: proposal.intent,
     status: snapshot.character.worldRole.statusFormat?.trim() && proposal.status?.trim() ? proposal.status.trim() : null,
     statValues: snapshot.character.worldRole.stats?.length ? clampStatValues(snapshot.character.worldRole.stats, snapshot.statValues ?? {}, proposal.statValues) : null,
-    images: photos.map(p => p.index),
-    // AI 가 센 블록 번호는 검증 전 블록 기준 — 그 앞까지를 같은 규칙으로 걸러 남은 수가 저장될 자리다. 끝이거나 번호가 없으면 답 끝.
-    imagesAfter: photos.map((p) => {
+    ...spreadPhotos(photos.map(p => p.index), blocks.length, photos.map((p) => {
       // 서버가 채운 사진은 정해 둔 자리(FILL_SLOTS, 저장 블록 기준) — 스트리밍 중에도 같은 자리에 먼저 보여 줄 수 있게. 답이 짧아 넘치면 답 끝.
       if (p.fill) return p.after !== null && p.after < blocks.length ? p.after : null
       if (p.after === null) return null
       const kept = allowedBlocks(proposal.rp.blocks.slice(0, p.after), snapshot).length
       return kept >= 1 && kept < blocks.length ? kept : null
-    }),
+    })),
     issues,
   }
+}
+
+/**
+ * 11/21 사용자: 사진은 글 → 사진 → 글. 두 장이 한자리(연달아)거나 답 끝(뒤에 글 없음)이면 안 된다.
+ * 자리(after, 1부터 센 블록 번호)는 1..n-1 에서 사진마다 다르게 — 자리가 없거나 겹치면 가장 가까운 빈자리로, 빈자리가 없으면 그 사진은 뺀다.
+ * 블록이 하나뿐인 답은 뒤에 글을 둘 수 없어 첫 사진 한 장만 답 끝에.
+ */
+export function spreadPhotos(images: number[], n: number, after: Array<number | null>): { images: number[]; imagesAfter: Array<number | null> } {
+  const out = { images: [] as number[], imagesAfter: [] as Array<number | null> }
+  if (n < 2) { if (images.length) { out.images.push(images[0]!); out.imagesAfter.push(null) } return out }
+  const used = new Set<number>()
+  images.forEach((index, k) => {
+    const want = Math.min(Math.max(after[k] ?? n - 1, 1), n - 1)
+    for (let d = 0; d < n; d++) for (const c of [want - d, want + d]) {
+      if (c >= 1 && c <= n - 1 && !used.has(c)) { used.add(c); out.images.push(index); out.imagesAfter.push(c); return }
+    }
+  })
+  return out
 }
 
 /** 스트리밍 중인 대사 블록을 최종 검증과 같은 규칙으로 거른다(10/9) — 보여 준 블록이 저장 때 빠지는 일을 줄인다. */
