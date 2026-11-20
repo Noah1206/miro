@@ -394,7 +394,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           {/* 11/11 다인: 주인공 칸 아래로 같은 모양의 캐릭터 칸을 버튼으로 하나씩 더한다. */}
-          {castMode === 'multi' && <CastProfiles cast={cast} onChange={setCast}
+          {castMode === 'multi' && <CastProfiles cast={cast} onChange={setCast} adultAllowed={adultAllowed}
             heading={(index, body) => <Section title={t('캐릭터 {n}', { n: index + 2 })}><IdentityCard>{body}</IdentityCard></Section>} />}
 
         </Panel>

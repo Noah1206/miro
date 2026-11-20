@@ -35,7 +35,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export async function saveCharacter(form: FormData): Promise<string> {
   const user = await requireUser()
   const p = parseCharacterForm(form)
-  if (await isMinor(user.id)) stripAdult(p.character)
+  if (await isMinor(user.id)) stripAdult(p)
   const creationId = String(form.get('creationId') ?? '')
   if (!UUID.test(creationId)) throw new Error('INVALID_CREATION_ID')
 

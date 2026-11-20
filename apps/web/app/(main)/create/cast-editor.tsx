@@ -102,17 +102,11 @@ function Area({ value, onChange, max, label }: { value: string; onChange: (v: st
  * 11/11 다인 작품 — 주인공(위 '캐릭터' 칸) 아래로 같은 모양의 캐릭터 칸을 하나씩 더한다: 사진·이름·소개·반응 성향·고급 설정.
  * 사진은 고르자마자 올리고(상황별 사진과 같은 업로드) URL 만 담는다. 저장은 ensemble_cast·ensemble_voices·ensemble_photos.
  */
-export function CastProfiles({ cast, onChange, heading }: { cast: CastMember[]; onChange: (c: CastMember[]) => void; heading: (index: number, body: ReactNode) => ReactNode }) {
+export function CastProfiles({ cast, onChange, heading, adultAllowed = false }: { cast: CastMember[]; onChange: (c: CastMember[]) => void; heading: (index: number, body: ReactNode) => ReactNode; adultAllowed?: boolean }) {
   const t = useT()
   const uid = useId()
   const [busy, setBusy] = useState<number | null>(null)
-  const [open, setOpen] = useState<Record<number, 'traits' | 'advanced' | 'both' | undefined>>({})
   const set = (i: number, patch: Partial<CastMember>) => onChange(cast.map((c, j) => j === i ? { ...c, ...patch } : c))
-  const toggle = (i: number, what: 'traits' | 'advanced') => setOpen(o => {
-    const cur = o[i], has = (k: string) => cur === k || cur === 'both'
-    const next = has(what) ? (cur === 'both' ? (what === 'traits' ? 'advanced' : 'traits') : undefined) : (cur ? 'both' : what)
-    return { ...o, [i]: next }
-  })
   const pick = async (i: number, file: File | undefined) => {
     if (!file) return
     setBusy(i)
@@ -124,8 +118,6 @@ export function CastProfiles({ cast, onChange, heading }: { cast: CastMember[]; 
   }
   return <>
     {cast.map((c, i) => {
-      const o = open[i], traitsOpen = o === 'traits' || o === 'both', advancedOpen = o === 'advanced' || o === 'both'
-      const summary = TRAITS.every(tr => level(c[tr.key]) === 1) ? t('균형') : TRAITS.map(tr => t(tr.choices[level(c[tr.key])]!)).join(' · ')
       return <div key={i}>{heading(i, <div className="stack" style={{ gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <label htmlFor={`${uid}-${i}`} aria-label={t('캐릭터 이미지')}
@@ -141,30 +133,9 @@ export function CastProfiles({ cast, onChange, heading }: { cast: CastMember[]; 
         <LabeledField label={t('캐릭터 소개')} required hint={t('이 인물의 성격·가치관·말투, 주인공·사용자와의 관계를 적어 주세요.')}>
           <Area label={t('캐릭터 소개')} value={c.intro ?? ''} max={1000} onChange={v => set(i, { intro: v })} />
         </LabeledField>
-        <div className="stack" style={{ gap: 8 }}>
-          <button type="button" aria-expanded={traitsOpen} onClick={() => toggle(i, 'traits')}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 0, border: 0, background: 'none', color: 'var(--color-text-primary)', cursor: 'pointer', textAlign: 'left' }}>
-            <span className="t-body" style={{ flex: 1, fontWeight: 'var(--weight-semibold)' }}>{t('반응 성향')}</span>
-            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{summary}</span>
-          </button>
-          {traitsOpen && TRAITS.map(tr => <fieldset key={tr.key} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-            <legend className="t-body" style={{ marginBottom: 8, fontWeight: 'var(--weight-semibold)' }}>{t(tr.label)}</legend>
-            <ChoiceChips columns={3} value={String(level(c[tr.key]))} options={tr.choices.map((ch, k) => ({ value: String(k), label: t(ch) }))}
-              onChange={v => set(i, { [tr.key]: [20, 50, 80][Number(v)] })} />
-          </fieldset>)}
-        </div>
-        <button type="button" aria-expanded={advancedOpen} onClick={() => toggle(i, 'advanced')}
-          style={{ minHeight: 48, borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', cursor: 'pointer', fontSize: 'var(--font-body-size)' }}>
-          {t('고급 설정')} {advancedOpen ? '▴' : '▾'}
-        </button>
-        {advancedOpen && <div className="stack" style={{ gap: 18 }}>
-          <LabeledField label={t('나이')}><Field label={t('나이')} value={c.age ?? ''} max={10} onChange={v => set(i, { age: v })} /></LabeledField>
-          <LabeledField label="MBTI"><ChoiceChips columns={4} value={c.mbti ?? ''} onChange={v => set(i, { mbti: v })}
-            options={[{ value: '', label: t('선택 안 함') }, ...MBTI_TYPES.map(m => ({ value: m, label: m }))]} /></LabeledField>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 12 }}>
-            <LabeledField label={t('국적')}><Field label={t('국적')} value={c.nationality ?? ''} max={40} onChange={v => set(i, { nationality: v })} /></LabeledField>
-            <LabeledField label={t('직업')}><Field label={t('직업')} value={c.occupation ?? ''} max={60} onChange={v => set(i, { occupation: v })} /></LabeledField>
-          </div>
+        {/* 11/20 사용자: 인물마다 있던 반응 성향·고급 설정(나이·MBTI·국적·직업)은 주인공 칸처럼 화면에서 뺐다 — 저장된 값은 castProfilesJson 이 그대로 보낸다.
+            인물별 성적 설정은 성인 인증한 사람에게만 바로 보인다(서버도 미성년이면 비운다). */}
+        {adultAllowed && <div className="stack" style={{ gap: 18 }}>
           <LabeledField label={t('성적 설정 · 선택')} hint={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 좋아하는 것·싫어하는 것·처음 허용하는 선·잘 넘어가는 계기·끝난 뒤 반응을 적어 주세요.')}>
             <Area label={t('성적 설정')} value={c.intimacy ?? ''} max={800} onChange={v => set(i, { intimacy: v })} />
           </LabeledField>

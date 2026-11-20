@@ -46,7 +46,9 @@ export type ParsedCharacter = ReturnType<typeof parseCharacterForm>
 export const isUnveilCommand = (c: { hint: string }) => c.hint.startsWith('[언베일]')
 
 /** 11/20 성인 인증 전(또는 미성년)은 언베일·성인 설정을 저장하지 않는다 — 만들기·편집 저장이 같이 쓴다. */
-export function stripAdult(c: ParsedCharacter['character']) {
+export function stripAdult(p: ParsedCharacter) {
+  const c = p.character
+  p.ensembleCast = p.ensembleCast.map(({ intimacy: _i, ...m }) => m)
   c.adultOnly = false
   c.intimacy = ''
   c.commands = c.commands.filter(x => !isUnveilCommand(x))
