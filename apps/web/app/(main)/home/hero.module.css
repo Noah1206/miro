@@ -1,6 +1,6 @@
 /* 11/10 크랙식 추천 — 큰 그림 | 소개 카드 | 다음 작품 띠. 작은 화면은 큰 그림 위에 글만. */
 .hero { position: relative; display: grid; grid-template-columns: 1fr; margin: 14px var(--gutter) var(--space-5); }  /* 11/12 사용자: 헤더와 배너 사이 공백 */
-.main { position: relative; display: block; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: #1a1a1f; }
+.main { position: relative; display: block; aspect-ratio: 3 / 2;  /* 11/21 사용자: 배너 높이 조금 줄임(4/3→3/2) */ border-radius: 14px; overflow: hidden; background: #1a1a1f; }
 .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; animation: fade .5s ease; }
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
 .mobileCopy { position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 16px 28px; background: linear-gradient(transparent, rgb(0 0 0 / .78)); color: #fff; }
@@ -13,7 +13,7 @@
 .dots i.on { background: #fff; width: 16px; border-radius: 3px; }
 
 @media (min-width: 1024px) {
-  .hero { grid-template-columns: minmax(0, 1fr) 320px auto; gap: 10px; height: 410px; margin-bottom: var(--space-6); }
+  .hero { grid-template-columns: minmax(0, 1fr) 320px auto; gap: 10px; height: 370px; margin-bottom: var(--space-6); }
   .main { aspect-ratio: auto; height: 100%; }
   .art { object-position: center 25%; }
   .mobileCopy, .dots { display: none; }
