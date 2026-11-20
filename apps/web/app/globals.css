@@ -559,3 +559,13 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 @supports not (height: 100dvh) {
   .page, .app-shell, .chat-layout, .chat-main { min-height: 100vh; }
 }
+
+/* 11/20 사용자: < (뒤로) 를 누르면 화살표 뒤로 회색 네모가 옅게 번지고 화살표가 살짝 왼쪽으로 — 누른 느낌을 준 뒤 이동. */
+.back-press { position: relative; -webkit-tap-highlight-color: transparent; }
+.back-press::before { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 8px; background: rgba(255,255,255,.14); opacity: 0; transform: translate(-50%, -50%) scale(.8); transition: opacity 220ms var(--ease-standard, ease), transform 220ms var(--ease-standard, ease); pointer-events: none; }
+.back-press svg { position: relative; transition: transform 160ms var(--ease-standard, ease); }
+.back-press:active::before { opacity: 1; transform: translate(-50%, -50%) scale(1); transition-duration: 60ms; }
+.back-press:active svg { transform: translateX(-2px); transition-duration: 60ms; }
+@media (hover: hover) { .back-press:hover::before { opacity: .55; transform: translate(-50%, -50%) scale(1); } }
+.back-press:focus-visible::before { opacity: .55; transform: translate(-50%, -50%) scale(1); }
+@media (prefers-reduced-motion: reduce) { .back-press::before, .back-press svg { transition: none; } .back-press:active svg { transform: none; } }
