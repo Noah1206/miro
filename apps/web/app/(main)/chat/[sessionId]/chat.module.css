@@ -770,3 +770,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .suggestCard { background: rgb(255 255 255 / .045); }
 .suggestCard:hover { background: rgb(255 255 255 / .08); }
 :global([data-chat-theme='dm-light']) .suggestCard, :global([data-chat-theme='talk']) .suggestCard { background: rgb(0 0 0 / .045); }
+/* 11/21 사용자: 추천 답변 카드는 전체 너비 말고 왼쪽을 조금 비워 오른쪽(내 말 쪽)으로. */
+.suggestRow { padding-left: 15%; }
