@@ -26,10 +26,8 @@ export function SuggestList({ state, onPick, onClose }: { state: Exclude<Suggest
   const t = useT()
   const text = (o: Suggestion) => [o.say && `"${o.say}"`, o.act && `*${o.act}*`].filter(Boolean).join(' ')
   if (state === 'loading') return <div className={styles.suggest} role="status" aria-label={t('추천 답변을 만드는 중')}>
-    {[0, 1, 2].map(i => <div key={i} className={styles.suggestRow}>
-      <span className={styles.suggestEdit} aria-hidden />
-      <span className={`${styles.suggestCard} ${styles.suggestSkeleton}`} style={{ animationDelay: `${i * 120}ms` }}><i /></span>
-    </div>)}
+    {/* 11/21 사용자: 만드는 중에는 오른쪽에 점 세 개 말풍선 셋(내 말 자리). */}
+    {[0, 1, 2].map(i => <div key={i} className={styles.suggestDots} style={{ animationDelay: `${i * 120}ms` }} aria-hidden><i /><i /><i /></div>)}
   </div>
   return <div className={styles.suggest} role="group" aria-label={t('추천 답변')}>
     {state.map((o, i) => <div key={i} className={`${styles.suggestRow} ${styles.suggestIn}`} style={{ animationDelay: `${i * 60}ms` }}>

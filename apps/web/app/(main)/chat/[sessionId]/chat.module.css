@@ -772,3 +772,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm-light']) .suggestCard, :global([data-chat-theme='talk']) .suggestCard { background: rgb(0 0 0 / .045); }
 /* 11/21 사용자: 추천 답변 카드는 전체 너비 말고 왼쪽을 조금 비워 오른쪽(내 말 쪽)으로. */
 .suggestRow { padding-left: 15%; }
+/* 11/21 사용자 스크린샷: 추천 답변 로딩 = 오른쪽에 점 세 개 말풍선 셋(내 말풍선처럼 오른쪽 위만 각지게). */
+.suggestDots { justify-self: end; display: inline-flex; align-items: center; gap: 6px; padding: 14px 18px; border-radius: 16px 0 16px 16px; background: rgb(255 255 255 / .08); animation: suggestIn 220ms ease-out both; }
+.suggestDots i { width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / .75); animation: suggestDot 1.2s ease-in-out infinite; }
+.suggestDots i:nth-child(2) { animation-delay: .15s; }
+.suggestDots i:nth-child(3) { animation-delay: .3s; }
+@keyframes suggestDot { 0%, 60%, 100% { opacity: .35; transform: translateY(0) } 30% { opacity: 1; transform: translateY(-2px) } }
+:global([data-chat-theme='dm-light']) .suggestDots, :global([data-chat-theme='talk']) .suggestDots { background: rgb(0 0 0 / .06); }
+:global([data-chat-theme='dm-light']) .suggestDots i, :global([data-chat-theme='talk']) .suggestDots i { background: rgb(0 0 0 / .55); }
+@media (prefers-reduced-motion: reduce) { .suggestDots, .suggestDots i { animation: none; } }
