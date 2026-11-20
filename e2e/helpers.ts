@@ -72,13 +72,9 @@ export async function confirmConversationPersona(page: Page) {
 
 /** 현재 가입 흐름: 취향 단계 없이 필수 생년월일을 입력하고 약관 단계 앞에서 멈춘다. */
 export async function passOnboardingProfile(page: Page, nickname = '테스터') {
-  await page.getByRole('radio', { name: '한국어' }).click()
-  await page.getByRole('button', { name: '다음' }).click()
   await page.getByLabel('닉네임').fill(nickname)
   await page.getByRole('button', { name: '다음' }).click()
   await page.getByRole('radio', { name: '밝히지 않음' }).click()
-  await page.getByRole('button', { name: '다음' }).click()
-  await page.getByLabel('생년월일').fill('1990.01.01')
   await page.getByRole('button', { name: '다음' }).click()
   await expect(page.getByRole('heading', { name: '시작하기 전에' })).toBeVisible()
 }

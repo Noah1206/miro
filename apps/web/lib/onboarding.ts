@@ -30,14 +30,14 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   if (!isLanguage(language)) return { ok: false, step: 1, error: msg('언어를 골라 주세요.') }
 
   const name = parsePersona({ name: form.get('nickname'), gender: null, description: null })
-  if (!name.ok) return { ok: false, step: 2, error: String(form.get('nickname') ?? '').trim() ? msg('닉네임은 12자까지 쓸 수 있어요.') : msg('닉네임을 적어 주세요.') }
+  if (!name.ok) return { ok: false, step: 1, error: String(form.get('nickname') ?? '').trim() ? msg('닉네임은 12자까지 쓸 수 있어요.') : msg('닉네임을 적어 주세요.') }
 
   const g = form.get('gender')
-  if (g !== 'female' && g !== 'male' && g !== 'none') return { ok: false, step: 3, error: msg('성별을 골라 주세요.') }
+  if (g !== 'female' && g !== 'male' && g !== 'none') return { ok: false, step: 2, error: msg('성별을 골라 주세요.') }
 
   // 11/13 사용자: 생년월일 단계 삭제 — 나이는 약관 단계의 '[필수] 만 n세 이상'(REQUIRED_TERMS 'age')으로 받는다. 성인 내용은 여전히 언베일(본인인증)에서만.
   void today
-  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 4, error: msg('필수 항목에 모두 동의해 주세요.') }
+  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 3, error: msg('필수 항목에 모두 동의해 주세요.') }
 
   return { ok: true, input: {
     language, nickname: name.persona.name, gender: g === 'none' ? null : g, birthDate: null,
@@ -62,7 +62,7 @@ export async function completeOnboarding(userId: string, input: OnboardingInput,
   const saved = existing?.name === input.nickname
     ? await db.update(userPersonas).set({ gender: input.gender, updatedAt: new Date() }).where(eq(userPersonas.userId, userId)).then(() => ({ ok: true as const }))
     : await savePersona(userId, { name: input.nickname, gender: input.gender, description: existing?.description ?? null })
-  if (!saved.ok) return { ok: false, step: 2, error: saved.error }
+  if (!saved.ok) return { ok: false, step: 1, error: saved.error }
 
   const now = new Date()
   await db.transaction(async (tx) => {

@@ -2057,6 +2057,8 @@
  "설정 내용": "Entry content",
  "위로 올리기": "Move up",
  "위에 있는 항목이 먼저 들어가요": "Entries higher up are sent first",
+ "항목 {n}/{max}개 · 항목당 최대 {per}자 · 전체 {total}자": "Entries {n}/{max} · up to {per} chars each · {total} chars total",
+ "키워드 없는 항목은 매 턴 실려요 · {n}자": "Entries without keywords are sent every turn · {n} chars",
  "적용할 시작 설정": "Start setting to apply to",
  "키워드": "Keywords",
  "한 턴에 전달할 항목 수": "Entries sent per turn",

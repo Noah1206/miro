@@ -63,15 +63,14 @@ const chipOn = 'var(--chip-on-bg, var(--color-accent))', chipOnFg = 'var(--chip-
 const chipOff = 'var(--chip-bg, var(--color-surface-2))', chipOffFg = 'var(--chip-fg, var(--color-text-secondary))'
 const chipFont = 'var(--chip-font, var(--font-caption))', chipWeightOff = 'var(--chip-weight, var(--weight-regular))'
 
-/** 한도의 80% 를 넘겨야 보인다 — 그 전에는 셀 이유가 없다. */
-function Counter({ length, max }: { length: number; max: number }) {
-  if (length < max * 0.8) return null
+/** 11/20 창작자(종량제): 몇 자까지 쓸 수 있는지 처음부터 보여야 한다 — 늘 보이고, 한도에 닿으면 빨강. */
+export function Counter({ length, max }: { length: number; max: number }) {
   return (
     <span className="t-micro" style={{
       textTransform: 'none', letterSpacing: 0, flexShrink: 0,
       color: length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)',
     }}>
-      {length}/{max}
+      {length.toLocaleString('en-US')}/{max.toLocaleString('en-US')}
     </span>
   )
 }
@@ -786,9 +785,16 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
     ...(r.name.trim() ? { name: r.name.trim() } : {}), ...(r.scene ? { scene: r.scene } : {}),
   }))
   const line = { width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit' } as const
+  const fmt = (n: number) => n.toLocaleString('en-US')
+  const always = value.filter(e => !e.keywords.length).reduce((n, e) => n + e.content.length, 0)
   return (
     <div className="stack" style={{ gap: 12 }}>
       <input type="hidden" name={name} value={JSON.stringify(value)} />
+      {/* 11/20 창작자(종량제): 설정집이 얼마나 되는지·매 턴 얼마나 실리는지 한눈에 */}
+      <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
+        {t('항목 {n}/{max}개 · 항목당 최대 {per}자 · 전체 {total}자', { n: rows.length, max: MAX_LORE, per: fmt(MAX_LORE_CONTENT), total: fmt(value.reduce((n, e) => n + e.content.length, 0)) })}
+        {always > 0 && <><br />{t('키워드 없는 항목은 매 턴 실려요 · {n}자', { n: fmt(always) })}</>}
+      </p>
       <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
         {t('한 턴에 전달할 항목 수')}
         <input name="loreLimit" type="number" min={1} max={20} value={limit} onChange={e => setLimit(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} aria-label={t('한 턴에 전달할 항목 수')}

@@ -1,6 +1,9 @@
 import { authoredCharacter, type AuthoredDocument, type CharacterCore } from '@miro/domain'
 
-/** Stable field names and exact authored text; no traits inferred from demographic labels. */
+/**
+ * Stable field names and exact authored text; no traits inferred from demographic labels.
+ * 11/20 사용자: 작성자가 쓴 내용은 생략 없이 그대로 — 자르거나 빼지 않는다. 상한은 엔진(AUTHORED_LIMITS)에서 넉넉히 올렸다.
+ */
 export function authoredDocument(character: CharacterCore, worldSetting: string | null, explicitFields: string[] = [], worldGenre?: string | null): AuthoredDocument {
   const fields: Record<string, string> = {}
   function add(key: string, value: unknown) {
@@ -16,9 +19,7 @@ export function authoredDocument(character: CharacterCore, worldSetting: string 
   add('identity', character.identity)
   // 관계 성격표는 AI 가 설정에서 만든 파생 값이다 — 작성자 원문이 아니므로 싣지 않는다(실으면 표가 바뀔 때마다 판이 새로 생긴다).
   add('personality', authoredCharacter(character).personality)
-  // 11/20 상황별 사진 설명은 인물 규칙이 아니다 — 사진이 100~1000장인 작품은 칸이 256개(설정 문서 상한)를 넘어 대화 시작이 실패했다(ZodError explicitFields too_big).
-  const { situationImages: _photos, ...worldRole } = character.worldRole
-  add('worldRole', worldRole)
+  add('worldRole', character.worldRole)
   add('appearance', character.appearance)
   add('worldSetting', worldSetting)
   add('worldGenre', worldGenre)

@@ -2,22 +2,20 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { LANGUAGES, PERSONA_LIMITS, type Language } from '@miro/domain'
+import { PERSONA_LIMITS } from '@miro/domain'
 import { Button } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { box } from '@/app/(main)/create/form-parts'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import { ONBOARDING_STEPS, REQUIRED_TERMS } from '@/lib/onboarding-options'
-import { loadMessages, useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/client'
+import { useLanguage, useT } from '@/lib/i18n/client'
 import type { VisitorConsent } from '@/lib/visitor-consent'
 import { msg } from '@/lib/i18n'
 import { useRouter } from 'next/navigation'
 import { checkNickname, finishOnboarding } from './actions'
 import { markPushAsked, settingsPath, subscribeToPush } from '@/components/push-subscribe'
-import styles from './onboarding.module.css'
 
 const COPY = [
-  { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
   { title: msg('어떻게 불러 드릴까요?'), lead: msg('캐릭터가 대화에서 부를 닉네임이에요. 마이페이지에서 언제든 바꿀 수 있어요.') },
   { title: msg('성별을 알려 주세요'), lead: msg('캐릭터가 나를 알아보는 데 쓰여요.') },
   { title: msg('시작하기 전에'), lead: msg('MIRO를 이용하려면 필수 항목에 동의해 주세요.') },
@@ -44,15 +42,13 @@ const NEXT_RADIUS = 16
 
 /**
  * 첫 로그인 온보딩. 한 화면에 한 질문 — 위에 뒤로·진행 막대·n/5, 아래에 다음 버튼 하나.
- * 첫 질문은 언어다 — 고르는 순간 화면이 그 언어로 바뀌고(쿠키), 나머지 질문은 그 언어로 묻는다.
+ * 11/20 사용자: 언어 단계는 뺐다 — 지금 화면 언어(기기 언어·쿠키)로 저장하고, 바꾸는 건 마이페이지 > 설정 > 언어.
  * 값은 이 컴포넌트가 들고 있다가 마지막 단계에서 숨은 칸으로 한 번에 보낸다. 서버가 틀린 칸을 알려 주면 그 단계로 돌아간다.
  */
 export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: VisitorConsent | null; minAge: 14 | 19 }) {
   const reduce = useReducedMotion()
   const t = useT()
   const language = useLanguage()
-  // 언어도 직접 골라야 '다음' 이 열린다 — 처음엔 아무것도 골라져 있지 않다(2026-09-30 요청). 화면은 기기 언어로 시작한다.
-  const [languagePicked, setLanguagePicked] = useState(false)
   const [state, action] = useActionState(finishOnboarding, null)
   const [step, setStep] = useState(1)
   const [nickname, setNickname] = useState('')
@@ -81,18 +77,18 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
   // 닉네임을 넘기면 뒤에서 미리 저장한다. 막히면 닉네임 단계로 돌아가 이유를 보인다.
   const leaveNickname = () => {
     const name = nickname
-    void checkNickname(name).then((r) => { if (!r.ok) { focusHeading.current = true; setStep(2); setError(r.error) } }).catch(() => {})
-    go(3)
+    void checkNickname(name).then((r) => { if (!r.ok) { focusHeading.current = true; setStep(1); setError(r.error) } }).catch(() => {})
+    go(2)
   }
   // 약관 단계가 열리면 다음 화면(홈)을 미리 받아 둔다 — '시작하기' 뒤에 바로 넘어가게.
   useEffect(() => { if (step === ONBOARDING_STEPS) router.prefetch('/home') }, [step, router])
   const nameOk = nickname.trim().length > 0
   // 단계별로 '다음' 을 누를 수 있는가.
-  const ready: Record<number, boolean> = { 1: languagePicked, 2: nameOk, 3: !!gender }
+  const ready: Record<number, boolean> = { 1: nameOk, 2: !!gender }
   const requiredOk = REQUIRED_TERMS.every((k) => checked[k])
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
-  const copy = visitorConsent && step === 4 ? { title: msg('캐릭터의 연락을 받아보세요'), lead: msg('약관 동의는 완료됐어요. 이 기기에서 알림을 받을지만 설정해 주세요.') } : COPY[step - 1]!
+  const copy = visitorConsent && step === 3 ? { title: msg('캐릭터의 연락을 받아보세요'), lead: msg('약관 동의는 완료됐어요. 이 기기에서 알림을 받을지만 설정해 주세요.') } : COPY[step - 1]!
   const fail = (why: string, path: string | null = null) => { focusHeading.current = true; setError(why); setPushPath(path) }
   /**
    * 브라우저 알림 권한을 묻는다. 허용이면 true. 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)는
@@ -144,14 +140,6 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
       // 잠금을 먼저 풀어야(동기로 그림) 잠긴 버튼으로 제출하지 않는다. 알림을 못 켰어도(거절·실패) 가입은 그대로 끝낸다 — 알림은 선택이다.
       .then(() => { flushSync(() => setAsking(false)); pushHandled.current = true; form.requestSubmit(submitter) })
   }
-  // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
-  const switchLanguage = useSwitchLanguage()
-  const pickLanguage = (l: Language) => {
-    setLanguagePicked(true)
-    if (l !== language) void switchLanguage(l)
-  }
-  // 언어 단계가 열리면 다른 언어 사전을 미리 받아 둔다 — 누르는 순간 바로 바뀌게.
-  useEffect(() => { for (const l of Object.keys(LANGUAGES) as Language[]) void loadMessages(l) }, [])
 
   return (
     <form action={action} onSubmit={askPushThenSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -184,29 +172,9 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t(copy.lead)}</p>
           </header>
 
-          {step === 1 && (
-            <div role="radiogroup" aria-label={t('언어')} className={styles.languageList}>
-              {/* 언어 이름은 번역하지 않는다 — 자기 언어를 그 언어의 글자로 알아본다. */}
-              {(Object.keys(LANGUAGES) as Language[]).map((l) => (
-                <label key={l} className={styles.languageOption} lang={l}>
-                  <input className={styles.languageRadio} type="radio" name="onboardingLanguage" value={l}
-                    checked={languagePicked && language === l} onChange={() => pickLanguage(l)} />
-                  <span className={styles.languageRow}>
-                    <span>{LANGUAGES[l]}</span>
-                    <span className={styles.languageIndicator} aria-hidden="true">
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m3.5 8 3 3 6-6" />
-                      </svg>
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          )}
+          {step === 1 && <NicknameField value={nickname} onChange={setNickname} onEnter={() => nameOk && leaveNickname()} invalid={!!error} />}
 
-          {step === 2 && <NicknameField value={nickname} onChange={setNickname} onEnter={() => nameOk && leaveNickname()} invalid={!!error} />}
-
-          {step === 3 && (
+          {step === 2 && (
             <div role="radiogroup" aria-label={t('성별')} className="stack" style={{ gap: 8 }}>
               {GENDERS.map((g) => (
                 <Option key={g.value} role="radio" selected={gender === g.value} dimmed={!!gender && gender !== g.value} title={t(g.label)} center icon={<GenderIcon kind={g.value} />} onClick={() => setGender(g.value)} />
@@ -214,7 +182,7 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
             </div>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             // 약관은 글자 줄로 — 토스 약관 동의 화면처럼(2026-09-30 요청): 위에 큰 '전체 동의'(동그라미 체크), 아래에 항목 줄(작은 체크 + 글자 + 보기 화살표).
             <div>
               {!visitorConsent && <TermsCheck all checked={allOn} title={t('전체 동의')} onToggle={() => { agreeAll(!allOn); if (!allOn && !checked.push) turnOnPush() }} />}
@@ -232,8 +200,8 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
 
           <div className="stack" style={{ gap: 4, marginTop: 'auto', paddingTop: 'var(--space-6)' }}>
             {/* 고르는 단계는 모두 같은 '다음' 하나로 넘어간다 — 고르기만으로는 넘어가지 않는다(2026-09-30 요청). */}
-            {step <= 3 && <Button type="button" variant="primary" full className="btn-next" disabled={!ready[step]} onClick={() => (step === 2 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
-            {step === 4 && (
+            {step <= 2 && <Button type="button" variant="primary" full className="btn-next" disabled={!ready[step]} onClick={() => (step === 1 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
+            {step === 3 && (
               // 11/13 알림이 선택이 되면서 버튼은 늘 '시작하기' — 필수 동의만 되면 열린다(예전엔 '알림 허용하기'로 시작해 허용해야 열렸다).
               <SubmitButton variant="primary" full disabled={asking || !requiredOk}>{t('시작하기')}</SubmitButton>
             )}

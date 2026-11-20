@@ -6,12 +6,18 @@ import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace
 
 export const AGENCY_COMPILER_VERSION = 'agency-compiler:v3'
 
+/**
+ * 설정 문서 상한. 11/20 사용자: 작성자가 쓴 내용은 생략 없이 다 들어가야 한다 — 칸 256·전체 48,000자·한 칸 12,000자에서
+ * 넉넉히 올렸다(지금 가장 큰 작품이 약 2만 자). 넘치면 대화가 아니라 해시·정리 단계가 실패하므로 웹은 자르지 않고 그대로 넘긴다.
+ */
+export const AUTHORED_LIMITS = { fields: 5000, fieldName: 200, fieldText: 100_000, totalText: 500_000 } as const
+
 const DocumentSchema = z.object({
-  fields: z.record(z.string().min(1).max(120), z.string().max(12_000)),
-  explicitFields: z.array(z.string().min(1).max(120)).max(256),
+  fields: z.record(z.string().min(1).max(AUTHORED_LIMITS.fieldName), z.string().max(AUTHORED_LIMITS.fieldText)),
+  explicitFields: z.array(z.string().min(1).max(AUTHORED_LIMITS.fieldName)).max(AUTHORED_LIMITS.fields),
 }).passthrough().superRefine((value, ctx) => {
   const fields = Object.keys(value.fields)
-  if (fields.length > 256 || Object.values(value.fields).reduce((n, text) => n + text.length, 0) > 48_000) {
+  if (fields.length > AUTHORED_LIMITS.fields || Object.values(value.fields).reduce((n, text) => n + text.length, 0) > AUTHORED_LIMITS.totalText) {
     ctx.addIssue({ code: 'custom', message: 'authored_document_too_large' })
   }
   if (new Set(value.explicitFields).size !== value.explicitFields.length || value.explicitFields.some(field => !Object.hasOwn(value.fields, field))) {
@@ -24,11 +30,11 @@ const CompiledRuleProposal = z.object({
     domain: z.enum(['identity', 'value', 'boundary', 'motive', 'expression', 'world']),
     statement: z.string().min(1).max(1600),
     source: z.object({
-      field: z.string().min(1).max(120),
+      field: z.string().min(1).max(AUTHORED_LIMITS.fieldName),
       quote: z.string().min(1).max(1600),
       // The server anchors unique exact quotes; repeated text requires exact offsets.
-      start: z.number().int().min(0).max(12_000).optional(),
-      end: z.number().int().min(1).max(12_000).optional(),
+      start: z.number().int().min(0).max(AUTHORED_LIMITS.fieldText).optional(),
+      end: z.number().int().min(1).max(AUTHORED_LIMITS.fieldText).optional(),
     }).strict(),
     origin: z.enum(['explicit', 'inferred', 'legacy-default']),
     confidence: z.number().min(0).max(1),

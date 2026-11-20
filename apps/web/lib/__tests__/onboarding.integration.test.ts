@@ -26,9 +26,9 @@ describe('온보딩 입력', () => {
   it('sends the user back to the step that is wrong', () => {
     const step = (v: Record<string, string | string[]>) => { const r = parseOnboarding(form(v), TODAY); return r.ok ? 0 : r.step }
     expect(step({ ...FULL, language: 'fr' })).toBe(1)
-    expect(step({ ...FULL, nickname: '  ' })).toBe(2)
-    expect(step({ ...FULL, nickname: '가'.repeat(13) })).toBe(2)
-    expect(step({ ...FULL, gender: '' })).toBe(3)
+    expect(step({ ...FULL, nickname: '  ' })).toBe(1)
+    expect(step({ ...FULL, nickname: '가'.repeat(13) })).toBe(1)
+    expect(step({ ...FULL, gender: '' })).toBe(2)
     for (const bad of ['2001-02-29', '2026-10-01', '1899-12-31', '2000/01/01']) expect(step({ ...FULL, birthDate: bad })).toBe(4)
     expect(step({ ...FULL, birthDate: '' })).toBe(4)
     expect(step({ ...FULL, birthDate: '2012-09-30' })).toBe(0)
