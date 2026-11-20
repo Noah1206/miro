@@ -117,6 +117,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
   const field = <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
     <input type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
     {draft && <button type="button" aria-label={t('검색어 지우기')} onClick={() => setDraft('')}>×</button>}
+    <button type="submit" aria-label={t('검색')} className={styles.searchIcon}><svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></button>
   </form>
   return <div className={`${styles.screen} ${isResults ? styles.resultsScreen : ''}`}>
     {/* 11/20 사용자: 탐색·검색은 하단 탭 없이 위쪽 화살표로 돌아간다. */}

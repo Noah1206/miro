@@ -47,3 +47,7 @@
 .header .backRow { margin-bottom: 0; }
 .backSearch { gap: 6px; margin-bottom: 14px; }
 .backSearch .field { flex: 1; width: auto; }
+/* 11/20 사용자 스크린샷: 검색창을 더 크게 — 높이 48·글자 16·오른쪽 돋보기, 바탕 한 단계 밝게. */
+.field { height: 48px; padding: 0 8px 0 16px; gap: 4px; background: #333; border-color: #ffffff14; border-width: 1.5px; }
+.field input::placeholder { font-size: 16px; }
+.field .searchIcon { display: grid; place-items: center; min-width: 40px; height: 40px; color: #9a9a9a; }
