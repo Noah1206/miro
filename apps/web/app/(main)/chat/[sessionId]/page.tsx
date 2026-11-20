@@ -143,11 +143,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
-          {/* 플레이 가이드(11/10, 크랙) — 첫 턴 전에만, 사용자에게만 보이는 안내. AI 에는 가지 않는다. */}
-          {s.turnCount === 0 && rec?.playGuide && <aside className={styles.playGuide} aria-label={t('플레이 가이드')}>
-            <strong>{t('플레이 가이드')}</strong><p>{rec.playGuide}</p>
-          </aside>}
-          <MessageList endings={rec?.endings ?? []} sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={cast} castPhotos={castPhotos} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
+          {/* 플레이 가이드(11/10) — 사용자에게만 보이는 안내, AI 에는 가지 않는다. 11/20 사용자: 인트로 바로 밑에, 대화가 이어져도 그 자리에 남는다. */}
+          <MessageList afterIntro={rec?.playGuide ? <aside className={styles.playGuide} aria-label={t('플레이 가이드')}><strong>{t('플레이 가이드')}</strong><p>{rec.playGuide}</p></aside> : undefined} endings={rec?.endings ?? []} sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={cast} castPhotos={castPhotos} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
           {needPersona && <WorldIntro sessionId={sessionId} worldSetting={s.worldSetting ?? null} guide={rec?.guide ?? ''} presets={rec?.presets ?? []} personality={s.character.personality.personality} audience={rec?.audience ?? null} />}
         </div>
 

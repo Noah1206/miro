@@ -2087,6 +2087,7 @@
  "예) 처음 뵙겠습니다.": "e.g. Nice to meet you.",
  "첫 대화에서 입력창 위에 미리 떠 있는 답이에요. 최대 3개, 행동은 *별표* 로 감싸요.": "Replies shown above the input in the first chat. Up to 3; wrap actions in *asterisks*.",
  "첫 화면에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.": "A note shown only to users on the first screen. The AI never reads it. Explain how to play.",
+ "대화방 인트로 바로 밑에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.": "A note shown only to users right below the chat intro. The AI never reads it. Explain how to play.",
  "추천 첫 답변 {n}": "Suggested first reply {n}",
  "추천 첫 답변 · 선택": "Suggested first replies · Optional",
  "플레이 가이드": "Play guide",

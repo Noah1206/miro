@@ -2,7 +2,7 @@
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { bindChatComposerFollow } from '@/components/chat-viewport'
 import { AnimatePresence } from 'motion/react'
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import styles from './chat.module.css'
 import { Popover, MenuItem, ButtonLink } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
@@ -24,7 +24,9 @@ type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'femal
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo, castPhotos = {}, endings = [] }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo, castPhotos = {}, endings = [], afterIntro }: {
+  /** 11/20 사용자: 작품의 플레이 가이드 — 인트로(첫 장면) 바로 밑에 붙는다. 인트로가 없으면 맨 위. */
+  afterIntro?: ReactNode
   /** 11/10 작품이 정한 엔딩(크랙 엔딩 설정) — 엔딩 카드에 등급을, 아직 못 본 엔딩은 힌트로. */
   endings?: Array<{ name: string; grade: string; hint?: string; image?: string }>
   /** 11/6: 인물 이름 → 사진(여러 인물 카드). 말풍선 아바타가 이름 첫 글자 대신 이 사진. */
@@ -80,6 +82,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
   const displayed = items.filter(m => opening.visible(m) && !voice.held(m.id))
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
+  const lastOpeningId = [...displayed].reverse().find(m => m.opening)?.id
+  const guide = afterIntro && !opening.playing ? afterIntro : null
   // 11/9 웹소설: 결말 표식이 실린 답 뒤에 결말 카드. 표식 줄 자체는 말풍선에서 뺀다.
   // 11/10: 이어서 하다 다른 엔딩에 닿아도 카드가 뜨게 — 엔딩마다 처음 닿은 답에 하나씩.
   const endingIds = new Set<string>()
@@ -188,6 +192,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       data-opening-playing={opening.playing || undefined} onClick={opening.playing ? event => {
         if (!(event.target as Element).closest('button, a')) opening.finish()
       } : undefined}>
+      {!lastOpeningId && guide}
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} data-fresh={m.role === 'user' && !initialKeys.current!.has(keyOf(m)) || undefined} layout={false} {...(quiet.has(m.id) || m.role === 'user' || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
@@ -212,6 +217,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               </div>
             })()}
             </div>
+            {m.id === lastOpeningId && guide}
             {sessionId && endingIds.has(m.id) && <aside className={styles.endingCard}>
               {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
                 return <>

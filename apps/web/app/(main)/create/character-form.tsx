@@ -496,12 +496,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('준비된 페르소나 · 선택')} subtitle={t('대화를 시작할 때 사용자가 고를 수 있는 \'나\'예요. 고른 뒤에 고쳐 쓸 수도 있어요.')}>
             <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
           </Section>
-          {/* 플레이 가이드·추천 첫 답변(11/10) — 11/20 사용자: 화면에서 뺐다. 저장된 값은 숨은 칸으로 그대로 보낸다. */}
-          <div hidden><Section title={t('플레이 가이드 · 선택')} subtitle={t('첫 화면에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
+          {/* 플레이 가이드(11/10) — 11/20 사용자: 다시 보이게, 선택. 적으면 대화방 인트로 바로 밑에 나온다. */}
+          <Section title={t('플레이 가이드 · 선택')} subtitle={t('대화방 인트로 바로 밑에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
             <CountedTextArea name="playGuide" ariaLabel={t('플레이 가이드')} max={500} rows={3} defaultValue={i.playGuide ?? ''}
               placeholder={t('예) 매일 해 질 녘에 습격이 와요. 죽으면 같은 날 아침으로 돌아가니, 무엇이 달라졌는지 살펴보세요.')} />
           </Section>
-          <Section title={t('추천 첫 답변 · 선택')} subtitle={t('첫 대화에서 입력창 위에 미리 떠 있는 답이에요. 최대 3개, 행동은 *별표* 로 감싸요.')}>
+          {/* 추천 첫 답변(11/10) — 11/20 사용자: 화면에서 뺐다. 저장된 값은 숨은 칸으로 그대로 보낸다. */}
+          <div hidden><Section title={t('추천 첫 답변 · 선택')} subtitle={t('첫 대화에서 입력창 위에 미리 떠 있는 답이에요. 최대 3개, 행동은 *별표* 로 감싸요.')}>
             <div className="stack" style={{ gap: 8 }}>
               {[0, 1, 2].map(n => <CountedInput key={n} name="firstReplies" ariaLabel={t('추천 첫 답변 {n}', { n: n + 1 })} max={200}
                 placeholder={[t('예) *주위를 둘러본다* 여기가… 어디지?'), t('예) 오늘은 정말 일찍 퇴근할 거예요.'), t('예) 처음 뵙겠습니다.')][n]} defaultValue={i.firstReplies?.[n] ?? ''} />)}
