@@ -783,3 +783,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 @media (prefers-reduced-motion: reduce) { .suggestDots, .suggestDots i { animation: none; } }
 /* 11/21 사용자: 추천 답변 글자를 조금 작게(15→13.5px). */
 .suggestCard { font-size: 13.5px; line-height: 1.55; }
+/* 11/21 사용자: 추천 답변 카드 높이만 조금 낮게(위아래 여백 12→8px). */
+.suggestCard { padding-top: 8px; padding-bottom: 8px; }
