@@ -80,3 +80,6 @@
 .recentList li { display: flex; justify-content: space-between; width: 100%; max-width: none; border-bottom: 1px solid #ffffff0a; }
 .recentList button { min-height: 44px; font-size: 15px; color: #fff; }
 .recentList li > button:first-child { flex: 1; }
+/* 11/21 사용자: 검색 화면의 가로선(섹션 위·검색어 사이) 모두 없앰. */
+.recent { border-top: 0; padding-top: 0; }
+.recentList li { border-bottom: 0; }
