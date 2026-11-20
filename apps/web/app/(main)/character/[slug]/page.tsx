@@ -13,7 +13,7 @@ import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
 import { characterLikeState, countComments, listComments, similarCharacters } from '@/lib/social'
-import { Back, Page, TransitionLink } from '@/components/ui'
+import { Back, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
@@ -29,7 +29,6 @@ import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import { hasActiveRun, reachedEndings } from '@/lib/ending-collection'
-import { CheerButton } from './cheer'
 import { db, users } from '@miro/db'
 import { eq } from 'drizzle-orm'
 import { fillCharacterMacros } from '@miro/domain'
@@ -49,7 +48,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const can = features()
   const editedDescription = officialDescription(c)
 
-  const cheerable = !c.isOfficial && (c.isPublic || c.linkShared) && !!c.ownerId && c.ownerId !== user?.id
   // 11/12 크리에이터 이름 — 해시태그 아래와 응원 버튼에 같이 쓴다(운영 작품은 그림체별 필명, lib/creator-name).
   const creator = creatorName(c, c.ownerId ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId)).limit(1))[0]?.name : null)
   const creatorKey = creatorKeyOf(c)
@@ -118,22 +116,29 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   return (
     <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: 'var(--color-bg)' }}>
       {/* 11/5 사용자: '< 프로필 상세'와 편집은 사진 안이 아니라 사진 위쪽 줄에. */}
-      <div className="detail-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 52, padding: '4px var(--gutter)' }}>
+      {/* 11/20 사용자: 머리 줄을 조금 높이고(52→60) 안의 아이콘도 조금 크게, 가운데에 미로 마크와 '미로', 신고는 아이콘 버튼으로. */}
+      <div className="detail-head" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 60, padding: '4px var(--gutter)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Back href="/home" bold />
+          <Back href="/home" bold size={30} />
           {/* 11/20 사용자: '프로필 상세' 글자는 뺐다 — 뒤로 가기만. */}
         </div>
+        <span aria-hidden style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', display: 'inline-flex', alignItems: 'center', gap: 7, pointerEvents: 'none', color: 'var(--color-text-primary)', fontSize: 19, fontWeight: 700, letterSpacing: '-.02em' }}>
+          <LogoMark size={24} label="" />{t('미로')}
+        </span>
         {/* 등록한 캐릭터를 고치는 길은 여기 하나다 — 주인에게만 보인다. */}
         {user && c.ownerId === user.id && (
           <TransitionLink href={`/my/characters/${c.id}/edit`} aria-label={t('편집')}
             style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)' }}>
-            <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+            <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
           </TransitionLink>
         )}
         {/* 11/10 작품 신고 — 남의 작품에만. 기존 신고 화면(/report)을 쓴다. */}
         {c.ownerId !== user?.id && (
-          <TransitionLink href={`/report?type=character&id=${c.id}`} className="t-caption"
-            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-secondary)' }}>{t('신고')}</TransitionLink>
+          <TransitionLink href={`/report?type=character&id=${c.id}`} aria-label={t('신고')} className="back-press"
+            style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)' }}>
+            {/* 신고 깃발 */}
+            <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22V4" /><path d="M4 4h12l-2 4 2 4H4" /></svg>
+          </TransitionLink>
         )}
       </div>
 
@@ -156,8 +161,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
           <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
           <LikeButton slug={slug} signedIn={!!user} initial={likes} />
-          {/* 11/11 응원하기 — 다른 사람이 만든 공개 캐릭터만(공식·내 캐릭터는 아님). */}
-          {cheerable && <CheerButton characterId={c.id} creatorName={creator || t('만든 사람')} />}
+          {/* 11/20 사용자: 응원하기 버튼은 이 화면에서 뺐다. */}
           {/* 11/6 사용자: 남성향/여성향 표시는 좋아요와 같은 줄에. */}
           <span className="t-caption" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{c.audience === 'male' ? t('남성향') : t('여성향')}</span>
         </div>
