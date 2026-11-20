@@ -22,7 +22,7 @@ export function HeaderProfileGuest() {
   const t = useT()
   const ask = useLoginSheet()
   return (
-    <button type="button" onClick={() => ask('/my')} aria-label={t('MIRO 로그인')} className={`hit ${styles.headerAvatar}`} style={{ border: 0, padding: 0, background: 'none', cursor: 'pointer' }}>
+    <button type="button" onClick={() => ask('/my')} aria-label={t('MIRO 로그인')} className={`hit ${styles.headerAvatar}`} style={{ border: 0, padding: 0, cursor: 'pointer' }}>
       <span className="avatar-default"><LogoMark size={18} label="" /></span>
     </button>
   )

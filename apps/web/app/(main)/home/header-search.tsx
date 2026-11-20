@@ -11,7 +11,7 @@ export function HeaderSearch({ label, className, signedIn }: { label: string; cl
   const icon = <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg>
   // 11/20 로그인 전엔 검색 화면이 홈으로 돌려보낸다(11/8 성인 서비스 규칙, 검색 API 도 로그인 필요) — 누르면 로그인 시트, 로그인 뒤 검색 화면으로.
   if (!signedIn) return <button type="button" aria-label={label} className={className} onClick={() => askLogin('/search')}
-    style={{ display: 'grid', placeItems: 'center', border: 0, background: 'transparent', color: 'var(--color-white)', cursor: 'pointer' }}>{icon}</button>
+    style={{ display: 'grid', placeItems: 'center', border: 0, padding: 0, background: 'transparent', color: 'var(--color-white)', cursor: 'pointer' }}>{icon}</button>
   return (
     <TransitionLink href="/search" aria-label={label} className={className} style={{ display: 'grid', placeItems: 'center', color: 'var(--color-white)' }}
       onClick={() => {
