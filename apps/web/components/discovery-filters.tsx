@@ -30,7 +30,7 @@ export function DiscoveryFilters({ groups, selected, onChange, counts, defaultEx
             data-empty={counts?.[tag] === 0 || undefined}
             title={[hot ? t('대화량 기준 인기') : '', counts?.[tag] !== undefined ? t('결과 {count}개', { count: counts[tag] }) : ''].filter(Boolean).join(' · ') || undefined}
             onClick={() => toggle(tag)}>
-            {hot && <span aria-hidden="true" className={styles.hot}>🔥</span>}{t(discoveryTagLabel(tag))}
+            {/* 11/20 사용자: 칩 안 이모지(🔥)는 뺐다. */}{t(discoveryTagLabel(tag))}
           </button>
         })}
       </div>
@@ -49,7 +49,6 @@ export function DiscoveryFilters({ groups, selected, onChange, counts, defaultEx
               title={[group.popularTags?.includes(tag) ? t('대화량 기준 인기') : '', counts?.[tag] !== undefined ? t('결과 {count}개', { count: counts[tag] }) : ''].filter(Boolean).join(' · ') || undefined}
               onClick={() => onChange(selected.includes(tag) ? selected.filter(value => value !== tag) : [...selected, tag])}>
               <span className={styles.tagLabel}>{t(discoveryTagLabel(tag))}</span>
-              {group.popularTags?.includes(tag) && <span aria-hidden="true" className={styles.popularBadge}>🔥</span>}
             </button>)}
           </div>
           {group.tags.length > 1 && <button type="button" className={styles.disclosure} aria-expanded={!isCollapsed} aria-controls={`discovery-tags-${group.id}`}

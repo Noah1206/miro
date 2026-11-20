@@ -13,9 +13,11 @@ export type DiscoveryGroupId = typeof DISCOVERY_GROUPS[number]['id']
 export type DiscoveryGroup = { id: DiscoveryGroupId; title: string; tags: string[]; popularTags?: string[] }
 export type DiscoveryCard = { name?: string; role?: string | null; tagline?: string | null; genre?: string | null; occupation?: string | null; relationshipKeywords: string[]; plays?: number }
 const groupIds = new Set<string>(DISCOVERY_GROUPS.map(group => group.id))
-export const discoveryTagLabel = (tag: string) => tag.includes(':') ? tag.slice(tag.indexOf(':') + 1) : tag
+// 11/20 사용자: '고수위' 태그는 화면에 '19'로 보인다(저장값은 그대로).
+const rawLabel = (tag: string) => tag.includes(':') ? tag.slice(tag.indexOf(':') + 1) : tag
+export const discoveryTagLabel = (tag: string) => { const label = rawLabel(tag); return label === '고수위' ? '19' : label }
 const validLabel = (label: string) => !!label.trim() && label.length <= 24 && !/[\x00-\x1f:·]/.test(label)
-const validTag = (tag: string) => knownTags.has(tag) || (groupIds.has(tag.split(':')[0]!) && tag.includes(':') && validLabel(discoveryTagLabel(tag)))
+const validTag = (tag: string) => knownTags.has(tag) || (groupIds.has(tag.split(':')[0]!) && tag.includes(':') && validLabel(rawLabel(tag)))
 export function discoveryTags(values: string[]): string[] | null {
   if (values.length > 32 || values.some(value => !validTag(value))) return null
   return [...new Set(values)].sort()
@@ -74,4 +76,4 @@ export const discoveryTagNeedle = (tag: string) => ({
   다정한: '다정', 도도한: '도도/차도녀', 까칠한: '까칠', 수줍은: '수줍', 순진한: '순진', '애교 많은': '애교',
   유혹적인: '유혹', 도발적인: '도발', '질투 많은': '질투', 헌신적인: '헌신', 집착하는: '집착', '자존심 센': '자존심', 복종적인: '복종', 리드하는: '리드/주도',
   '주종 역전': '주종역전/주종 역전', '비밀 연애': '비밀 연애/비밀연애', '계약 연애': '계약', 
-} as Record<string, string>)[discoveryTagLabel(tag)] ?? discoveryTagLabel(tag)
+} as Record<string, string>)[rawLabel(tag)] ?? rawLabel(tag)
