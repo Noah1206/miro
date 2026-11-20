@@ -25,6 +25,11 @@ export const users = pgTable('users', {
   adultVerifyFailedAt: timestamp('adult_verify_failed_at', { withTimezone: true }),
   /** 본인인증 DI 의 해시('sha256:'+hex, 10/6). 한 사람(DI)은 한 계정만 성인 인증 — 계정을 지우면 비운다. */
   adultVerifyDi: text('adult_verify_di').unique(),
+  /** 11/20 가입 때 '만 14세 미만'을 고른 회원 — 보호자 본인인증(guardianConsentAt)을 마쳐야 서비스를 쓴다. */
+  under14: boolean('under14').notNull().default(false),
+  guardianConsentAt: timestamp('guardian_consent_at', { withTimezone: true }),
+  /** 동의한 보호자 DI 의 해시('sha256:'+hex). 같은 보호자가 여러 자녀에게 동의할 수 있어 고유하지 않다. */
+  guardianConsentDi: text('guardian_consent_di'),
   /** 성인 콘텐츠 사용 정책 동의. 인증과 별개로 요구된다 (명세서 정책 2). */
   maturePolicyAgreedAt: timestamp('mature_policy_agreed_at', { withTimezone: true }),
   /** 첫 로그인 온보딩에서 받는다(선택). 'YYYY-MM-DD'. */

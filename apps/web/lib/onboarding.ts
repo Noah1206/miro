@@ -6,6 +6,7 @@ import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
 import { getPersona, parsePersona, savePersona } from '@/lib/persona'
 import { grantRecharge } from '@/lib/usage/guard'
+import { childOpen } from '@/lib/teen-open'
 import { REQUIRED_TERMS } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
 
@@ -19,6 +20,8 @@ export type OnboardingInput = {
   nickname: string
   gender: 'female' | 'male' | null
   birthDate: string | null
+  /** 11/20 '만 14세 미만'을 골랐다 — 보호자 동의 단계로 간다. */
+  under14: boolean
   marketing: boolean
   nightMarketing: boolean
 }
@@ -37,10 +40,12 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
 
   // 11/13 사용자: 생년월일 단계 삭제 — 나이는 약관 단계의 '[필수] 만 n세 이상'(REQUIRED_TERMS 'age')으로 받는다. 성인 내용은 여전히 언베일(본인인증)에서만.
   void today
-  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 3, error: msg('필수 항목에 모두 동의해 주세요.') }
+  // 11/20 나이는 '만 14세 이상' 또는(시행일부터) '만 14세 미만 — 보호자 동의' 중 하나.
+  const under14 = form.get('under14') === 'on' && childOpen(today)
+  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on' || (k === 'age' && under14))) return { ok: false, step: 3, error: msg('필수 항목에 모두 동의해 주세요.') }
 
   return { ok: true, input: {
-    language, nickname: name.persona.name, gender: g === 'none' ? null : g, birthDate: null,
+    language, nickname: name.persona.name, gender: g === 'none' ? null : g, birthDate: null, under14,
     marketing: form.get('marketing') === 'on', nightMarketing: form.get('nightMarketing') === 'on',
   } }
 }
@@ -71,7 +76,7 @@ export async function completeOnboarding(userId: string, input: OnboardingInput,
     const consents = { language: input.language, marketingConsentAt: input.marketing ? now : null, nightMarketingConsentAt: input.nightMarketing ? now : null }
     await tx.insert(userSettings).values({ userId, ...consents })
       .onConflictDoUpdate({ target: userSettings.userId, set: { ...consents, updatedAt: now } })
-    await tx.update(users).set({ birthDate: input.birthDate, displayName: input.nickname })
+    await tx.update(users).set({ birthDate: input.birthDate, displayName: input.nickname, under14: input.under14 })
       .where(eq(users.id, userId))
   })
 

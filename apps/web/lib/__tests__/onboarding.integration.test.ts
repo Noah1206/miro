@@ -51,7 +51,7 @@ async function user() {
   made.push(u!.id)
   return u!.id
 }
-const INPUT: OnboardingInput = { language: 'ja', nickname: '지우', gender: 'female', birthDate: '2000-01-02', marketing: true, nightMarketing: false }
+const INPUT: OnboardingInput = { language: 'ja', nickname: '지우', gender: 'female', birthDate: '2000-01-02', under14: false, marketing: true, nightMarketing: false }
 
 describeDb('온보딩 저장', () => {
   it('saves the profile, consents and a one-time 7-day welcome gift, and the account deletion clears the profile', async () => {

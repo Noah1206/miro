@@ -3,6 +3,7 @@ import { setHomeUnveilFor } from '@/lib/home-mode'
 import { NextResponse } from 'next/server'
 import { currentUser } from '@/lib/auth'
 import { confirmAdult } from '@/lib/adult-verify'
+import { confirmGuardian } from '@/lib/guardian'
 import { afterSignup, withWelcome } from '@/lib/onboarding-options'
 
 /**
@@ -14,6 +15,11 @@ export async function GET(req: Request) {
   const user = await currentUser()
   if (!user) return NextResponse.redirect(new URL('/login', url))
   const id = url.searchParams.get('identityVerificationId')
+  // 11/20 만 14세 미만 가입의 보호자 동의 — 아이 계정의 성인 인증(confirmAdult)과 섞지 않는다.
+  if (url.searchParams.get('next') === '/onboarding/guardian') {
+    const ok = !!id && !url.searchParams.get('code') && (await confirmGuardian(user.id, { identityVerificationId: id })).ok
+    return NextResponse.redirect(new URL(ok ? '/home' : `/onboarding/guardian?r=${id && !url.searchParams.get('code') ? 'failed' : 'cancelled'}`, url))
+  }
   // code 가 있으면 사용자가 창을 닫았거나 본인확인기관 오류다 — 결과를 받으러 가지 않는다.
   const r = !id || url.searchParams.get('code') ? 'cancelled' : (await confirmAdult(user.id, { identityVerificationId: id })).ok ? 'done' : 'failed'
   const next = url.searchParams.get('next')

@@ -45,7 +45,7 @@ const NEXT_RADIUS = 16
  * 11/20 사용자: 언어 단계는 뺐다 — 지금 화면 언어(기기 언어·쿠키)로 저장한다. 설정의 언어 메뉴도 같은 날 뺐다.
  * 값은 이 컴포넌트가 들고 있다가 마지막 단계에서 숨은 칸으로 한 번에 보낸다. 서버가 틀린 칸을 알려 주면 그 단계로 돌아간다.
  */
-export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: VisitorConsent | null; minAge: 14 | 19 }) {
+export function OnboardingForm({ visitorConsent, minAge, allowChild = false }: { visitorConsent: VisitorConsent | null; minAge: 14 | 19; allowChild?: boolean }) {
   const reduce = useReducedMotion()
   const t = useT()
   const language = useLanguage()
@@ -55,6 +55,9 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
   const [gender, setGender] = useState('')
   const [checked, setChecked] = useState<Record<string, boolean>>(visitorConsent ? { terms: true, privacy: true, transfer: true, ai: true, marketing: visitorConsent.marketing, nightMarketing: visitorConsent.nightMarketing } : {})
   const [error, setError] = useState<string | null>(null)
+  // 11/20 '만 14세 미만 — 보호자 동의'(시행일부터, allowChild). 나이 줄과 둘 중 하나만 켜진다.
+  const [under14, setUnder14] = useState(false)
+  useEffect(() => { if (checked.age) setUnder14(false) }, [checked.age])
   // 알림이 차단된 기기 — 이 브라우저에서 다시 켜는 길(오류 아래 한 줄).
   const [pushPath, setPushPath] = useState<string | null>(null)
   // '캐릭터 알림 받기' 권한 창이 떠 있는 동안 — 시작하기를 잠가 둔다(넘어가 버리면 권한 창이 닫힌다).
@@ -85,7 +88,7 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
   const nameOk = nickname.trim().length > 0
   // 단계별로 '다음' 을 누를 수 있는가.
   const ready: Record<number, boolean> = { 1: nameOk, 2: !!gender }
-  const requiredOk = REQUIRED_TERMS.every((k) => checked[k])
+  const requiredOk = REQUIRED_TERMS.every((k) => checked[k] || (k === 'age' && under14))
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
   const copy = visitorConsent && step === 3 ? { title: msg('캐릭터의 연락을 받아보세요'), lead: msg('약관 동의는 완료됐어요. 이 기기에서 알림을 받을지만 설정해 주세요.') } : COPY[step - 1]!
@@ -148,6 +151,7 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
       <input type="hidden" name="nickname" value={nickname} />
       <input type="hidden" name="gender" value={gender} />
       {TERMS.map((t) => checked[t.key] && <input key={t.key} type="hidden" name={t.key} value="on" />)}
+      {under14 && <input type="hidden" name="under14" value="on" />}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44 }}>
         <button type="button" onClick={() => go(step - 1)} aria-label={t('이전 단계')} disabled={step === 1} className="hit"
@@ -192,6 +196,8 @@ export function OnboardingForm({ visitorConsent, minAge }: { visitorConsent: Vis
                   onToggle={() => toggleTerm(item.key)}
                   link={'href' in item ? { href: item.href, label: t('{title} 전문 보기', { title: t(item.title) }) } : undefined} />
               ))}
+              {allowChild && <TermsCheck checked={under14} title={t('만 14세 미만이에요 (보호자 동의 필요)')} sub={t('다음 단계에서 보호자가 휴대전화로 본인인증을 하면 시작할 수 있어요')}
+                onToggle={() => { setUnder14(v => !v); setChecked(c => ({ ...c, age: false })) }} />}
             </div>
           )}
 

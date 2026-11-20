@@ -1,4 +1,5 @@
 import { voicePaused } from '@miro/config'
+import { childOpen } from '@/lib/teen-open'
 
 // 11/13 자주 묻는 질문 — 11/13 사용자: 홈이 아니라 프로필(/my)의 섹션으로. 원문 한국어라 한국어 화면에서만.
 // '음성 캐릭터챗' — 음성 서버가 멈춘 동안(voicePaused)은 '곧 열려요'로, 되는 것처럼 쓰지 않는다.
@@ -14,4 +15,9 @@ const FAQ_BASE: [string, string][] = [
   ['몇 살부터 이용할 수 있나요?', '만 14세 이상이면 가입할 수 있어요. 성인 전용 콘텐츠(언베일)는 본인인증으로 만 19세 이상임을 확인한 분에게만 열려요.'],
   ['앱을 설치해야 하나요?', '아니요. miroapp.app 웹에서 바로 쓸 수 있고, 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있어요. 한국어, 영어, 일본어, 중국어를 지원해요.'],
 ]
-export const faqList = (): [string, string][] => { const [first, ...rest] = FAQ_BASE; return [first!, VOICE_FAQ[voicePaused() ? 'paused' : 'on'], ...rest] }
+// 11/20 만 14세 미만 가입(법정대리인 동의) 시행일부터 나이 답을 바꾼다.
+const AGE_CHILD = '만 14세 이상이면 바로 가입할 수 있고, 만 14세 미만은 보호자(법정대리인)가 휴대전화 본인인증으로 동의하면 가입할 수 있어요. 성인 전용 콘텐츠(언베일)는 본인인증으로 만 19세 이상임을 확인한 분에게만 열려요.'
+export const faqList = (): [string, string][] => {
+  const [first, ...rest] = FAQ_BASE.map(([q, a]): [string, string] => q === '몇 살부터 이용할 수 있나요?' && childOpen() ? [q, AGE_CHILD] : [q, a])
+  return [first!, VOICE_FAQ[voicePaused() ? 'paused' : 'on'], ...rest]
+}
