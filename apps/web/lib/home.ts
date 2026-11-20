@@ -205,7 +205,7 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * - 오리지널·유저 신작: 최신순. 세이프티는 언베일을 켠 사람에게만, 성인 전용이 아닌 캐릭터.
  */
 const MIRO_OFFICIAL = ['official-m-miro', 'official-m-veil', 'official-m-fairies', 'official-m-librarian', 'official-m-painter', 'official-m-exchange', 'official-m-artisan', 'official-m-tailor', 'official-m-bell', 'official-m-novelist', 'official-m-clock', 'official-m-cartographer']
-export type HomeSections = { rising: HomeCard[]; popularMale: HomeCard[]; popularFemale: HomeCard[]; originals: HomeCard[]; forYou: HomeCard[]; fresh: HomeCard[]; safety: HomeCard[]; tags: string[]; others: HomeCard[]; filters: DiscoveryGroup[] }
+export type HomeSections = { rising: HomeCard[]; popularMale: HomeCard[]; popularFemale: HomeCard[]; originals: HomeCard[]; forYou: HomeCard[]; fresh: HomeCard[]; safety: HomeCard[]; tags: string[]; others: HomeCard[]; /** 11/20 사용자: 홈 '전체 캐릭터'는 위 줄에 나온 것까지 전부(탐색과 같은 수) — others 는 줄에 안 뽑힌 나머지라 수가 달랐다. */ all: HomeCard[]; filters: DiscoveryGroup[] }
 export async function homeSections(userId: string | null, audience?: Audience): Promise<HomeSections> {
   const [{ items: raw }, chattedRows, unveil] = await Promise.all([
     homeCatalog(userId, { sort: 'latest', audience }),
@@ -243,7 +243,7 @@ export async function homeSections(userId: string | null, audience?: Audience): 
   // 태그 줄: 대화가 많은 캐릭터에 붙은 태그부터(각 묶음의 인기 태그), 없으면 묶음 앞 태그.
   const tags = [...new Set(filters.flatMap(g => g.popularTags ?? g.tags.slice(0, 2)))].slice(0, 16)
   // 11/9 사용자: 한 캐릭터는 홈에서 한 섹션에만 — 아래 격자도 위 줄에 안 나온 캐릭터만(10/28 '전부 보여 주기'를 뒤집음).
-  return { rising, popularMale, popularFemale, originals, forYou, fresh, safety, tags, others: pool, filters }
+  return { rising, popularMale, popularFemale, originals, forYou, fresh, safety, tags, others: pool, all: items, filters }
 }
 
 function shuffle<T>(xs: T[]): T[] {

@@ -117,7 +117,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </section>}
       {sections.safety.length > 0 && <Row index={6} row={{ key: 'safety', title: t('🛡️ 놓치면 아쉬운 세이프티 인기 TOP 10'), subtitle: t('언베일 없이도 재밌는 이야기'), items: sections.safety }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
-      {sections.others.length > 0 && <AllCharacters items={sections.others} />}
+      {sections.all.length > 0 && <AllCharacters items={sections.all} />}
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 11/13 처음 온 사람에게 제작자 모집을 한 번 알린다(브라우저당 한 번, 다른 시트가 닫힌 뒤). */}
       {settled && <CreatorInvite ratePercent={Math.round(CREATOR_REWARD_RATE * 100)} />}
