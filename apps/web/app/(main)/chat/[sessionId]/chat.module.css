@@ -761,3 +761,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .headerTitleRow .title { flex: 0 1 auto; min-width: 0; }
 /* 11/20 안드로이드 대비: dvh 를 모르는 브라우저에선 채팅방 높이(100dvh)가 버려져 방이 무너진다 — 그때만 vh 로. */
 @supports not (height: 100dvh) { .main { height: 100vh; } }
+
+/* 11/20 사용자: 대기 박스(점 세 개)는 지금 모양 그대로 왼쪽 위 모서리만 각지게. */
+:global([data-chat-theme='miro']) .typingBubble { border-top-left-radius: 0; }
