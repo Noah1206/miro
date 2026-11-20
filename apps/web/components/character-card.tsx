@@ -79,7 +79,7 @@ export function CharacterCard({ c, still, ratio = '1 / 1' }: { c: CardCharacter;
             {/* 11/13 베이비챗식: 해시태그(유부녀·NTR 등)는 브라우저에서만 — 서버 HTML(검색엔진)에 성인 태그 글자를 남기지 않는다. */}
             {/* 11/21 사용자: 카드 해시태그 글자는 분홍색. */}
             <AfterMount>{tags.map(tag => (
-              <span key={tag} style={{ padding: '2px 6px', borderRadius: 6, background: 'var(--color-surface-2)', color: '#ff7eb6', fontSize: 10, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
+              <span key={tag} style={{ padding: '2px 6px', borderRadius: 6, background: '#333336', color: '#ff7eb6', fontSize: 10, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
             ))}</AfterMount>
           </div>
           {c.creator && <p style={{ margin: 0, fontSize: 11, lineHeight: 1.4, color: 'var(--color-text-tertiary, #8f8f99)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{c.creator}</p>}
