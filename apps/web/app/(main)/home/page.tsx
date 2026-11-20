@@ -20,8 +20,6 @@ import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 import { AfterMount } from '@/components/after-mount'
-import { CreatorInvite } from '@/components/creator-invite'
-import { CREATOR_REWARD_RATE } from '@/lib/usage/creator-reward'
 
 const SITE = 'https://miroapp.app'
 const homeJsonLd = {
@@ -120,7 +118,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {sections.all.length > 0 && <AllCharacters items={sections.all} />}
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 11/13 처음 온 사람에게 제작자 모집을 한 번 알린다(브라우저당 한 번, 다른 시트가 닫힌 뒤). */}
-      {settled && <CreatorInvite ratePercent={Math.round(CREATOR_REWARD_RATE * 100)} />}
+      {/* 11/21 사용자: 제작자 모집 시트(CreatorInvite)는 띄우지 않는다. */}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>
