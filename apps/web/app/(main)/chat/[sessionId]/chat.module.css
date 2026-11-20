@@ -781,3 +781,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm-light']) .suggestDots, :global([data-chat-theme='talk']) .suggestDots { background: rgb(0 0 0 / .06); }
 :global([data-chat-theme='dm-light']) .suggestDots i, :global([data-chat-theme='talk']) .suggestDots i { background: rgb(0 0 0 / .55); }
 @media (prefers-reduced-motion: reduce) { .suggestDots, .suggestDots i { animation: none; } }
+/* 11/21 사용자: 추천 답변 글자를 조금 작게(15→13.5px). */
+.suggestCard { font-size: 13.5px; line-height: 1.55; }

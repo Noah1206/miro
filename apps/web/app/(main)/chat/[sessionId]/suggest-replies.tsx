@@ -38,6 +38,6 @@ export function SuggestList({ state, onPick, onClose }: { state: Exclude<Suggest
         {o.say && <span>&quot;{o.say}&quot;</span>}{o.say && o.act && ' '}{o.act && <em>{o.act}</em>}
       </button>
     </div>)}
-    <button type="button" className={styles.suggestClose} onClick={onClose}>{t('닫기')}</button>
+    {/* 11/21 사용자: '닫기' 글자는 뺐다 — 추천 답변 버튼을 다시 누르면 닫힌다. */}
   </div>
 }
