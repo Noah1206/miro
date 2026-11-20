@@ -7,9 +7,7 @@ import { measured } from '@/lib/observe'
 import { Row } from './row'
 import { AllCharacters } from './all-characters'
 import { HomeHero } from './hero'
-import { NotificationBell } from './bell'
 import { SiteFooter } from '@/components/site-footer'
-import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getLanguage, getT } from '@/lib/i18n/server'
 import { AudienceSelect } from './audience-select'
@@ -46,10 +44,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const raw = (await searchParams).audience
   // 11/20 사용자: 여성향(남자 캐릭터)은 다시 홈에서 뺀다(11/13 뺌 → 11/15 되살림 → 11/20 뺌) — 공식 여성향 38개 비공개(목록 output/ads/hidden-female-2026-11-20.txt). 유저는 여성향을 계속 만들어 올릴 수 있다.
   const audience = raw === 'male' ? raw : undefined
-  // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
-  const [sections, unread, unveil, profile] = await Promise.all([
+  // 11/20 사용자: 알림 종을 뺐다 — 안 읽은 연락 수도 더는 읽지 않는다.
+  const [sections, unveil, profile] = await Promise.all([
     measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),  // 11/12: 로그인 전에도 이름·소개 그대로(19세 막 시절의 글자 비우기 삭제)
-    user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
     user ? accountProfile(user) : null,
   ])
@@ -67,9 +64,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
 
         <div className={styles.headerTools} style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: -8, marginLeft: 'auto' }}>
           {user && <HeaderWallet />}
+          {/* 11/20 사용자: 알림 종 삭제, 19 토글은 프로필 사진 옆, 그 왼쪽에 흰 검색 아이콘 — 누르면 검색 화면(최근 검색어·입력칸 포커스). */}
+          <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', color: 'var(--color-white)' }}>
+            <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg>
+          </TransitionLink>
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
-          {/* 알림 종 — 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). 로그인 전에는 누르면 로그인 시트가 뜬다. */}
-          <NotificationBell unread={unread} signedIn={!!user} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
           {profile ? <HeaderProfile initial={profile} /> : !user && <HeaderProfileGuest />}
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}
         </div>

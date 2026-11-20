@@ -65,6 +65,9 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     else { const url = `/search/results${next.size ? `?${next}` : ''}`; startNavigation('forward', () => router.push(url), url) }
   }
   const [composing, setComposing] = useState(false)
+  // 11/20 사용자: 홈 검색 아이콘으로 오면 입력칸에 바로 커서(검색 화면만 — 탐색·결과 화면은 아님). 화면 전환 뒤에도 잡히게 그린 다음 한 번 더.
+  const inputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => { if (!isResults) requestAnimationFrame(() => inputRef.current?.focus()) }, [isResults])
   const [result, setResult] = useState<{ key: string; page: CardPage } | null>(() => initialPage ? { key: '', page: initialPage } : null)
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -115,7 +118,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     return () => request.current?.abort()
   }, [key, retry, isResults]) // Only the results route fetches catalog data; each query owns its request.
   const field = <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
-    <input type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
+    <input ref={inputRef} autoFocus={!isResults} type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
     {draft && <button type="button" aria-label={t('검색어 지우기')} onClick={() => setDraft('')}>×</button>}
     <button type="submit" aria-label={t('검색')} className={styles.searchIcon}><svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></button>
   </form>
