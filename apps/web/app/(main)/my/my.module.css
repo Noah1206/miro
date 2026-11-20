@@ -60,8 +60,6 @@
 .accountActions > a { display: inline-flex; align-items: center; min-height: 44px; }
 .accountActions > span { color: #777; }
 .legal { padding: 4px 4px 0; }
-.legalLinks { display: flex; flex-wrap: wrap; gap: 0 16px; color: var(--profile-muted); font-size: 12px; }
-.legalLinks a { display: inline-flex; align-items: center; min-height: 44px; }
 .businessDetails { margin-top: 4px; color: var(--profile-muted); font-size: 12px; }
 .businessDetails > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 44px; list-style: none; cursor: pointer; }
 .businessDetails > summary::-webkit-details-marker { display: none; }
@@ -96,3 +94,9 @@
 /* 11/20 로그인 전 프로필: 카드 전체를 덮는 투명 버튼 — 어디를 눌러도 로그인 시트. */
 .guestCard { position: relative; }
 .guestTap { position: absolute; inset: 0; z-index: 1; border: 0; border-radius: inherit; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+/* 11/20 약관 및 정책 — 아이콘 없이 글자+오른쪽 > 만. 위 메뉴와 간격을 맞춘다. */
+.legal { margin-top: 26px; padding: 0; }
+.legalMenu .row { min-height: 52px; }
+.legalMenu .row > .chevron { display: flex; }
+.legal .businessDetails { padding: 0 4px; }
