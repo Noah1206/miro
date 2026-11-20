@@ -1,6 +1,7 @@
 'use client'
 import { Button, useLoginSheet } from '@/components/ui'
 import { useUnveilEnable } from '@/components/unveil-unlock'
+import { useFormStatus } from 'react-dom'
 
 /** 비로그인 상태의 대화 시작. 로그인 화면으로 보내지 않고 시트로 묻는다. */
 export function StartWithLogin({ slug, label }: { slug: string; label: string }) {
@@ -24,4 +25,20 @@ export function StartWithUnveil({ returnTo, label }: { returnTo: string; label: 
     </Button>
     {sheets}
   </>
+}
+
+/**
+ * 11/20 사용자: 이미 대화한 방이 있으면 '이어서 대화'(그 방으로)와 '새로 대화'(지금 방은 대화 목록에 남기고 새 방) 두 버튼.
+ * 시작 폼(start-roleplay) 안에 둔다 — 새로 대화는 fresh=1 을 함께 보낸다. 누른 쪽에만 도는 표시.
+ */
+export function ResumeOrNew({ resume, fresh }: { resume: string; fresh: string }) {
+  const { pending, data } = useFormStatus()
+  const isFresh = data?.get('fresh') === '1'
+  const base = { flex: 1, minWidth: 0, borderRadius: 'var(--radius-lg)', fontWeight: 'var(--weight-semibold)' } as const
+  return <div style={{ display: 'flex', gap: 8 }}>
+    <Button type="submit" full status={pending && !isFresh ? 'loading' : 'idle'} disabled={pending}
+      style={{ ...base, background: '#353535', border: '1px solid #353535', color: 'var(--color-white)' }}>{resume}</Button>
+    <Button type="submit" name="fresh" value="1" full status={pending && isFresh ? 'loading' : 'idle'} disabled={pending}
+      style={{ ...base, background: '#f3f3f3', border: '1px solid #f3f3f3', color: '#1c1c1c' }}>{fresh}</Button>
+  </div>
 }

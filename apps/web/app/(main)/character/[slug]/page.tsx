@@ -22,7 +22,7 @@ import { subject, withParticle } from '@/lib/format'
 import { hotFirst } from '@/lib/character-card-copy'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
-import { StartWithLogin, StartWithUnveil } from './start-button'
+import { ResumeOrNew, StartWithLogin, StartWithUnveil } from './start-button'
 import { CreatorRow } from '@/components/creator-row'
 import { creatorKeyOf, creatorOf } from '@/lib/creators'
 import { UnveilCover } from '@/components/unveil-badge'
@@ -59,7 +59,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
     similarCharacters(c.id, c.worldGenre, c.experienceType, unveil),
     characterLikeState(c.id, user?.id ?? null),
     c.endings.length && user ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
-    c.endings.length && user ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
+    // 11/20 사용자: 이미 대화한 방이 있으면 '이어서 대화 · 새로 대화' 두 버튼(엔딩 작품만이 아니라 전부).
+    user ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
     creatorKey ? creatorOf(creatorKey, user?.id ?? null) : Promise.resolve(null),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
@@ -186,12 +187,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             <div style={{ flex: 1, minWidth: 0 }}>
               {locked
                 ? <StartWithUnveil returnTo={unlockAt.returnTo} label={t(COPY.cta.startRoleplay)} />
+                : user && running
+                ? <form id="start-roleplay" action={enter}><ResumeOrNew resume={t('이어서 대화')} fresh={t('새로 대화')} /></form>
                 : user
                 ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
                 : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
-              {/* 11/10 다회차 — 엔딩이 있는 작품에서 이미 하던 방이 있으면, 그 방은 남기고 처음부터 새로 시작한다. */}
-              {user && running && <button type="submit" form="start-roleplay" name="fresh" value="1"
-                style={{ display: 'block', margin: '8px auto 0', border: 0, background: 'transparent', color: 'var(--color-text-secondary)', font: 'inherit', fontSize: 13, textDecoration: 'underline', cursor: 'pointer' }}>{t('처음부터 다시 하기 (지금 방은 대화 목록에 남아요)')}</button>}
             </div>
           </div>
         </div>
