@@ -145,7 +145,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} veil={unveil ? null : unlockAt} />
         {/* 11/6: 언베일을 켠 사람에겐 사진 모서리 '언베일' 표시를 띄우지 않는다. */}
         {(c.coverUnveil || c.adultOnly) && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} hideLabel={unveil} />}
-        <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
+        <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} signedIn={!!user} initial={likes} overlay /></div>
       </div>
 
       <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
@@ -155,7 +155,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {/* 통계 — 댓글·좋아요. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청). */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
           <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
-          <LikeButton slug={slug} initial={likes} />
+          <LikeButton slug={slug} signedIn={!!user} initial={likes} />
           {/* 11/11 응원하기 — 다른 사람이 만든 공개 캐릭터만(공식·내 캐릭터는 아님). */}
           {cheerable && <CheerButton characterId={c.id} creatorName={creator || t('만든 사람')} />}
           {/* 11/6 사용자: 남성향/여성향 표시는 좋아요와 같은 줄에. */}
@@ -180,7 +180,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '32px var(--gutter) calc(10px + env(safe-area-inset-bottom))', background: 'linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0), rgba(var(--color-bg-rgb), 0.8) 40%, var(--color-bg) 75%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* 11/20 사용자: 시작 버튼 왼쪽 버튼을 엄지 좋아요로(전엔 댓글 화면 링크 — 댓글은 아래 댓글 칸에서 연다). */}
-            <LikeButton slug={slug} initial={likes} cta />
+            <LikeButton slug={slug} signedIn={!!user} initial={likes} cta />
             <div style={{ flex: 1, minWidth: 0 }}>
               {locked
                 ? <StartWithUnveil returnTo={unlockAt.returnTo} label={t(COPY.cta.startRoleplay)} />

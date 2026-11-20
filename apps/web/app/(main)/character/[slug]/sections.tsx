@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { TransitionLink, useToast } from '@/components/ui'
+import { TransitionLink, useLoginSheet, useToast } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { CharacterPhoto } from '@/components/character-visual'
 import { parseEmphasis } from '@/components/scene/emphasis'
@@ -254,14 +254,17 @@ const day = (d: Date, locale: string) => new Date(d).toLocaleDateString(locale, 
 /** 11/20 사용자: 대화 시작하기 옆 버튼은 엄지 모양 좋아요(cta) — 48px 네모, 누르면 엄지가 채워진다. */
 const THUMB = <><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /></>
 
-export function LikeButton({ overlay = false, cta = false, slug, initial = { count: 0, liked: false } }: { overlay?: boolean; cta?: boolean; slug?: string; initial?: { count: number; liked: boolean } }) {
+export function LikeButton({ overlay = false, cta = false, slug, signedIn = true, initial = { count: 0, liked: false } }: { overlay?: boolean; cta?: boolean; slug?: string; signedIn?: boolean; initial?: { count: number; liked: boolean } }) {
   const t = useT()
   const [state, setState] = useState(initial)
   const [pending, setPending] = useState(false)
   const toast = useToast()
+  const askLogin = useLoginSheet()
   useEffect(() => setState(initial), [initial.count, initial.liked])
   const onClick = async () => {
     if (!slug || pending) return
+    // 11/20 사용자: 좋아요는 로그인해야 — 로그인 전이면 바로 로그인 시트(로그인 뒤 이 소개 페이지로).
+    if (!signedIn) { askLogin(`/character/${slug}`); return }
     setPending(true)
     try { setState(await likeCharacter(slug, !state.liked)) }
     catch { toast(t('좋아요를 저장하지 못했어요. 다시 시도해 주세요.')) }
