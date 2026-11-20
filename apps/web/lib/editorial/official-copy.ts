@@ -59,6 +59,8 @@ export function officialIntro(profile: { id: string; slug: string | null }, entr
       context: briefing ? contextFor(briefing, replacement[0]!) : replacement[0],
       ...(entry.time ? { time: entry.time } : {}),
       ...(entry.location ? { location: entry.location } : {}),
+      // 11/20 인트로 상태창도 교정본 인트로로 갈아끼울 때 그대로 넘긴다(전엔 빠져 인트로에 상태창이 안 나왔다).
+      ...(entry.status ? { status: entry.status } : {}),
     }
     if (briefing) result.push(
       { ...metadata, role: 'narrator', text: [briefing.role, briefing.before].join('\n\n'), purpose: 'intro' },

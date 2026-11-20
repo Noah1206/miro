@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
 import { SEEDS as SEEDS_1, type Seed } from './bl-characters.data.mts'
 import { STATUS_FORMATS } from './status-formats.data.mts'
+import { INTRO_STATUS } from './intro-status.data.mts'
 import { SEEDS_2 } from './bl-characters-2.data.mts'
 import { SEEDS_3 } from './bl-characters-3.data.mts'
 import { SEEDS_4_TIGER } from './bl-characters-4-tiger.data.mts'
@@ -195,6 +196,17 @@ function keepSceneImages(next: Seed['sampleDialogue'], prev: Array<{ purpose?: s
   })
 }
 
+// 11/20 사용자: 인트로에도 상태창 — 기본 도입부 첫 인트로 줄에 값까지 채운 상태창을 붙인다(이미 적힌 게 있으면 그대로). intro-status.data.mts
+function withIntroStatus<T extends { purpose?: string; role: string; scene?: string; status?: string }>(slug: string, dialogue: T[]): T[] {
+  const status = INTRO_STATUS[slug]
+  const intro = dialogue.filter(d => d.purpose === 'intro' && (d.role === 'character' || d.role === 'narrator'))
+  if (!status || !intro.length) return dialogue
+  const scene = intro[0]!.scene ?? ''
+  if (intro.some(d => (d.scene ?? '') === scene && d.status)) return dialogue
+  const first = dialogue.indexOf(intro[0]!)
+  return dialogue.map((d, i) => i === first ? { ...d, status } : d)
+}
+
 const inserted: Array<{ id: string; name: string; revisionId: string | null }> = []
 for (const s of SEEDS) {
   const [exists] = await db.select({ id: characters.id, dialogue: characters.sampleDialogue, deletedAt: characters.deletedAt }).from(characters).where(eq(characters.slug, s.slug)).limit(1)
@@ -210,7 +222,7 @@ for (const s of SEEDS) {
     hobbies: s.hobbies, dislikes: s.dislikes,
     jealousy: s.jealousy, initiative: s.initiative, emotionalExpression: s.emotionalExpression,
     relationshipKeywords: s.relationshipKeywords, startingContext: s.startingContext, startingTime: s.startingTime,
-    sampleDialogue: keepSceneImages(s.sampleDialogue, exists?.dialogue ?? []), lore: s.lore, initialRelationship: s.initialRelationship,
+    sampleDialogue: withIntroStatus(s.slug, keepSceneImages(s.sampleDialogue, exists?.dialogue ?? [])), lore: s.lore, initialRelationship: s.initialRelationship,
     personaGuide: s.personaGuide ?? '', coverUnveil: s.coverUnveil ?? false,
     statusFormat: s.statusFormat ?? STATUS_FORMATS[s.slug] ?? '', stats: s.stats ?? [],   // 11/19 남성향 상태창 표(status-formats.data.mts)
     playGuide: s.playGuide ?? '', firstReplies: s.firstReplies ?? [], endings: s.endings ?? [],
