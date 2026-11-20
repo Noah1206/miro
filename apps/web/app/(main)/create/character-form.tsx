@@ -183,7 +183,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ ...i.ensembleCast?.find(p => p.name === name), name, voice, ...(i.ensemblePhotos?.[name] ? { photo: i.ensemblePhotos[name] } : {}) })))
   const [castMode, setCastMode] = useState<'single' | 'multi'>(cast.length ? 'multi' : 'single')
   const [advanced, setAdvanced] = useState(false)
-  const [profileAdvanced, setProfileAdvanced] = useState(false)
+  // 11/20 사용자: 엔딩은 고급 — '고급 설정'을 켜야 탭이 보인다. 엔딩이 이미 있는 작품은 켠 채로 연다. 켠 상태는 이 기기에 기억한다.
+  const [showAdvanced, setShowAdvanced] = useState(() => (initial?.endings?.length ?? 0) > 0)
+  useEffect(() => { try { if (localStorage.getItem('miro-create-advanced') === '1') setShowAdvanced(true) } catch { /* 저장소를 못 쓰면 기본값 */ } }, [])
+  const toggleAdvanced = (on: boolean) => { setShowAdvanced(on); try { localStorage.setItem('miro-create-advanced', on ? '1' : '0') } catch { /* 저장소를 못 쓰면 이번만 */ } }
+  // 세계관 탭은 11/20 사용자 결정으로 화면에서 뺐다(칸은 숨긴 채 남아 저장된 값을 보낸다).
+  const hiddenTabs: CreateTab[] = showAdvanced ? ['personality'] : ['personality', 'endings']
+  useEffect(() => { if (hiddenTabs.includes(tab)) setTab('settings') }, [showAdvanced]) // eslint-disable-line react-hooks/exhaustive-deps
   const [isPublic, setIsPublic] = useState(i.isPublic)
   const [linkShared, setLinkShared] = useState(!!i.linkShared)
   const [media, setMedia] = useState<CharacterMedia>(i.media)
@@ -308,7 +314,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit}
           onBlocked={() => toast(t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') }))} canDraft={!!name.trim()} pending={pending}
           missingHint={canSubmit ? (isPublic ? t('공개 게시') : linkShared ? t('링크로만 공유') : t('나만 보기')) : t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') })}
-          buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
+          buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} hidden={hiddenTabs} />
         {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{t(saveError)}</p>}
         {mode === 'create' && experienceType === 'reality' && <CreateTour tab={tab} onTab={openTab} />}
 
@@ -340,7 +346,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                 options={[{ value: 'single', label: t('1:1'), hint: t('캐릭터 한 명') }, { value: 'multi', label: t('다인'), hint: t('여러 인물') }]} />
             </Card>
           </Section>
-          <Section title={t('공개')}>
+          {/* 11/20 사용자: 공개·링크 공유 스위치는 화면에서 뺐다 — 새 작품은 공개, 기존 작품은 저장된 값 그대로 보낸다. */}
+          <div hidden><Section title={t('공개')}>
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
                 label={t('다른 사람에게 공개')}
@@ -349,7 +356,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                 label={t('링크로만 공유')}
                 hint={t('홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.')} />}
             </Card>
-          </Section>
+          </Section></div>
           <Section title={t('캐릭터')}>
             <Card>
               <ImagePicker label={t('캐릭터 이미지')} maxCount={5} existing={i.images} />
@@ -365,13 +372,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                     <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 외모·성격·말투·가치관·비밀·배경 이야기를 자유롭게 적어 주세요. AI는 여기 적힌 대로 연기해요.')}>
                       <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={10040} rows={10} />
                     </LabeledField>
-                    {experienceType === 'reality' && <ReactionTraits initial={i} />}
+                    {/* 11/20 사용자: 반응 성향은 화면에서 뺐다 — 저장된 값은 숨은 칸으로 그대로 보낸다. */}
+                    {experienceType === 'reality' && <div hidden><ReactionTraits initial={i} /></div>}
                   </div>
                 </IdentityCard>
               </div>
-              {/* 나이·MBTI·국적·직업은 고급 — 이름과 소개만으로 카드가 된다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
-              <AdvancedToggle open={profileAdvanced} onToggle={() => setProfileAdvanced((v) => !v)} controls="profile-advanced" />
-              <div id="profile-advanced" hidden={!profileAdvanced}>
+              {/* 나이·MBTI·국적·직업 — 11/20 사용자: 화면에서 뺐다. 칸은 숨긴 채 DOM 에 남아 저장된 값을 그대로 보낸다. */}
+              <div id="profile-advanced" hidden>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                   <LabeledField label={t('나이')}><CountedInput name="age" max={10} {...g('age')} /></LabeledField>
                   <LabeledField label="MBTI">
@@ -445,11 +452,12 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="relationship" show={tab === 'relationship'}>
           {/* 관계 성격표 편집(ProfileSettings)과 세부 감정 6개는 10/19 화면에서 뺐다 — 저장 때 AI 가 만든 표와 프리셋 값이 그대로 쓰인다. 일상·연락도 이 탭으로 합쳤다. */}
           {experienceType === 'reality' && <>
-          <Section title={t('시작 관계')}>
+          {/* 11/20 사용자: 시작 관계·가까워지는 속도는 화면에서 뺐다 — 저장된 값은 숨은 칸으로 그대로 보낸다. */}
+          <div hidden><Section title={t('시작 관계')}>
             <RelationshipSettings initial={i} />
-          </Section>
+          </Section></div>
           {/* 10/28: '일상·연락' 제목은 지웠다(사용자 요청). */}
-          <section aria-label={t('일상·연락')} style={{ marginTop: 'var(--space-6)' }}>
+          <section aria-label={t('일상·연락')}>
             <ContactSettings initial={i} mode={mode} capabilities={capabilities} />
           </section>
           </>}
@@ -480,16 +488,16 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('대화 전 페르소나')} subtitle={t('필수로 두면 사용자는 첫 대화 전에 이 세계에서의 나를 정해야 시작할 수 있어요. 선택이면 바로 대화를 시작해요.')}>
             <Segmented name="personaRequired" value={personaRequired} onChange={setPersonaRequired} options={[{ value: '0', label: t('선택') }, { value: '1', label: t('필수') }]} />
           </Section>
-          {/* 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드에서 사용자가 '이 세계에서의 나'를 쓸 때 보이는 안내. */}
-          <Section title={t('페르소나 작성 안내 · 선택')} subtitle={t('첫 대화 전에 사용자는 세계관을 읽고 이 세계에서의 자기 자신을 직접 적어요. 무엇을 적으면 좋을지 알려 주세요.')}>
+          {/* 페르소나 작성 안내(11/4) — 11/20 사용자: 화면에서 뺐다. 저장된 값은 숨은 칸으로 그대로 보낸다. */}
+          <div hidden><Section title={t('페르소나 작성 안내 · 선택')} subtitle={t('첫 대화 전에 사용자는 세계관을 읽고 이 세계에서의 자기 자신을 직접 적어요. 무엇을 적으면 좋을지 알려 주세요.')}>
             <CountedTextArea name="personaGuide" ariaLabel={t('페르소나 작성 안내')} max={300} rows={3} defaultValue={i.personaGuide ?? ''}
               placeholder={t('예) 당신은 어떤 헌터인가요? 이름, 원래 등급, 능력, 지금 처지를 적어 주세요.')} />
-          </Section>
+          </Section></div>
           <Section title={t('준비된 페르소나 · 선택')} subtitle={t('대화를 시작할 때 사용자가 고를 수 있는 \'나\'예요. 고른 뒤에 고쳐 쓸 수도 있어요.')}>
             <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
           </Section>
-          {/* 플레이 가이드·추천 첫 답변(11/10, 크랙 시작 설정) — 둘 다 사용자 화면에만 보이고 AI 에는 가지 않는다. */}
-          <Section title={t('플레이 가이드 · 선택')} subtitle={t('첫 화면에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
+          {/* 플레이 가이드·추천 첫 답변(11/10) — 11/20 사용자: 화면에서 뺐다. 저장된 값은 숨은 칸으로 그대로 보낸다. */}
+          <div hidden><Section title={t('플레이 가이드 · 선택')} subtitle={t('첫 화면에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
             <CountedTextArea name="playGuide" ariaLabel={t('플레이 가이드')} max={500} rows={3} defaultValue={i.playGuide ?? ''}
               placeholder={t('예) 매일 해 질 녘에 습격이 와요. 죽으면 같은 날 아침으로 돌아가니, 무엇이 달라졌는지 살펴보세요.')} />
           </Section>
@@ -498,7 +506,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               {[0, 1, 2].map(n => <CountedInput key={n} name="firstReplies" ariaLabel={t('추천 첫 답변 {n}', { n: n + 1 })} max={200}
                 placeholder={[t('예) *주위를 둘러본다* 여기가… 어디지?'), t('예) 오늘은 정말 일찍 퇴근할 거예요.'), t('예) 처음 뵙겠습니다.')][n]} defaultValue={i.firstReplies?.[n] ?? ''} />)}
             </div>
-          </Section>
+          </Section></div>
         </Panel>
         <Panel id="intro-dialogue" show={tab === 'intro'}>
           <Section title={t('인트로 대화')} subtitle={t('새 채팅이 열릴 때 캐릭터가 먼저 건네는 말이에요. 비워 두면 사용자가 먼저 말을 걸어요.')}>
@@ -516,7 +524,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
         <Panel id="status" show={tab === 'status'}>
           <Section title={t('상태창 · 선택')} subtitle={t('매 답변 끝에 붙는 상태 정보의 틀이에요. 날짜·장소·스탯·아이템처럼 이야기가 어디까지 왔는지 보여 줘요. 대화 화면에선 접었다 펼 수 있는 카드로 나와요.')}>
-            <StatusEditor defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} defaultIntroStatus={(introDialogue(i.sampleDialogue) as Array<{ status?: string }>).find(e => e.status)?.status ?? ''} />
+            <StatusEditor showStats={false} defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} defaultIntroStatus={(introDialogue(i.sampleDialogue) as Array<{ status?: string }>).find(e => e.status)?.status ?? ''} />
           </Section>
         </Panel>
         {/* ── 엔딩(11/10, 크랙 엔딩 설정) — 비워 두면 엔딩 없이 이어진다. ── */}
@@ -542,16 +550,16 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="situations" show={tab === 'situations'}>
           {/* 상황별 사진(10/28, 위프·베이비챗식) — 사진마다 상황을 적어 두면 대화가 그 상황이 됐을 때 AI 가 골라 채팅에 띄운다(10/31). */}
           <Section title={t('상황별 사진 · 선택')} subtitle={t('사진마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 AI가 알아서 채팅에 띄워요.')}>
-            <SituationImagesEditor defaultValue={i.situationImages ?? []} adultAllowed={adultAllowed} />
+            <SituationImagesEditor defaultValue={i.situationImages ?? []} />
           </Section>
           {/* 11/19 상황별 BGM — 곡마다 상황을 적어 두면 대화가 그 상황일 때 채팅방에서 반복 재생된다. */}
           <Section title={t('상황별 BGM · 선택')} subtitle={t('곡마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 채팅방에서 그 음악이 흘러요. 상황을 비운 곡은 기본 음악이에요.')}>
             <BgmEditor defaultValue={i.bgm ?? []} />
           </Section>
-          {/* 사진 장면(11/3) — 채팅 사진 버튼의 기본 장면 뒤에 이 캐릭터만의 장면을 붙인다. */}
-          <Section title={t('사진 장면 · 선택')} subtitle={t('채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.')}>
+          {/* 사진 장면(11/3) — 11/20 사용자: 화면에서 뺐다. 저장된 장면은 숨은 칸으로 그대로 보낸다. */}
+          <div hidden><Section title={t('사진 장면 · 선택')} subtitle={t('채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.')}>
             <PhotoScenesEditor defaultValue={i.photoScenes ?? []} adultAllowed={adultAllowed} />
-          </Section>
+          </Section></div>
         </Panel>
 
         {/* ── 분류·설정(10/28) — 카테고리 하나 + 해시태그(장르·관계를 한곳에서). 저장 때 parse 가 예전 장르·관계 태그 칸으로 나눈다. ── */}
@@ -588,10 +596,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
             </div>
           </Section>
+          <Section title={t('고급 설정')}>
+            <Switch name="" checked={showAdvanced} onChange={toggleAdvanced} label={t('고급 설정 보기')} hint={t('켜면 엔딩 탭이 나타나요.')} />
+          </Section>
         </Panel>
 
         {/* ── 소개 페이지 ── */}
-        {tab !== 'preview' && <StepNav tab={tab} onTab={openTab} />}
+        {tab !== 'preview' && <StepNav tab={tab} onTab={openTab} hidden={hiddenTabs} />}
         <Panel id="preview" show={tab === 'preview' || (desktop && tab !== 'intro')}>
           {/* 11/19 사용자: 테스트 채팅 버튼을 뺐다 — 미리보기는 소개 페이지만. */}
           <DetailPreview d={snap} can={can} experienceType={experienceType} />

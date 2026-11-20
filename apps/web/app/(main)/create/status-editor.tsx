@@ -30,7 +30,8 @@ const EXAMPLES: Array<[string, string]> = [
  * 상태창·스탯(11/10) — 매 답변 끝에 붙는 상태창의 틀과, 대화방마다 움직이는 수치(최대 7개).
  * AI 는 형식을 채우고 스탯 새 값을 내며, 서버가 범위로 자른다. 비워 두면 상태창이 없다.
  */
-export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus = '' }: { defaultFormat: string; defaultStats: CharacterStat[]; defaultIntroStatus?: string }) {
+/** 11/20 사용자: 스탯 칸은 화면에서 뺐다(showStats=false) — 저장된 스탯은 숨은 값으로 그대로 보낸다. */
+export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus = '', showStats = true }: { defaultFormat: string; defaultStats: CharacterStat[]; defaultIntroStatus?: string; showStats?: boolean }) {
   const t = useT()
   const [format, setFormat] = useState(defaultFormat)
   const [rows, setRows] = useState<Row[]>(() => defaultStats.map((s, id) => ({ id, name: s.name, min: String(s.min), max: String(s.max), def: String(s.default), unit: s.unit ?? '', description: s.description,
@@ -61,7 +62,7 @@ export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus =
         <textarea name="introStatus" defaultValue={defaultIntroStatus} maxLength={STATUS_FORMAT_LIMIT} rows={6} aria-label={t('인트로 상태창')}
           style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: 13, lineHeight: 1.6, resize: 'vertical', outline: 'none', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} />
       </div>
-      {rows.map(r => (
+      {showStats && rows.map(r => (
         <div key={r.id} className="stack" style={{ gap: 8, padding: 12, borderRadius: 12, border: '1px solid var(--color-border)' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input value={r.name} maxLength={10} placeholder={t('스탯 이름 (예: 호감도)')} aria-label={t('스탯 이름')} onChange={e => patch(r.id, { name: e.target.value })} style={{ ...input, flex: 1 }} />
@@ -93,7 +94,7 @@ export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus =
             style={{ alignSelf: 'flex-start', minHeight: 32, padding: '0 12px', borderRadius: 999, border: '1px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>{t('+ 구간 추가')}</button>}
         </div>
       ))}
-      {rows.length < STAT_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', min: '0', max: '100', def: '0', unit: '', description: '', hidden: false, stages: [] }]); setNextId(n => n + 1) }}
+      {showStats && rows.length < STAT_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', min: '0', max: '100', def: '0', unit: '', description: '', hidden: false, stages: [] }]); setNextId(n => n + 1) }}
         style={{ minHeight: 44, borderRadius: 12, border: '1.5px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: fieldFont }}>{t('+ 스탯 추가')} ({rows.length}/{STAT_LIMIT})</button>}
     </div>
   )

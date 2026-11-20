@@ -26,8 +26,10 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
  * 만들기 머리 (레퍼런스 구조): 닫기 · 제목 · 등록, 그 아래 가로 스크롤 탭.
  * 탭에는 표시를 달지 않는다 — 필수는 칸의 별표가 말하고, 다 차기 전엔 등록이 잠겨 있다.
  */
-export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, pending, buttons, closeHref, missingHint, onBlocked }: {
+export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, pending, buttons, closeHref, missingHint, onBlocked, hidden = [] }: {
   tab: CreateTab
+  /** 11/20 화면에서 뺀 탭(세계관)과 고급 설정을 켜야 보이는 탭(엔딩). 패널은 DOM 에 남아 값을 보낸다. */
+  hidden?: CreateTab[]
   onTab: (t: CreateTab) => void
   experienceType: 'chat' | 'reality'
   missingHint?: string
@@ -68,7 +70,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
       {/* 입력 탭은 고르게 펼치고, 미리보기도 배경 없는 밑줄 탭으로 구분한다. */}
       <div role="tablist" className="create-tabs" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-          {TABS.filter((x) => x.key !== 'preview').map((x) => {
+          {TABS.filter((x) => x.key !== 'preview' && !hidden.includes(x.key)).map((x) => {
             const active = x.key === tab
             return (
               <button key={x.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${x.key}`} onClick={() => onTab(x.key)}
@@ -117,9 +119,9 @@ function chip(primary: boolean, on: boolean): React.CSSProperties {
  * 11/10 단계 이동(크랙 만들기식) — 폼 맨 아래에 붙는 이전/다음. 다음 버튼엔 다음 탭 이름을 써서 어디로 가는지 보이게.
  * 마지막 입력 탭에선 다음이 없다(게시는 머리의 버튼). 탭을 바꾸면 폼 맨 위로 올린다.
  */
-export function StepNav({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTab) => void }) {
+export function StepNav({ tab, onTab, hidden = [] }: { tab: CreateTab; onTab: (t: CreateTab) => void; hidden?: CreateTab[] }) {
   const t = useT()
-  const keys = TABS.filter(x => x.key !== 'preview')
+  const keys = TABS.filter(x => x.key !== 'preview' && !hidden.includes(x.key))
   const at = keys.findIndex(x => x.key === tab)
   if (at < 0) return null
   const go = (k: CreateTab) => { onTab(k); window.scrollTo({ top: 0, behavior: 'smooth' }) }
