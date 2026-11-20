@@ -12,6 +12,10 @@ import { CharacterCard } from '@/components/character-card'
 import { startNavigation } from '@/lib/motion/view-transition'
 import cards from '../home/home.module.css'
 import styles from './search.module.css'
+import { msg } from '@/lib/i18n'
+
+/** 11/21 사용자: 검색 화면의 추천 검색어 — 많이 찾는 분위기 태그 5개. */
+const SUGGESTED = [msg('현대물'), msg('하렘'), msg('순애'), msg('판타지'), msg('로맨스')]
 
 export function SearchScreen({ groups = [], filterCatalog, initialPage, isResults = false, resultsPath = '/search/results' }: {
   groups?: DiscoveryGroup[]; filterCatalog?: DiscoveryCard[]; isResults?: boolean; resultsPath?: '/search/results' | '/explore'
@@ -44,7 +48,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     try {
       const saved: unknown = JSON.parse(localStorage.getItem(historyKey) ?? '[]')
       if (Array.isArray(saved)) {
-        const clean = [...new Set(saved.filter((v): v is string => typeof v === 'string' && !!v.trim()).map(v => v.trim().slice(0, 40)))].slice(0, 8)
+        const clean = [...new Set(saved.filter((v): v is string => typeof v === 'string' && !!v.trim()).map(v => v.trim().slice(0, 40)))].slice(0, 5)
         recentRef.current = clean; setRecent(clean)
       }
     } catch { /* Search remains usable when storage is unavailable. */ }
@@ -55,7 +59,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
   }
   function remember(value: string) {
     const word = value.trim().slice(0, 40)
-    if (word) saveRecent([word, ...recentRef.current.filter(v => v.toLowerCase() !== word.toLowerCase())].slice(0, 8))
+    if (word) saveRecent([word, ...recentRef.current.filter(v => v.toLowerCase() !== word.toLowerCase())].slice(0, 5))
   }
   function search(value: string) {
     const word = value.trim().slice(0, 40)
@@ -152,12 +156,19 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
         </AnimatePresence>
       </motion.div>}
     </AnimatePresence>
-    {!isResults && recent.length === 0 && <p className={styles.recentEmpty}>{t('최근 검색어가 없어요')}</p>}
-    {!isResults && recent.length > 0 && <section className={styles.recent} aria-labelledby="recent-searches">
-      <div className={styles.recentHeading}><h2 id="recent-searches">{t('최근 검색어')}</h2><button type="button" onClick={() => saveRecent([])}>{t('전체 삭제')}</button></div>
-      <ul className={styles.recentList}>{recent.map(word => <li key={word}>
+    {/* 11/21 사용자: 최근 검색어 제목은 비어 있어도 크게 보이고, 그 아래 추천 검색어 5개를 세로 한 줄씩. */}
+    {!isResults && <section className={styles.recent} aria-labelledby="recent-searches">
+      <div className={styles.recentHeading}><h2 id="recent-searches">{t('최근 검색어')}</h2>{recent.length > 0 && <button type="button" onClick={() => saveRecent([])}>{t('전체 삭제')}</button>}</div>
+      {recent.length === 0 ? <p className={styles.recentEmpty}>{t('최근 검색어가 없어요')}</p>
+        : <ul className={styles.recentList}>{recent.map(word => <li key={word}>
         <button type="button" onClick={() => search(word)}><span>{word}</span></button>
         <button type="button" aria-label={t('{word} 삭제', { word })} onClick={() => saveRecent(recentRef.current.filter(v => v !== word))}>×</button>
+      </li>)}</ul>}
+    </section>}
+    {!isResults && <section className={styles.recent} aria-labelledby="suggested-searches">
+      <div className={styles.recentHeading}><h2 id="suggested-searches">{t('추천 검색어')}</h2></div>
+      <ul className={styles.recentList}>{SUGGESTED.map(word => <li key={word}>
+        <button type="button" onClick={() => search(t(word))}><span>{t(word)}</span></button>
       </li>)}</ul>
     </section>}
     {isResults && <section className={styles.results} aria-label={t('검색 결과')} aria-busy={busy}>

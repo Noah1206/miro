@@ -69,3 +69,14 @@
 .sortTabs { display: flex; align-items: center; gap: 10px; font-size: 22px; letter-spacing: -.02em; color: #6f6f6f; }
 .sortTabs button { min-height: 40px; padding: 0; border: 0; background: none; color: #6f6f6f; font: inherit; font-weight: 600; cursor: pointer; transition: color .15s; }
 .sortTabs button[aria-selected='true'] { color: #fff; font-weight: 800; }
+
+/* 11/21 사용자 스크린샷: 데스크톱에서 검색·탐색 화면이 왼쪽 대화 사이드바 밑에 깔려 < ·검색창 앞·최근 검색어가 가려졌다 — 캐릭터 상세처럼 사이드바 오른쪽 영역의 가운데에 선다. */
+@media (min-width: 1024px) {
+  :global(.app-shell:has(> aside)) .screen { --search-w: min(1100px, calc(100% - var(--side, 280px) - 48px)); max-width: var(--search-w); margin-left: calc(var(--side, 280px) + (100% - var(--side, 280px) - var(--search-w)) / 2); margin-right: 0; }
+}
+/* 11/21 사용자: 최근 검색어는 세로 한 줄씩, 제목은 크게·흰색, 검색어도 흰색. */
+.recentHeading h2 { margin: 0; font-size: 18px; font-weight: 700; color: #fff; }
+.recentList { flex-direction: column; flex-wrap: nowrap; gap: 0; }
+.recentList li { display: flex; justify-content: space-between; width: 100%; max-width: none; border-bottom: 1px solid #ffffff0a; }
+.recentList button { min-height: 44px; font-size: 15px; color: #fff; }
+.recentList li > button:first-child { flex: 1; }
