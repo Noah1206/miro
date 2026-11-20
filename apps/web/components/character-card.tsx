@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { useLanguage } from '@/lib/i18n/client'
 import { CharacterVisual } from '@/components/character-visual'
-import { UnveilCover } from '@/components/unveil-badge'
+import { UnveilCover, UnveilHeart } from '@/components/unveil-badge'
 import { characterTags } from '@/lib/character-card-copy'
 import { press, spring } from '@/lib/motion/tokens'
 import { coverTitle } from '@/lib/editorial/cover-title'
@@ -65,6 +65,8 @@ export function CharacterCard({ c, still, ratio = '1 / 1' }: { c: CardCharacter;
           <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio={ratio} scrim={false} />
           {/* 11/10 사용자: 흐림은 수위 있는 표지가 보일 때만 — 넘어간 다른 사진엔 안 씌운다 */}
           {c.coverUnveil && photo === c.images[0] && <UnveilCover veiled={c.veiled} label="언베일" hideLabel={!c.veiled} />}
+          {/* 11/21 사용자: 언베일 작품은 늘 왼쪽 위에 분홍 하트 열쇠구멍(가운데 큰 19 가 뜨는 흐린 표지일 땐 겹치지 않게 뺀다). */}
+          {c.coverUnveil && !(c.veiled && photo === c.images[0]) && <UnveilHeart />}
           {!!c.chats && <span style={{ position: 'absolute', left: 6, bottom: 6, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 7px', borderRadius: 999, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 11, fontWeight: 600, lineHeight: 1 }}>
             <span aria-hidden="true" style={{ width: 12, height: 12, flex: 'none', background: 'var(--color-lavender-400)', WebkitMask: 'url(/logo-mark.svg) center / contain no-repeat', mask: 'url(/logo-mark.svg) center / contain no-repeat' }} />{/* 숫자가 마크보다 떠 보여 살짝 내린다 */}<span style={{ position: 'relative', top: '.08em' }}>{new Intl.NumberFormat(language, { notation: 'compact', maximumFractionDigits: 1 }).format(c.chats)}</span>
           </span>}
