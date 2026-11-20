@@ -120,15 +120,15 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
   const field = <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
     <input ref={inputRef} autoFocus={!isResults} type="search" enterKeyHint="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />
     {draft && <button type="button" aria-label={t('검색어 지우기')} onClick={() => setDraft('')}>×</button>}
-    <button type="submit" aria-label={t('검색')} className={styles.searchIcon}><svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></button>
+    <button type="submit" aria-label={t('검색')} className={styles.searchIcon}><svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></button>
   </form>
   return <div className={`${styles.screen} ${isResults ? styles.resultsScreen : ''}`}>
     {/* 11/20 사용자: 탐색·검색은 하단 탭 없이 위쪽 화살표로 돌아간다. */}
     {/* 11/20 사용자: 탐색·결과 화면도 < 옆에 검색창 — 누르면 지금 필터에 검색어를 더한다. */}
     {isResults && <div className={`${styles.backRow} ${styles.backSearch}`}><Back href={resultsPath === '/explore' ? '/home' : '/search'} />{field}</div>}
+    {/* 11/20 사용자: 검색 화면도 < 와 검색창을 한 줄로(탐색 화면과 같은 모양). */}
     {!isResults && <header className={`sticky-head ${styles.header}`}>
-      <div className={styles.backRow}><Back href="/home" /></div>
-      {field}
+      <div className={`${styles.backRow} ${styles.backSearch}`}><Back href="/home" />{field}</div>
     </header>}
     <h1 className="sr-only">{t(resultsPath === '/explore' ? '탐색' : isResults ? '검색 결과' : '검색')}</h1>
     {isResults && <section className={styles.filters} aria-labelledby="search-filters">
@@ -144,6 +144,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
         </AnimatePresence>
       </motion.div>}
     </AnimatePresence>
+    {!isResults && recent.length === 0 && <p className={styles.recentEmpty}>{t('최근 검색어가 없어요')}</p>}
     {!isResults && recent.length > 0 && <section className={styles.recent} aria-labelledby="recent-searches">
       <div className={styles.recentHeading}><h2 id="recent-searches">{t('최근 검색어')}</h2><button type="button" onClick={() => saveRecent([])}>{t('전체 삭제')}</button></div>
       <ul className={styles.recentList}>{recent.map(word => <li key={word}>

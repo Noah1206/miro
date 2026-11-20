@@ -60,3 +60,6 @@
 .backRow a { color: var(--color-text-primary) !important; }
 /* 11/20 사용자: 검색창 테두리 없앰(입력 중에도). 모서리는 0 이 너무 각져 8 로. */
 .field, .field:focus-within { border: 0; border-radius: 8px; }
+/* 11/20 검색 화면: 한 줄 머리 아래 여백 정리 · 최근 검색어 없음 안내 */
+.header .backSearch { margin-bottom: 0; }
+.recentEmpty { margin: 20px 4px 0; color: var(--color-text-tertiary); font-size: 14px; }

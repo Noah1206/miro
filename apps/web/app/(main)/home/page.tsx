@@ -1,4 +1,5 @@
 import { HomeUnveilToggle } from './unveil-toggle'
+import { HeaderSearch } from './header-search'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
 import { homeSections } from '@/lib/home'
@@ -65,9 +66,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
         <div className={styles.headerTools} style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: -8, marginLeft: 'auto' }}>
           {user && <HeaderWallet />}
           {/* 11/20 사용자: 알림 종 삭제, 19 토글은 프로필 사진 옆, 그 왼쪽에 흰 검색 아이콘 — 누르면 검색 화면(최근 검색어·입력칸 포커스). */}
-          <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', color: 'var(--color-white)' }}>
-            <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg>
-          </TransitionLink>
+          <HeaderSearch label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
           {profile ? <HeaderProfile initial={profile} /> : !user && <HeaderProfileGuest />}
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}
