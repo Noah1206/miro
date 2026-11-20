@@ -154,7 +154,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
 
       <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
-        {creatorInfo && <div style={{ marginBottom: 14 }}><CreatorRow creator={creatorInfo} signedIn={!!user} /></div>}
+        {/* 11/20 사용자: 만든 사람 줄과 제목 사이에 가는 선과 넉넉한 여백. */}
+        {creatorInfo && <div style={{ paddingBottom: 16, marginBottom: 20, borderBottom: '1px solid var(--color-border)' }}><CreatorRow creator={creatorInfo} signedIn={!!user} /></div>}
         {/* 11/5 사용자 스크린샷 순서: 제목 → 통계 → 배지 → 소개 → 해시태그 칩. */}
         <h1 className="t-hero t-name" style={{ marginBottom: 8 }}>{coverTitle(c)}</h1>
 
