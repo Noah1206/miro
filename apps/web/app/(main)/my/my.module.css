@@ -95,8 +95,7 @@
 .guestCard { position: relative; }
 .guestTap { position: absolute; inset: 0; z-index: 1; border: 0; border-radius: inherit; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
-/* 11/20 약관 및 정책 — 아이콘 없이 글자+오른쪽 > 만. 위 메뉴와 간격을 맞춘다. */
+/* 11/20 약관 및 정책 — 왼쪽 아이콘+글자+오른쪽 >. 위 메뉴와 간격을 맞춘다. */
 .legal { margin-top: 26px; padding: 0; }
-.legalMenu .row { min-height: 52px; }
 .legalMenu .row > .chevron { display: flex; }
 .legal .businessDetails { padding: 0 4px; }

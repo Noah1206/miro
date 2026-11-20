@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type ProfileIconName = 'settings' | 'chat' | 'characters' | 'heart' | 'persona' | 'globe' | 'shield' | 'bell' | 'download' | 'help' | 'data' | 'logout' | 'trash' | 'chevron'
+export type ProfileIconName = 'settings' | 'chat' | 'characters' | 'heart' | 'persona' | 'globe' | 'shield' | 'bell' | 'download' | 'help' | 'data' | 'logout' | 'trash' | 'chevron' | 'document' | 'lock' | 'receipt'
 
 const paths: Record<ProfileIconName, ReactNode> = {
   settings: <><path d="m9.5 3-.7 2.3-2 .9-2.2-.6-2 3.4 1.6 1.7v2.6l-1.6 1.7 2 3.4 2.2-.6 2 .9.7 2.3h4.9l.7-2.3 2-.9 2.2.6 2-3.4-1.6-1.7v-2.6l1.6-1.7-2-3.4-2.2.6-2-.9-.7-2.3z" /><circle cx="12" cy="12" r="3" /></>,
@@ -17,6 +17,9 @@ const paths: Record<ProfileIconName, ReactNode> = {
   logout: <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9" />,
   trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
   chevron: <path d="m9 5 7 7-7 7" />,
+  document: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></>,
+  lock: <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2" /></>,
+  receipt: <><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5z" /><path d="M9.5 8h5M9.5 12h5M9.5 16h3" /></>,
 }
 
 export function ProfileIcon({ name, size = 22 }: { name: ProfileIconName; size?: number }) {

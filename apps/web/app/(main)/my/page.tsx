@@ -28,9 +28,9 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       {/* 11/20 사용자: 약관은 작은 글씨 링크 대신 메뉴처럼 한 줄씩(줄마다 > ). */}
       <div className={styles.legalMenu}>
         <MenuSection title={t('약관 및 정책')}>
-          <MenuRow href="/terms/service" label={t('이용약관')} />
-          <MenuRow href="/terms/privacy" label={t('개인정보 처리방침')} />
-          <MenuRow href="/terms/refund" label={t('취소·환불 규정')} />
+          <MenuRow href="/terms/service" label={t('이용약관')} icon="document" />
+          <MenuRow href="/terms/privacy" label={t('개인정보 처리방침')} icon="lock" />
+          <MenuRow href="/terms/refund" label={t('취소·환불 규정')} icon="receipt" />
         </MenuSection>
       </div>
       <details className={styles.businessDetails}>
