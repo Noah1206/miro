@@ -66,6 +66,6 @@
 
 /* 11/20 사용자: 태그 칸 배경을 지우고(태그만), 위에 글자만 All / Rank. */
 .filters { padding: 0; border-radius: 0; background: transparent; }
-.sortTabs { display: flex; align-items: center; gap: 8px; font-size: 15px; color: #6f6f6f; }
-.sortTabs button { min-height: 32px; padding: 0; border: 0; background: none; color: #6f6f6f; font: inherit; font-weight: 600; cursor: pointer; transition: color .15s; }
+.sortTabs { display: flex; align-items: center; gap: 10px; font-size: 22px; letter-spacing: -.02em; color: #6f6f6f; }
+.sortTabs button { min-height: 40px; padding: 0; border: 0; background: none; color: #6f6f6f; font: inherit; font-weight: 600; cursor: pointer; transition: color .15s; }
 .sortTabs button[aria-selected='true'] { color: #fff; font-weight: 800; }
