@@ -2,13 +2,13 @@ import { redirect } from 'next/navigation'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { characters, db, worlds } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { Back, Page, TransitionLink } from '@/components/ui'
+import { Page, TransitionLink } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { msg } from '@/lib/i18n'
 import { getT } from '@/lib/i18n/server'
-import { SectionLinks } from '@/components/ui/section-links'
 import styles from './characters.module.css'
 import { MakeTabs } from './make-tabs'
+import { CreatorNotice } from './creator-notice'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
 const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -44,14 +44,13 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
   return (
     <Page wide className={styles.page}>
       <div className={styles.frame}>
-      <header className={styles.header}><Back href="/my" /><h1 className="sr-only">{t('내 캐릭터')}</h1><MakeTabs active="characters" /></header>
+      <header className={styles.header}><h1 className="sr-only">{t('내 캐릭터')}</h1><MakeTabs active="characters" /></header>
       {/* 11/20 사용자: 창작 보상·작품별 수익·작품별 대화 통계 카드를 이 화면에서 뺐다(수익 지갑은 지갑 화면의 "자세히"로 간다). */}
-      {/* 11/16 만드는 사람에게 하는 약속 — 커뮤니티에서 제작자가 떠나는 이유 세 가지(독점 강요·비공개 작품 개입·이유 없는 조치)를 하지 않는다고 적어 둔다. */}
-      <p className="t-caption" style={{ margin: '0 0 12px', color: 'var(--color-text-tertiary)', lineHeight: 1.7 }}>
-        {t('미로는 독점을 요구하지 않아요. 비공개 캐릭터의 설정은 운영이 고치거나 지우지 않아요. 공개 작품에 조치가 필요하면 이유를 알려 드려요.')}
-      </p>
-      <SectionLinks fullBleed label={t('내가 만든 캐릭터')} active={filter}
-        items={FILTERS.map(f => ({ key: f.key, label: t(f.label), href: f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}` }))} />
+      {/* 11/20 사용자: 전체·공개·비공개·임시저장은 '캐릭터 음성' 바로 밑에 왼쪽 정렬 한 줄로. */}
+      <nav aria-label={t('내가 만든 캐릭터')} className={styles.filters}>
+        {FILTERS.map(f => <TransitionLink key={f.key} href={f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}`} aria-current={filter === f.key ? 'page' : undefined}>{t(f.label)}</TransitionLink>)}
+      </nav>
+      <CreatorNotice />
       {cards.length === 0 ? (
         <section className={styles.empty} aria-label={t('캐릭터 목록')}>
           <h2>{mine.length === 0 ? t('나만의 캐릭터를\n직접 만들어 볼까요?') : filter === 'draft' ? t('작성 중인 캐릭터가 없어요') : filter === 'private' ? t('비공개 캐릭터가 없어요') : t('공개한 캐릭터가 없어요')}</h2>

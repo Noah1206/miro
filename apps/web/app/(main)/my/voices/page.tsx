@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
-import { Back, Page, TransitionLink } from '@/components/ui'
+import { Page, TransitionLink } from '@/components/ui'
 import { getT } from '@/lib/i18n/server'
 import { MAX_USER_VOICES, issueVoicePrompt, myVoices } from '@/lib/voice'
 import styles from '../characters/characters.module.css'
@@ -22,7 +22,7 @@ export default async function MyVoices() {
   return (
     <Page wide className={styles.page}>
       <div className={styles.frame}>
-        <header className={styles.header}><Back href="/my" /><h1 className="sr-only">{t('내 음성')}</h1><MakeTabs active="voices" /></header>
+        <header className={styles.header}><h1 className="sr-only">{t('내 음성')}</h1><MakeTabs active="voices" /></header>
         {/* 11/12 목소리 보상 — 다른 사람이 내가 공개한 목소리로 답을 들으면 그 턴에 쓴 토큰의 일부가 쌓인다(작품 보상과 같은 지갑). */}
         <section aria-label={t('목소리 보상')} style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '4px 0 12px', padding: '14px 16px', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}>
           <img src="/miro-token.svg" alt="" aria-hidden width={28} height={28} />
