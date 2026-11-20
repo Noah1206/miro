@@ -5,7 +5,6 @@ import { ATTENDANCE_GRANT } from '@miro/config'
 import { accountProfile } from '@/lib/account-profile'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { getT } from '@/lib/i18n/server'
-import { SiteFooter } from '@/components/site-footer'
 import { logout } from './actions'
 import { MenuRow, MenuSection } from './menu'
 import { CreditCard } from './credit-card'
@@ -33,10 +32,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href="/terms/refund" label={t('취소·환불 규정')} icon="receipt" />
         </MenuSection>
       </div>
-      <details className={styles.businessDetails}>
-        <summary>{t('MIRO 사업자 정보')}<ProfileIcon name="chevron" size={14} /></summary>
-        <SiteFooter style={{ marginTop: 8, padding: '16px 0 0', borderTop: '1px solid var(--profile-divider)' }} />
-      </details>
     </footer>
   )
   // 11/20 사용자: 로그인 전에도 프로필은 로그인한 화면과 같은 모양으로 — 이름 자리에만 짧은 로그인 안내, 카드를 누르면 로그인 시트.

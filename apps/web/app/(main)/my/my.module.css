@@ -60,11 +60,6 @@
 .accountActions > a { display: inline-flex; align-items: center; min-height: 44px; }
 .accountActions > span { color: #777; }
 .legal { padding: 4px 4px 0; }
-.businessDetails { margin-top: 4px; color: var(--profile-muted); font-size: 12px; }
-.businessDetails > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 44px; list-style: none; cursor: pointer; }
-.businessDetails > summary::-webkit-details-marker { display: none; }
-.businessDetails > summary svg { transition: transform 160ms; }
-.businessDetails[open] > summary svg { transform: rotate(90deg); }
 .page :is(a, button, summary):focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 4px; border-radius: 8px; }
 .edit:active { transform: scale(.97); }
 @media (hover: hover) { .settingsButton:hover, .edit:hover { background: #373737; } .row:hover { opacity: .72; } .historyLink:hover { color: var(--profile-text); } }
@@ -93,9 +88,10 @@
 .profileCard .credit { border-radius: 0; background: transparent; border-top: 1px solid var(--profile-divider); }
 /* 11/20 로그인 전 프로필: 카드 전체를 덮는 투명 버튼 — 어디를 눌러도 로그인 시트. */
 .guestCard { position: relative; }
+.guestCard .credit { border-top: 0; } /* 11/20 사용자: 로그인 전 카드의 '로그인하고 시작하기' 아래 줄 없앰 */
 .guestTap { position: absolute; inset: 0; z-index: 1; border: 0; border-radius: inherit; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
 /* 11/20 약관 및 정책 — 왼쪽 아이콘+글자+오른쪽 >. 위 메뉴와 간격을 맞춘다. */
 .legal { margin-top: 26px; padding: 0; }
 .legalMenu .row > .chevron { display: flex; }
-.legal .businessDetails { padding: 0 4px; }
+.legal 
