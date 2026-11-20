@@ -416,7 +416,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="commands" show={tab === 'commands'}>
           <Section title={t('명령어')} subtitle={t('대화 중 /이름 으로 불러 쓰는 한 턴 지시예요. 다른 사람이 공개한 것을 그대로 붙이거나, 직접 만들어 공개할 수 있어요.')}>
             <Card>
-              <CommandEditor name="commands" defaultValue={i.commands} />
+              <CommandEditor name="commands" defaultValue={i.commands} adultAllowed={adultAllowed} />
             </Card>
           </Section>
         </Panel>
@@ -542,7 +542,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="situations" show={tab === 'situations'}>
           {/* 상황별 사진(10/28, 위프·베이비챗식) — 사진마다 상황을 적어 두면 대화가 그 상황이 됐을 때 AI 가 골라 채팅에 띄운다(10/31). */}
           <Section title={t('상황별 사진 · 선택')} subtitle={t('사진마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 AI가 알아서 채팅에 띄워요.')}>
-            <SituationImagesEditor defaultValue={i.situationImages ?? []} />
+            <SituationImagesEditor defaultValue={i.situationImages ?? []} adultAllowed={adultAllowed} />
           </Section>
           {/* 11/19 상황별 BGM — 곡마다 상황을 적어 두면 대화가 그 상황일 때 채팅방에서 반복 재생된다. */}
           <Section title={t('상황별 BGM · 선택')} subtitle={t('곡마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 채팅방에서 그 음악이 흘러요. 상황을 비운 곡은 기본 음악이에요.')}>
@@ -550,7 +550,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           {/* 사진 장면(11/3) — 채팅 사진 버튼의 기본 장면 뒤에 이 캐릭터만의 장면을 붙인다. */}
           <Section title={t('사진 장면 · 선택')} subtitle={t('채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.')}>
-            <PhotoScenesEditor defaultValue={i.photoScenes ?? []} />
+            <PhotoScenesEditor defaultValue={i.photoScenes ?? []} adultAllowed={adultAllowed} />
           </Section>
         </Panel>
 

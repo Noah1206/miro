@@ -2,7 +2,8 @@
 import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
 import { db, commandBook, users, type CharacterCommand } from '@miro/db'
 import { requireUser } from '@/lib/auth'
-import { parseCommands } from './parse'
+import { isMinor } from '@/lib/payments/minor'
+import { isUnveilCommand, parseCommands } from './parse'
 
 export type LibraryCommand = CharacterCommand & { id: string; uses: number; mine: boolean; owner: string | null }
 
@@ -15,7 +16,9 @@ export async function searchCommands(query: string): Promise<LibraryCommand[]> {
     .where(and(isNull(commandBook.deletedAt), or(eq(commandBook.isPublic, true), eq(commandBook.ownerId, user.id)),
       ...(q ? [or(ilike(commandBook.name, `%${q}%`), ilike(commandBook.hint, `%${q}%`))] : [])))
     .orderBy(desc(commandBook.uses), desc(commandBook.createdAt)).limit(60)
-  return rows.map(r => ({ id: r.id, sourceId: r.id, name: r.name, hint: r.hint, prompt: r.prompt, uses: r.uses, mine: r.ownerId === user.id, owner: r.owner }))
+  // 11/20 성인 인증 전에는 언베일 전용 명령어를 라이브러리에 보이지 않는다(붙여도 저장 때 빠진다).
+  const minor = await isMinor(user.id)
+  return rows.filter(r => !minor || !isUnveilCommand(r)).map(r => ({ id: r.id, sourceId: r.id, name: r.name, hint: r.hint, prompt: r.prompt, uses: r.uses, mine: r.ownerId === user.id, owner: r.owner }))
 }
 
 /** 새 명령어를 라이브러리에 넣는다. 공개면 누구나 자기 캐릭터에 붙일 수 있다. 돌려준 복사본을 캐릭터에 붙인다. */
@@ -23,6 +26,7 @@ export async function saveCommand(input: { name: string; hint: string; prompt: s
   const user = await requireUser()
   const [cmd] = parseCommands(JSON.stringify([input]))
   if (!cmd) throw new Error('COMMAND_INVALID')
+  if (isUnveilCommand(cmd) && await isMinor(user.id)) cmd.hint = cmd.hint.replace(/^\[언베일\]\s*/, '')
   const [row] = await db.insert(commandBook).values({ ownerId: user.id, name: cmd.name, hint: cmd.hint, prompt: cmd.prompt, isPublic: input.isPublic === true }).returning({ id: commandBook.id })
   return { ...cmd, sourceId: row!.id }
 }

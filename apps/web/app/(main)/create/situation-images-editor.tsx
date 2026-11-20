@@ -14,7 +14,7 @@ type Row = { id: number; image: string; keywords: string; situation: string; adu
  * 상황별 사진(10/28, 위프·베이비챗식) — 사진 한 장 + 상황 설명(+ 선택 키워드). 대화가 그 상황이 되면 AI 가 골라 채팅에 한 번 띄운다(10/31).
  * 사진은 고르자마자 올리고(uploadSituationImage) 폼에는 URL 만 JSON 으로 싣는다.
  */
-export function SituationImagesEditor({ defaultValue }: { defaultValue: SituationImage[] }) {
+export function SituationImagesEditor({ defaultValue, adultAllowed = false }: { defaultValue: SituationImage[]; adultAllowed?: boolean }) {
   const t = useT()
   const uid = useId()
   const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', '), situation: e.situation ?? '', adult: e.adult })))
@@ -89,10 +89,10 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
               placeholder={t('키워드 (선택, 쉼표로) 예) 비, 우산')}
               style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%' }} />
             {/* 11/14 언베일 전용 — 켜면 언베일이 켜진 턴에만 후보가 되고, 일반 방 갤러리에선 흐리게 보인다. */}
-            <label className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+            {adultAllowed && <label className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
               <input type="checkbox" checked={!!r.adult} onChange={e => patch(r.id, { adult: e.target.checked ? true : undefined })} />
               {t('언베일 전용')}
-            </label>
+            </label>}
             {r.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(r.error)}</p>}
           </div>
         ))}

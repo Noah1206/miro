@@ -11,7 +11,7 @@ import { isMinor } from '@/lib/payments/minor'
 import { getOwnedCharacter } from '@/lib/owned'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages } from '@/lib/storage/images'
-import { parseCharacterForm } from '@/app/(main)/create/parse'
+import { parseCharacterForm, stripAdult } from '@/app/(main)/create/parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableEnsemble, selectableVoice } from '@/lib/voice'
@@ -30,8 +30,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   if (!owned) notFound()
 
   const p = parseCharacterForm(form, owned.character.experienceType)
-  // 11/20 성인 인증 전(또는 미성년)은 '언베일 전용'·'성적 설정'을 저장하지 않는다.
-  if (await isMinor(user.id)) { p.character.adultOnly = false; p.character.intimacy = '' }
+  if (await isMinor(user.id)) stripAdult(p.character)
   // 편집기는 기본 도입부만 다룬다 — 다른 시작 상황(scene 이 붙은 인트로, 10/5)은 그대로 남긴다.
   const [firstScene] = introScenes(owned.character.sampleDialogue)
   // 11/10: 만들기 화면이 다른 시작 설정도 다루면(extraScenesPresent) 폼이 보낸 장면이 전부다 — 지운 장면은 지운 것이다.

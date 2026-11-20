@@ -11,7 +11,7 @@ import { COMMAND_LIMITS } from './parse'
  * 명령어(10/19) — 채팅에서 `/이름` 으로 부르는 한 턴 지시. 라이브러리(누구나 공개)에서 골라 붙이거나 직접 만든다.
  * 캐릭터에는 복사본이 붙어 hidden JSON 으로 제출된다 — 원본이 바뀌어도 캐릭터는 그대로다.
  */
-export function CommandEditor({ name, defaultValue = [] }: { name: string; defaultValue?: CharacterCommand[] }) {
+export function CommandEditor({ name, defaultValue = [], adultAllowed = false }: { name: string; defaultValue?: CharacterCommand[]; adultAllowed?: boolean }) {
   const t = useT()
   const [items, setItems] = useState<CharacterCommand[]>(defaultValue)
   const [picking, setPicking] = useState(false)
@@ -46,7 +46,7 @@ export function CommandEditor({ name, defaultValue = [] }: { name: string; defau
         <button type="button" style={btn} disabled={full} onClick={() => setMaking(v => !v)} aria-expanded={making}>{t('직접 만들기')}</button>
       </div>
       <p className="t-micro" style={{ textAlign: 'right', textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{items.length}/{COMMAND_LIMITS.count}</p>
-      {making && <NewCommand onDone={cmd => { add(cmd); setMaking(false) }} />}
+      {making && <NewCommand adultAllowed={adultAllowed} onDone={cmd => { add(cmd); setMaking(false) }} />}
       <LibrarySheet open={picking} onClose={() => setPicking(false)} attached={items.map(i => i.name)} onPick={cmd => { if (add(cmd) && cmd.sourceId) void markCommandUsed(cmd.sourceId) }} />
     </div>
   )
@@ -56,7 +56,7 @@ const field: React.CSSProperties = { width: '100%', background: 'none', border: 
 /** 이 편집기는 캐릭터 폼 안에 있다 — 한 줄 입력에서 Enter 가 캐릭터를 게시해 버리지 않게. */
 const noSubmit = (e: React.KeyboardEvent) => { if (e.key === 'Enter') e.preventDefault() }
 
-function NewCommand({ onDone }: { onDone: (cmd: CharacterCommand) => void }) {
+function NewCommand({ onDone, adultAllowed }: { onDone: (cmd: CharacterCommand) => void; adultAllowed: boolean }) {
   const t = useT()
   const [name, setName] = useState('')
   const [hint, setHint] = useState('')
@@ -88,7 +88,7 @@ function NewCommand({ onDone }: { onDone: (cmd: CharacterCommand) => void }) {
         placeholder={t('AI에게 줄 프롬프트 — 예) 오늘 하루를 일기 형식으로 돌아보는 장면을 써 줘')} style={{ ...field, resize: 'none' }} />
     </div>
     <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} hint={t('켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.')} />
-    <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} hint={t('켜면 언베일을 켠 대화방에서만 실행돼요.')} />
+    {adultAllowed && <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} hint={t('켜면 언베일을 켠 대화방에서만 실행돼요.')} />}
     {error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{error}</p>}
     <button type="button" onClick={() => void submit()} disabled={!ok || pending}
       style={{ minHeight: 44, borderRadius: 'var(--radius-button)', border: 0, cursor: ok ? 'pointer' : 'default', background: ok ? 'var(--color-accent)' : 'var(--color-surface-3)', color: ok ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>

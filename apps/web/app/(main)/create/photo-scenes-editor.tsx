@@ -10,7 +10,7 @@ type Row = CustomPhotoScene & { id: number }
  * 사진 장면(11/3) — 만든 사람이 이 캐릭터만의 장면을 이름 + 설명으로 적는다. 채팅 사진 시트에 기본 장면과 함께 나오고,
  * 고르면 설명이 그림 태그로 바뀌어 그 장면대로 그린다. 언베일 장면은 언베일이 켜진 대화에서만 보인다.
  */
-export function PhotoScenesEditor({ defaultValue }: { defaultValue: CustomPhotoScene[] }) {
+export function PhotoScenesEditor({ defaultValue, adultAllowed = false }: { defaultValue: CustomPhotoScene[]; adultAllowed?: boolean }) {
   const t = useT()
   const [rows, setRows] = useState<Row[]>(() => defaultValue.map((s, id) => ({ ...s, id })))
   const [nextId, setNextId] = useState(defaultValue.length)
@@ -34,7 +34,7 @@ export function PhotoScenesEditor({ defaultValue }: { defaultValue: CustomPhotoS
             onChange={e => patch(r.id, { description: e.target.value })} style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: fieldFont, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button type="button" aria-pressed={!!r.couple} onClick={() => patch(r.id, { couple: r.couple ? undefined : true })} style={toggle(r.couple)}>{t('둘이 함께')}</button>
-            <button type="button" aria-pressed={!!r.unveil} onClick={() => patch(r.id, { unveil: r.unveil ? undefined : true })} style={toggle(r.unveil)}>{t('언베일 장면')}</button>
+            {adultAllowed && <button type="button" aria-pressed={!!r.unveil} onClick={() => patch(r.id, { unveil: r.unveil ? undefined : true })} style={toggle(r.unveil)}>{t('언베일 장면')}</button>}
           </div>
         </div>
       ))}

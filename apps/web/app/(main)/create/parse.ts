@@ -42,6 +42,18 @@ export const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'am
 export const CHANNELS = ['message', 'photo', 'voice_message', 'voice_call'] as const
 export type ParsedCharacter = ReturnType<typeof parseCharacterForm>
 
+/** 언베일 전용 명령어 표시(turn.ts 가 이 접두로 언베일 방에서만 실행한다). */
+export const isUnveilCommand = (c: { hint: string }) => c.hint.startsWith('[언베일]')
+
+/** 11/20 성인 인증 전(또는 미성년)은 언베일·성인 설정을 저장하지 않는다 — 만들기·편집 저장이 같이 쓴다. */
+export function stripAdult(c: ParsedCharacter['character']) {
+  c.adultOnly = false
+  c.intimacy = ''
+  c.commands = c.commands.filter(x => !isUnveilCommand(x))
+  c.situationImages = c.situationImages.map(({ adult: _a, ...e }) => e)
+  c.photoScenes = c.photoScenes.map(({ unveil: _u, ...s }) => s)
+}
+
 /**
  * 만들기·편집이 같은 폼을 쓰므로 읽는 법도 하나다.
  * 비워 둔 칸은 스키마 기본값이 메운다 — 빈칸 때문에 저장이 막히면 안 된다.

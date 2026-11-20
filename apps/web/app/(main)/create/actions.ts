@@ -14,7 +14,7 @@ import { resolveCharacterImages, uploadCharacterImage } from '@/lib/storage/imag
 import { randomUUID } from 'crypto'
 import { PUBLIC_BUCKET, publicMediaUrl, writeMedia } from '@/lib/storage/media'
 import { BGM_LIMITS, BGM_TYPES } from '@/lib/bgm'
-import { parseCharacterForm } from './parse'
+import { parseCharacterForm, stripAdult } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableEnsemble, selectableVoice } from '@/lib/voice'
@@ -35,8 +35,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export async function saveCharacter(form: FormData): Promise<string> {
   const user = await requireUser()
   const p = parseCharacterForm(form)
-  // 11/20 성인 인증 전(또는 미성년)은 '언베일 전용'·'성적 설정'을 저장하지 않는다.
-  if (await isMinor(user.id)) { p.character.adultOnly = false; p.character.intimacy = '' }
+  if (await isMinor(user.id)) stripAdult(p.character)
   const creationId = String(form.get('creationId') ?? '')
   if (!UUID.test(creationId)) throw new Error('INVALID_CREATION_ID')
 
