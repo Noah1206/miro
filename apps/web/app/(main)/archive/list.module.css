@@ -43,3 +43,8 @@
 .side { flex-shrink: 0; display: grid; justify-items: end; gap: 2px; }
 .resume { display: inline-flex; align-items: center; gap: 1px; font-size: 13px; font-weight: 700; line-height: 20px; color: #fff; }
 .sideSub { font-size: 12px; line-height: 18px; color: #8a8a8a; }
+/* 11/21 사용자: 긴 작품 이름이 '이어하기'와 겹쳤다 — 글 칸이 내용만큼 늘어나지 않게(minmax 0) 막고, 이름은 말줄임 대신 줄바꿈. 이어하기와의 간격은 줄의 gap(14px) 그대로. */
+.body { grid-template-columns: minmax(0, 1fr); }
+.titleRow { min-width: 0; align-items: flex-start; }
+.title { white-space: normal; overflow: visible; text-overflow: clip; word-break: keep-all; overflow-wrap: anywhere; }
+.unread { flex-shrink: 0; margin-top: 3px; }
