@@ -83,3 +83,11 @@
 /* 11/21 사용자: 검색 화면의 가로선(섹션 위·검색어 사이) 모두 없앰. */
 .recent { border-top: 0; padding-top: 0; }
 .recentList li { border-bottom: 0; }
+/* 11/21 사용자: 추천 검색어 왼쪽에 둥근 순위 숫자, 컴퓨터에선 글자 더 크게. */
+.recentList .suggested { display: inline-flex; align-items: center; gap: 12px; }
+.rankNum { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; background: #333; color: #fff; font-size: 12px; font-style: normal; font-weight: 700; line-height: 1; }
+@media (min-width: 1024px) {
+  .recentHeading h2 { font-size: 24px; }
+  .recentList button { min-height: 52px; font-size: 19px; }
+  .rankNum { width: 28px; height: 28px; font-size: 14px; }
+}

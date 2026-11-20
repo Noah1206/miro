@@ -167,8 +167,8 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     </section>}
     {!isResults && <section className={styles.recent} aria-labelledby="suggested-searches">
       <div className={styles.recentHeading}><h2 id="suggested-searches">{t('추천 검색어')}</h2></div>
-      <ul className={styles.recentList}>{SUGGESTED.map(word => <li key={word}>
-        <button type="button" onClick={() => search(t(word))}><span>{t(word)}</span></button>
+      <ul className={styles.recentList}>{SUGGESTED.map((word, index) => <li key={word}>
+        <button type="button" className={styles.suggested} onClick={() => search(t(word))}><i aria-hidden className={styles.rankNum}>{index + 1}</i><span>{t(word)}</span></button>
       </li>)}</ul>
     </section>}
     {isResults && <section className={styles.results} aria-label={t('검색 결과')} aria-busy={busy}>
