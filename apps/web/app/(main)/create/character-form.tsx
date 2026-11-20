@@ -130,10 +130,6 @@ type CharacterFormProps = {
   initial?: Partial<FormInitial>
   action: (form: FormData) => Promise<string>
   closeHref: string
-  /** 11/20 성인 인증(또는 생년월일로 성인)을 마친 사람만 '언베일 전용'·'성적 설정'을 쓴다. */
-  adultAllowed?: boolean
-  /** 11/20 편집 화면의 작품 삭제 — 지운 뒤 갈 곳을 돌려준다. */
-  onDelete?: () => Promise<string>
 }
 
 export function CharacterForm(props: CharacterFormProps) {
@@ -153,7 +149,7 @@ export function CharacterForm(props: CharacterFormProps) {
   return <CharacterFormBody {...props} initial={mode === 'create' ? restored ?? {} : props.initial} storageKey={key} />
 }
 
-function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [], models = [], adultAllowed = false, onDelete }: CharacterFormProps & { storageKey: string | null }) {
+function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [], models = [] }: CharacterFormProps & { storageKey: string | null }) {
   const router = useRouter(), toast = useToast()
   const t = useT()
   const i: FormInitial = { ...EMPTY, ...initial }
@@ -162,7 +158,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const pendingRef = useRef(false)
   const mountedRef = useRef(true)
   const [saveError, setSaveError] = useState('')
-  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'busy'>('idle')
   useEffect(() => {
     mountedRef.current = true
     return () => { mountedRef.current = false }
@@ -305,8 +300,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
     <main id="main" tabIndex={-1} className="page create-page" style={{ paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
       <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
-        <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit}
-          onBlocked={() => toast(t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') }))} canDraft={!!name.trim()} pending={pending}
+        <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending}
           missingHint={canSubmit ? (isPublic ? t('공개 게시') : linkShared ? t('링크로만 공유') : t('나만 보기')) : t('아직 필요: {items}', { items: missing.map(label => t(label)).join(' · ') })}
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
         {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{t(saveError)}</p>}
@@ -427,11 +421,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <LoreEditor name="lore" defaultValue={i.lore} defaultLimit={i.loreLimit ?? 6} scenes={introScenes(i.sampleDialogue).slice(1)} />
           </Section>
           {/* 11/13 성적 설정(아카 설계탭 BP 성적 설정) — 언베일이 켜진 대화에서만 AI 에 실린다. 상세 화면엔 안 보인다. */}
-          {adultAllowed ? <Section title={t('성적 설정 · 선택')} subtitle={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.')}>
+          <Section title={t('성적 설정 · 선택')} subtitle={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.')}>
             <CountedTextArea name="intimacy" max={INTIMACY_LIMIT} rows={7} defaultValue={i.intimacy ?? ''} ariaLabel={t('성적 설정')}
               placeholder={t('예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척')} />
           </Section>
-           : <Section title={t('성적 설정 · 선택')}><p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('성인 인증을 마치면 쓸 수 있어요.')}</p><input type="hidden" name="intimacy" value="" /></Section>}
         </Panel>
 
         {/* ── 외형 — 관계 탭 안에 함께 보인다(10/19). DOM 은 앞이지만 order 로 관계 내용 아래에 놓는다. ── */}
@@ -565,8 +558,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           {/* 이용 대상(10/28) — 언베일 전용이면 언베일을 켠 사람의 홈·탐색에만 나온다. */}
           <Section title={t('이용 대상')}>
-            {adultAllowed ? <Segmented name="adultOnly" value={adultOnly} onChange={setAdultOnly} options={[{ value: '0', label: t('모두') }, { value: '1', label: t('언베일 전용'), unveil: true }]} />
-              : <><input type="hidden" name="adultOnly" value="0" /><p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('언베일 전용은 성인 인증을 마치면 고를 수 있어요.')}</p></>}
+            <Segmented name="adultOnly" value={adultOnly} onChange={setAdultOnly} options={[{ value: '0', label: t('모두') }, { value: '1', label: t('언베일 전용'), unveil: true }]} />
           </Section>
           <Section title={t('대화 기본값')}>
             <div style={{ display: 'grid', gap: 24, padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', background: 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' }}>
@@ -598,16 +590,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
       </form>
-      {/* 11/20 사용자: 만든 작품을 지울 수 있게 — 두 번 눌러야 지운다(한 번 누르면 확인 문구로 바뀐다). 기존 대화방은 남는다. */}
-      {mode === 'edit' && onDelete && <div style={{ padding: 'var(--space-6) 0 var(--space-4)', textAlign: 'center' }}>
-        <button type="button" disabled={deleteStep === 'busy'} onClick={async () => {
-          if (deleteStep === 'idle') { setDeleteStep('confirm'); return }
-          setDeleteStep('busy')
-          try { const to = await onDelete(); toast(msg('삭제했어요.')); router.push(to) } catch { setDeleteStep('idle'); setSaveError(msg('삭제하지 못했어요. 다시 시도해 주세요.')) }
-        }} className="hit" style={{ minHeight: 44, padding: '8px 16px', border: 0, background: 'none', color: deleteStep === 'idle' ? 'var(--color-text-tertiary)' : 'var(--color-danger)', fontSize: 'var(--font-caption)', cursor: 'pointer' }}>
-          {deleteStep === 'idle' ? t('작품 삭제') : deleteStep === 'confirm' ? t('한 번 더 누르면 삭제돼요. 되돌릴 수 없어요.') : t('삭제 중')}
-        </button>
-      </div>}
     </main>
   )
 }
