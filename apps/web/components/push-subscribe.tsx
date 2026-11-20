@@ -60,7 +60,8 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     document.cookie = `${JUST_SIGNED_IN_COOKIE}=; path=/; max-age=0`
     setJustSignedIn(true)
   }, [])
-  useEffect(() => { if (status === 'denied' && !deniedToast.current && (!autoPrompt || justSignedIn)) { deniedToast.current = true; toast(t('알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.')) } }, [status, toast, t, autoPrompt, justSignedIn])
+  // 11/21 사용자: 알림 팝업은 없앤다 — 로그인·가입 직후에도 시트·차단 안내를 먼저 띄우지 않는다(권한 화면에서만 안내).
+  useEffect(() => { if (status === 'denied' && !deniedToast.current && !autoPrompt) { deniedToast.current = true; toast(t('알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.')) } }, [status, toast, t, autoPrompt, justSignedIn])
   // 먼저 묻기. 가입 직후라면 가입 선물 팝업이 이것이 끝나기를 기다린다(markPushPromptDone) — 보여 주고 닫았거나, 물을 게 없었을 때.
   // 가입 직후(?welcome=1)에는 알림이 이미 켜져 있어도('켜져 있어요' 시트) 알림 시트를 먼저 보인다. 다만 온보딩의 '캐릭터 알림 받기' 에서
   // 이미 물었으면(markPushAsked) 다시 띄우지 않는다 — 가입이 한 번에 끝나게(2026-09-30 요청). 주소는 화면이 붙은 뒤에 읽는다 —
@@ -74,6 +75,8 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   useEffect(() => { mountedAt.current = Date.now() }, [])
   useEffect(() => {
     if (!autoPrompt || status === 'working') return
+    // 11/21 사용자: 먼저 묻는 알림 팝업은 띄우지 않는다. 가입 선물 팝업이 기다리지 않게 바로 끝났다고 알린다.
+    if (status !== 'checking') { markPushPromptDone(); return }
     // 확인이 오래 걸리면(서비스 워커가 안 뜨는 등) 뒤의 팝업을 붙잡아 두지 않는다.
     if (status === 'checking') { const timer = setTimeout(markPushPromptDone, 8000); return () => clearTimeout(timer) }
     // 이미 한 번 보였거나(허용 뒤 상태가 바뀐 경우) 팝업이 먼저 떠 버렸으면 시트를 다시 띄우지 않는다 — 겹치지 않게.
