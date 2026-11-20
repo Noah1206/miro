@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
+import { isMinor } from '@/lib/payments/minor'
 import { getOwnedCharacter } from '@/lib/owned'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages } from '@/lib/storage/images'
@@ -29,6 +30,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   if (!owned) notFound()
 
   const p = parseCharacterForm(form, owned.character.experienceType)
+  // 11/20 성인 인증 전(또는 미성년)은 '언베일 전용'·'성적 설정'을 저장하지 않는다.
+  if (await isMinor(user.id)) { p.character.adultOnly = false; p.character.intimacy = '' }
   // 편집기는 기본 도입부만 다룬다 — 다른 시작 상황(scene 이 붙은 인트로, 10/5)은 그대로 남긴다.
   const [firstScene] = introScenes(owned.character.sampleDialogue)
   // 11/10: 만들기 화면이 다른 시작 설정도 다루면(extraScenesPresent) 폼이 보낸 장면이 전부다 — 지운 장면은 지운 것이다.
@@ -99,4 +102,16 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     return `/chat/${sessionId}`
   }
   return stillDraft ? '/my/characters?filter=draft' : `/character/${characterId}`
+}
+
+/** 11/20 작품 삭제 — 지운 표시(deletedAt)만 남기고 공개를 끈다. 이미 열린 대화방과 기록은 지우지 않는다. 주인만. */
+export async function deleteCharacter(characterId: string): Promise<string> {
+  const user = await requireUser()
+  const owned = await getOwnedCharacter(characterId, user.id)
+  if (!owned) notFound()
+  await db.update(characters).set({ deletedAt: new Date(), isPublic: false, linkShared: false }).where(eq(characters.id, characterId))
+  revalidatePath(`/character/${characterId}`)
+  revalidatePath('/my/characters')
+  revalidatePath('/home')
+  return '/my/characters'
 }

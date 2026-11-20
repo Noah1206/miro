@@ -26,7 +26,7 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
  * 만들기 머리 (레퍼런스 구조): 닫기 · 제목 · 등록, 그 아래 가로 스크롤 탭.
  * 탭에는 표시를 달지 않는다 — 필수는 칸의 별표가 말하고, 다 차기 전엔 등록이 잠겨 있다.
  */
-export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, pending, buttons, closeHref, missingHint }: {
+export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, pending, buttons, closeHref, missingHint, onBlocked }: {
   tab: CreateTab
   onTab: (t: CreateTab) => void
   experienceType: 'chat' | 'reality'
@@ -37,6 +37,8 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
   /** create: 등록. save: 이미 등록한 캐릭터를 고칠 때 — 저장 하나. */
   buttons: 'create' | 'save'
   closeHref: string
+  /** 11/20 게시가 잠겼을 때 누르면 — 무엇이 빠졌는지 알린다(안내 글은 10/20 요청으로 화면에서 숨겨 둔 채). */
+  onBlocked?: () => void
 }) {
   const t = useT()
   return (
@@ -56,7 +58,8 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
         <span style={{ flex: 1 }} />
         {buttons === 'create' && <button type="submit" name="intent" value="draft" disabled={!canDraft || pending}
           style={{ minHeight: 44, padding: '4px 6px', background: 'none', border: 0, color: canDraft && !pending ? 'var(--color-text-secondary)' : 'var(--color-text-disabled)', cursor: canDraft && !pending ? 'pointer' : 'default', fontSize: 'var(--font-caption)' }}>{t('임시저장')}</button>}
-        <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending} className="hit" style={chip(true, canSubmit && !pending)}>
+        <button type={canSubmit ? 'submit' : 'button'} name="intent" value="publish" disabled={pending || (!canSubmit && !onBlocked)} aria-disabled={!canSubmit}
+          onClick={canSubmit ? undefined : onBlocked} className="hit" style={chip(true, canSubmit && !pending)}>
           {buttons === 'save' ? (pending ? t('저장 중') : t('저장')) : (pending ? t('게시 중') : t('게시'))}
         </button>
       </div>

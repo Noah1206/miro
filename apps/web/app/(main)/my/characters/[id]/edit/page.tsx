@@ -6,7 +6,8 @@ import { getOwnedCharacter } from '@/lib/owned'
 import { genreValues } from '@/lib/genres'
 import { voiceOptions } from '@/lib/voice'
 import { CharacterForm, type FormInitial } from '@/app/(main)/create/character-form'
-import { updateCharacter } from './actions'
+import { deleteCharacter, updateCharacter } from './actions'
+import { isMinor } from '@/lib/payments/minor'
 import { profileStatus } from '@/lib/relationship-profile'
 
 /** 편집 = 만들기와 같은 폼에 저장된 값을 채운 것. 항목·모양이 다르면 두 화면이 서로 거짓말을 한다. */
@@ -56,7 +57,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions(user.id):[]} models={await recommendableModels(user.id)} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions(user.id):[]} models={await recommendableModels(user.id)} adultAllowed={!(await isMinor(user.id))} onDelete={deleteCharacter.bind(null, id)} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my/characters?filter=draft' : `/character/${id}`} />
   )
 }

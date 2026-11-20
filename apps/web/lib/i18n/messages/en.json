@@ -2444,5 +2444,12 @@
   "다시 끄기": "Turn off",
   "되돌리기": "Undo",
   "이 답은 지금 되돌릴 수 없어요.": "This reply can't be undone right now.",
-  "계정": "Account"
+  "계정": "Account",
+  "삭제 중": "Deleting…",
+  "삭제하지 못했어요. 다시 시도해 주세요.": "Couldn't delete. Please try again.",
+  "삭제했어요.": "Deleted.",
+  "성인 인증을 마치면 쓸 수 있어요.": "Available after adult verification.",
+  "언베일 전용은 성인 인증을 마치면 고를 수 있어요.": "Unveil-only is available after adult verification.",
+  "작품 삭제": "Delete work",
+  "한 번 더 누르면 삭제돼요. 되돌릴 수 없어요.": "Tap again to delete. This can't be undone."
 }

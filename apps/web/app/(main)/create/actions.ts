@@ -7,6 +7,7 @@ import { and, eq, asc, desc, isNull, sql } from 'drizzle-orm'
 import {
   db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
+import { isMinor } from '@/lib/payments/minor'
 import { msg } from '@/lib/i18n'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages, uploadCharacterImage } from '@/lib/storage/images'
@@ -34,6 +35,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export async function saveCharacter(form: FormData): Promise<string> {
   const user = await requireUser()
   const p = parseCharacterForm(form)
+  // 11/20 성인 인증 전(또는 미성년)은 '언베일 전용'·'성적 설정'을 저장하지 않는다.
+  if (await isMinor(user.id)) { p.character.adultOnly = false; p.character.intimacy = '' }
   const creationId = String(form.get('creationId') ?? '')
   if (!UUID.test(creationId)) throw new Error('INVALID_CREATION_ID')
 

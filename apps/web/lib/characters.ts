@@ -64,13 +64,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 /**
  * 상세용 조회. 공식 캐릭터는 slug, 사용자 캐릭터는 id 로 온다 (카드가 `slug ?? id` 로 링크한다).
  * uuid 열에 아무 문자열이나 비교하면 Postgres 가 던지므로 모양을 보고 갈래를 정한다.
- * 보이는 조건: 공식이거나, 공개했거나, 내 것. 초안은 본인에게도 상세로 보이지 않는다 — 편집 화면이 그 자리다.
+ * 보이는 조건: 공개했거나, 링크 공유했거나, 내 것(공식도 같다). 초안은 본인에게도 상세로 보이지 않는다 — 편집 화면이 그 자리다.
  */
 export async function getCharacterByKey(key: string, viewerId: string | null) {
   const byKey = UUID.test(key) ? eq(characters.id, key) : eq(characters.slug, key)
   const visible = viewerId
-    ? or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.linkShared, true), eq(characters.ownerId, viewerId))
-    : or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.linkShared, true))
+    // 11/20 사용자: 공식이라도 비공개로 돌린 작품은 주소로도 열리지 않는다(전엔 공식이면 무조건 보였다 — 숨긴 공식 여성향이 주소로 열렸다).
+    ? or(eq(characters.isPublic, true), eq(characters.linkShared, true), eq(characters.ownerId, viewerId))
+    : or(eq(characters.isPublic, true), eq(characters.linkShared, true))
   return getOne(and(byKey, visible, eq(characters.isDraft, false), isNull(characters.deletedAt)))
 }
 

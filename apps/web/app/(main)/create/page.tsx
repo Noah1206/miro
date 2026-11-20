@@ -10,6 +10,7 @@ import { CharacterForm } from './character-form'
 import { saveCharacter } from './actions'
 import { CreateTypePicker } from './type-picker'
 import { CREATE_CHARACTER_OPTIONS } from '@/lib/create-character-types'
+import { isMinor } from '@/lib/payments/minor'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -40,5 +41,5 @@ export default async function CreatePage({ searchParams }: {
   }
 
   return <CharacterForm key={`${user.id}:${params.type}:${params.draft}`} mode="create" experienceType={params.type} creationId={params.draft}
-    userId={user.id} action={saveCharacter} closeHref="/home" capabilities={features()} voices={feature('characterVoice')?await voiceOptions(user.id):[]} models={await recommendableModels(user.id)} />
+    userId={user.id} action={saveCharacter} closeHref="/home" capabilities={features()} voices={feature('characterVoice')?await voiceOptions(user.id):[]} models={await recommendableModels(user.id)} adultAllowed={!(await isMinor(user.id))} />
 }
