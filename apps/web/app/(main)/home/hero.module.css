@@ -19,7 +19,7 @@
 
 @media (min-width: 1024px) {
   /* 옆 카드는 걸쳐 보이게 — 가운데 1.65 : 옆 1. 옆 카드는 어둡게 눌러 가운데에 눈이 가게. */
-  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1fr); gap: 0; /* 11/21 사용자: 카드 사이 공백 없이(20px → 0) */ height: 400px; margin-bottom: var(--space-6); }
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px; /* 11/21 사용자: 공백 없앴다가 원래대로(20px, 모서리도 다시 모두 둥글게) */ height: 400px; margin-bottom: var(--space-6); }
   .main { aspect-ratio: auto; height: 100%; border-radius: 16px; }
   .art { object-position: center 25%; }
   .copy { padding: 96px 30px 26px; }
@@ -32,10 +32,6 @@
   .side img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; filter: brightness(.55); transition: filter .25s, transform .4s; }
   .side:hover img { filter: brightness(.7); transform: scale(1.03); }
   .arrow { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; border: 0; border-radius: 50%; background: rgb(0 0 0 / .45); color: #fff; cursor: pointer; }
-  /* 11/21 사용자: 붙는 쪽 모서리는 둥글기 없이 — 세 카드가 한 장처럼(바깥 네 모서리만 둥글게). */
-  .side + .main { border-radius: 0; }
-  .side:first-child { border-radius: 16px 0 0 16px; }
-  .main + .side { border-radius: 0 16px 16px 0; }
   .arrowPrev { left: 20px; }
   .arrowNext { right: 20px; }
 }
