@@ -21,6 +21,8 @@ import type { AIContext, AIProvider, AIUsageRecord, GenerationRequest } from './
  *   gateway     AI_GATEWAY_API_KEY, MIRO_LLM_MODEL ("anthropic/claude-haiku-4-5" 처럼 provider/model)
  *   openai      OPENAI_API_KEY, OPENAI_MODEL, (OPENAI_BASE_URL — 로컬 서버도 여기로)
  *   openrouter  OPENROUTER_API_KEY, 모델은 레지스트리에서 (성인 모드 전용 — MIRO_ADULT_MODEL_REGISTRY)
+ *   gemini-adult·anthropic-adult·openai-adult  GEMINI_ADULT_API_KEY·ANTHROPIC_ADULT_API_KEY·OPENAI_ADULT_API_KEY (11/22 언베일 전용 키 —
+ *     메인과 다른 계정·프로젝트의 키라 막혀도 언베일만 멈춘다. OpenRouter 없이 언베일을 돌린다. Gemini 는 안전 필터를 끈다)
  */
 export function providerFromEnv(name: string | undefined, model?: string): AIProvider | null {
   const e = process.env
@@ -40,6 +42,9 @@ export function providerFromEnv(name: string | undefined, model?: string): AIPro
       // Vertex 는 열에 한 번쯤 '참여할 수 없다'는 답을 돌려줬고(실제 방에선 네 번 연속) AI Studio 는 한 번도 없었다. AI Studio 가 막히면(429) Vertex 로 넘어간다.
       ? new OpenAICompatibleProvider('openrouter', e.OPENROUTER_API_KEY, model, 'https://openrouter.ai/api/v1', { provider: { data_collection: 'deny', require_parameters: true,
         ...(model.startsWith('google/') ? { order: ['google-ai-studio', 'google-vertex'] } : { sort: 'throughput' }) } }) : null
+    case 'gemini-adult': return e.GEMINI_ADULT_API_KEY ? new GeminiProvider(e.GEMINI_ADULT_API_KEY, model || e.GEMINI_MODEL || undefined, true) : null
+    case 'anthropic-adult': return e.ANTHROPIC_ADULT_API_KEY && model ? new AnthropicProvider(e.ANTHROPIC_ADULT_API_KEY, model) : null
+    case 'openai-adult': return e.OPENAI_ADULT_API_KEY && model ? new OpenAICompatibleProvider('openai', e.OPENAI_ADULT_API_KEY, model, 'https://api.openai.com/v1') : null
     case 'miro-slm': return e.MIRO_SLM_URL && (model || e.MIRO_SLM_MODEL) ? new MiroSLMProvider(e.MIRO_SLM_URL, e.MIRO_SLM_API_KEY ?? '', (model || e.MIRO_SLM_MODEL)!) : null
     default: return null
   }
@@ -112,16 +117,19 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
  */
 function sharedChatModels(into: 'main' | 'adult'): object[] {
   const raw = process.env[into === 'adult' ? 'MIRO_MODEL_REGISTRY' : 'MIRO_ADULT_MODEL_REGISTRY']
-  if (!raw || !process.env.OPENROUTER_API_KEY) return []
+  // 11/22 언베일 전용 키가 있으면 그 공급자로 직접(OpenRouter 없이) — 일반 방 모델(gemini·anthropic·openai)을 같은 모델 이름 그대로 빌린다.
+  const adultDirect = (provider: string, model: string) => into === 'adult' && !!providerFromEnv(`${provider}-adult`, model)
+  if (!raw || (!process.env.OPENROUTER_API_KEY && into === 'main')) return []
   const vendor: Record<string, string> = { anthropic: 'anthropic', gemini: 'google', openai: 'openai', openrouter: '' }
   return (JSON.parse(raw) as Array<Record<string, unknown>>).flatMap(d => {
     const caps = (d.capabilities as string[] | undefined) ?? (into === 'main' ? [...AI_TASKS] : [])
     if (d.enabled === false || (d.fallback === true && d.chatSelectable !== true) || !caps.includes('dialogue') || d.inputCost === undefined || d.outputCost === undefined) return []
     const prefix = vendor[String(d.provider)]
-    if (prefix === undefined) return []
+    const direct = adultDirect(String(d.provider), String(d.providerModelId))
+    if (prefix === undefined || (!direct && !process.env.OPENROUTER_API_KEY)) return []
     // claude-sonnet-5-5 → anthropic/claude-sonnet-5.5 (OpenRouter 는 버전을 점으로 쓴다)
     const model = prefix ? `${prefix}/${String(d.providerModelId).replace(/-(\d+)-(\d+)$/, '-$1.$2')}` : String(d.providerModelId)
-    return [withCacheRate({ id: `shared-${String(d.id)}`, provider: 'openrouter', providerModelId: model, tier: 'standard', capabilities: ['dialogue'],
+    return [withCacheRate({ id: `shared-${String(d.id)}`, ...(direct ? { provider: `${String(d.provider)}-adult`, providerModelId: String(d.providerModelId) } : { provider: 'openrouter', providerModelId: model }), tier: 'standard', capabilities: ['dialogue'],
       inputCost: d.inputCost, outputCost: d.outputCost, maxContextTokens: d.maxContextTokens ?? 128_000, maxOutputTokens: d.maxOutputTokens ?? 16_384,
       // 11/16 캐시 단가·구간 단가도 같이 옮긴다 — 빠져 있어서 OpenRouter 로 보낸 같은 모델이 캐시로 읽고도 할인 없는 값으로 계산·차감됐다(언베일 Sonnet 턴이 일반 방의 두 배).
       ...(d.cachedInputCost === undefined ? {} : { cachedInputCost: d.cachedInputCost }), ...(d.priceTiers ? { priceTiers: d.priceTiers } : {}), ...(d.priceChanges ? { priceChanges: d.priceChanges } : {}),
@@ -142,7 +150,7 @@ const OPENROUTER_CACHE_READ: Array<[RegExp, number]> = [[/^~?anthropic\//, 0.1],
 function withCacheRate<T extends object>(d: T): T {
   const m = d as { provider?: string; providerModelId?: string; inputCost?: number; cachedInputCost?: number }
   const rate = m.cachedInputCost !== undefined || typeof m.inputCost !== 'number' ? undefined
-    : m.provider === 'anthropic' ? 0.1
+    : m.provider === 'anthropic' || m.provider === 'anthropic-adult' ? 0.1
     : m.provider === 'openrouter' ? OPENROUTER_CACHE_READ.find(([family]) => family.test(m.providerModelId ?? ''))?.[1] : undefined
   return rate === undefined ? d : { ...d, cachedInputCost: m.inputCost! * rate }
 }
