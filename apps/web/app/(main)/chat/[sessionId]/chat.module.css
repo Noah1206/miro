@@ -796,3 +796,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .suggestCard:hover { background: #242424; }
 :global([data-chat-theme='dm-light']) .suggestCard, :global([data-chat-theme='talk']) .suggestCard { background: #f1f1f1; }
 :global([data-chat-theme='dm-light']) .suggestDots, :global([data-chat-theme='talk']) .suggestDots { background: #f0f0f0; }
+/* 11/21 사용자: 추천 답변이 떠 있을 때 카드 사이·옆으로 뒤 대화(사진)가 비쳐 겹쳐 보였다 — 그때만 입력 띠 전체를 테마 바탕색으로 막는다(위 16px 만 부드럽게). 평소엔 11/19 대로 투명. */
+.composer:has(.suggest), :global([data-chat-theme]) .composer:has(.suggest) { background: linear-gradient(180deg, #1e1e1e00, #1e1e1e 16px); }
+:global([data-chat-theme='dm']) .composer:has(.suggest) { background: linear-gradient(180deg, #00000000, #000 16px); }
+:global([data-chat-theme='dm-light']) .composer:has(.suggest) { background: linear-gradient(180deg, #ffffff00, #fff 16px); }
+:global([data-chat-theme='talk']) .composer:has(.suggest) { background: linear-gradient(180deg, #b2c7d900, #b2c7d9 16px); }
