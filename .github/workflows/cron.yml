@@ -1,15 +1,8 @@
 name: cron
 
-# Vercel Hobby 플랜은 cron 을 하루 1회만 허용한다. 이 스케줄러는 계좌이체 승인 건 지급,
-# 이용권 만료와 만료 안내, 선연락 판단까지 맡으므로 하루 1회로는 입금 후 지급이 최대
-# 하루 늦어진다. 그래서 호출만 밖에서 대신한다 — 앱 코드는 그대로다.
-#
-# ⚠ 이 워크플로는 **백업**이다. GitHub 스케줄은 저활동 저장소에서 수 시간씩 밀린다
-# (2026-09-16 실측: 15분 설정에 실제 5시간 간격). 주 경로는 운영 Postgres 의 pg_cron 잡
-# `miro-reality-scheduler`(*/15, pg_net 으로 같은 엔드포인트 호출)다. 둘이 겹쳐 돌아도
-# 스케줄러가 idempotent 해서 문제되지 않는다. 확인: `SELECT * FROM cron.job_run_details`.
-#
-# Pro 플랜으로 올리면 vercel.json 에 crons 를 되돌리고 이 워크플로와 pg_cron 잡을 지운다.
+# 11/22 운영이 맥(miroapp.app → 맥 터널)으로 옮겨진 뒤: 스케줄러는 맥 launchd(app.miro.cron → ~/miro-prod-ops/cron.sh)가 돌린다.
+# 예전 예비 스케줄러(reality 작업)는 뺐다 — 한 번에 60~100초 걸려 Cloudflare 100초·curl 120초 제한에 걸렸다.
+# 여기엔 앱 밖에서 보는 상태 감시(health)만 남는다 — 맥이나 터널이 죽으면 앱 안 알림도 못 나가서.
 on:
   schedule:
     # GitHub 의 스케줄은 혼잡하면 수 분 밀린다. 스케줄러가 idempotent 해서 문제되지 않는다.
@@ -22,24 +15,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  reality:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run the scheduler
-        env:
-          BASE: ${{ secrets.PRODUCTION_BASE_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          set -euo pipefail
-          if [ -z "${BASE:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
-            echo "PRODUCTION_BASE_URL / CRON_SECRET 시크릿이 필요하다"; exit 1
-          fi
-          # 본문을 남겨 둔다 — 지급·만료 건수가 여기 찍힌다.
-          code=$(curl -sS -o /tmp/out.json -w '%{http_code}' --max-time 120 \
-            -H "Authorization: Bearer ${CRON_SECRET}" "${BASE}/api/cron/reality")
-          cat /tmp/out.json; echo
-          [ "$code" = "200" ] || { echo "스케줄러 실패: HTTP $code"; exit 1; }
-
   # 앱 밖에서 보는 상태 확인(10/5) — 앱 안의 운영 알림은 크론이 돌아야 나가서, 크론·배포가 죽으면 조용하다.
   # 실패하면 GitHub 가 저장소 주인에게 메일을 보내고, MIRO_OPS_DISCORD_WEBHOOK 시크릿이 있으면 Discord 로도 알린다.
   health:
