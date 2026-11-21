@@ -852,3 +852,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/22 사용자: 휴대폰 채팅방 머리의 19 토글 — 컴퓨터는 사이트 머리에 있어 숨긴다. */
 .headerUnveil { flex: none; display: flex; align-items: center; }
 @media (min-width: 1024px) { .headerUnveil { display: none; } }
+/* 11/22 사용자: 답 기다리는 말풍선 위로 훑고 지나가던 빛은 지운다(점 물결만). */
+:global([data-chat-theme='miro']) .typingBubble { background: rgba(255,255,255,.06); animation: none; }
