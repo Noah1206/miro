@@ -5,37 +5,11 @@ import { DesktopChats } from './desktop-chats'
 import { usePathname } from 'next/navigation'
 import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
-import { msg } from '@/lib/i18n'
+import { NAV_ITEMS, activeNavIndex } from './nav-items'
 import { useT } from '@/lib/i18n/client'
 import glass from './nav-glass.module.css'
 
-/**
- * 탭은 홈 · 탐색 · 만들기 · 대화 · 프로필 순서다.
- *
- * 아이콘은 선이 아니라 꽉 찬 실루엣이다. 속(플러스·말풍선 점)은 같은 path 안의
- * 하위 도형으로 두고 fill-rule=evenodd 로 뚫는다 — 배경색으로 덮으면 내비의 반투명 블러와
- * 어긋나므로, 진짜 구멍을 내서 뒤가 그대로 비치게 한다.
- */
-const ITEMS = [
-  /**
-   * 미로 — 첫 화면(홈). 캐릭터 카드가 겹겹이 쌓인 모양이다.
-   * 겹친 자리는 evenodd 로 뚫려 틈이 된다. 그 틈 덕에 한 덩어리가 아니라 '여러 장' 으로 읽힌다.
-   */
-  /** 11/7 사용자: '미로' → '홈', 집 모양 아이콘. 지붕+몸통 한 덩어리에 문을 evenodd 로 뚫는다. */
-  { href: '/home', label: msg('홈'),
-    icon: <path d="M11.2 2.9a1.3 1.3 0 0 1 1.6 0l8.4 6.7c.4.3.6.8.6 1.3v9.1c0 .9-.7 1.6-1.6 1.6H4c-.9 0-1.6-.7-1.6-1.6v-9.1c0-.5.2-1 .6-1.3l8.2-6.7ZM10 15.4v4.8h4v-4.8a2 2 0 0 0-4 0Z" /> },
-  { href: '/explore', label: msg('탐색'),
-    icon: <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 5.4-2.8 6.4-6.4 2.8 2.8-6.4 6.4-2.8ZM12 10.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z" /> },
-  /** 만들기 — 둥근 사각형에 evenodd 로 뚫린 플러스. 10/28: '내가 만든 캐릭터' 화면으로 간다(사용자 요청). */
-  { href: '/my/characters', label: msg('만들기'), auth: true,
-    icon: <path d="M7 2.6h10A4.4 4.4 0 0 1 21.4 7v10a4.4 4.4 0 0 1-4.4 4.4H7A4.4 4.4 0 0 1 2.6 17V7A4.4 4.4 0 0 1 7 2.6Zm4 4.9v3.5H7.5v2H11v3.5h2V13h3.5v-2H13V7.5h-2Z" /> },
-  { href: '/archive', label: msg('대화'), auth: true,
-    icon: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5zM7.6 11.5a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0z" /> },
-  // 머리가 크고 어깨에 바로 붙는다 (레퍼런스). 둘이 겹치므로 여기만 nonzero — evenodd 면 겹친 자리가 뚫린다.
-  // 11/20 사용자: 프로필은 로그인 전에도 열린다(안에서 로그인 버튼).
-  { href: '/my', label: msg('프로필'),
-    icon: <g fillRule="nonzero"><circle cx="12" cy="8.9" r="6.4" /><path d="M12 14.8c-5.2 0-9.4 2.9-9.4 6.1 0 .3.2.5.5.5h17.8c.3 0 .5-.2.5-.5 0-3.2-4.2-6.1-9.4-6.1z" /></g> },
-]
+const ITEMS = NAV_ITEMS
 
 const SUB_PAGES = /^\/(explore|search|genre|persona|creators?|earnings|stories|recharge|archive\/delete)(?:\/|$)|^\/my\/(settings|permissions|ai-data|subscription|likes|delete)(?:\/|$)|^\/character\/[^/]+\/comments/
 
@@ -80,8 +54,7 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   useEffect(() => { window.dispatchEvent(new Event('miro:viewport-settle')) }, [pathname])
   const t = useT()
   const askLogin = useLoginSheet()
-  const activePath = /^\/search(?:\/|$)/.test(pathname) ? '/explore' : pathname
-  const activeIndex = ITEMS.findIndex(item => activePath === item.href || activePath.startsWith(item.href + '/'))
+  const activeIndex = activeNavIndex(pathname)
   // 11/3: 채팅방·문자(DM)방은 컴퓨터에서 왼쪽 채팅 사이드바만 둔다(하단 탭은 입력창과 겹쳐서 계속 숨김). 휴대폰에서 사이드바는 CSS 로 안 보인다.
   // 11/4: 캐릭터 상세도 컴퓨터에서는 왼쪽 대화 목록을 띄운다(휴대폰은 화면 폭 때문에 숨겨진다).
   if (/^\/(chat|messages)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
@@ -91,7 +64,8 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   if (SUB_PAGES.test(pathname)) return <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
   return (
     // 대화 탭은 목록이 곧 사이드바 내용이라 데스크톱 사이드바를 두지 않는다(10/28).
-    <>{!/^\/archive(?:\/|$)/.test(pathname) && <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />}<nav aria-label={t('주요')} className={`nav ${glass.bar}`}>
+    // 11/21 사용자: 데스크톱은 메뉴가 왼쪽 사이드바에 있어 하단 탭을 숨긴다(nav--side). 사이드바가 없는 대화 탭(/archive)만 하단 탭 그대로.
+    <>{!/^\/archive(?:\/|$)/.test(pathname) && <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />}<nav aria-label={t('주요')} className={`nav ${glass.bar}${/^\/archive(?:\/|$)/.test(pathname) ? '' : ' nav--side'}`}>
       {activeIndex >= 0 && <span aria-hidden="true" className={glass.indicator} style={{ transform: `translateX(${activeIndex * 100}%)` }} />}
       {ITEMS.map((it) => {
         const active = ITEMS[activeIndex] === it  // /my/characters 에서 프로필(/my)까지 켜지지 않게 한 칸만.

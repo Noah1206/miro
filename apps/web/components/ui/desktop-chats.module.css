@@ -56,3 +56,18 @@
 }
 
 .copy small { display: block; margin-top: 3px; font-size: 10px; color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 11/21 사용자: 데스크톱 사이드바 위쪽 메뉴(하단 탭과 같은 목록). 지금 화면은 흰 글자·옅은 면, 나머지도 흰 글자(회색 금지). 접으면 아이콘만. */
+.menu { display: none; }
+@media (min-width: 1024px) {
+  .sidebar { bottom: 0; }
+  .menu { display: flex; flex-direction: column; gap: 2px; margin-top: 20px; }
+  .menuItem { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--color-text-primary); font: inherit; font-size: 15px; text-align: left; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  .menuItem svg { flex: none; }
+  .menuItem:hover { background: var(--color-surface-1); }
+  .menuItem[aria-current="page"] { background: var(--color-surface-2); font-weight: 650; }
+  .menuLabel { transition: opacity 180ms ease; }
+  .sidebar[data-collapsed="true"] .menuItem { padding: 0 9px; }
+  .sidebar[data-collapsed="true"] .menuLabel { opacity: 0; pointer-events: none; }
+  .heading { padding-top: 24px; }
+}

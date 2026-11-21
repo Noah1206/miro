@@ -8,13 +8,16 @@ import { useT } from '@/lib/i18n/client'
 import { CharacterPhoto } from '@/components/character-visual'
 import { TransitionLink } from './transition-link'
 import { SocialButton, type LoginProvider } from './social-button'
-import { WelcomeTicket } from './login-sheet'
+import { WelcomeTicket, useLoginSheet } from './login-sheet'
+import { NAV_ITEMS, activeNavIndex } from './nav-items'
 import { LogoMark } from './logo'
 import styles from './desktop-chats.module.css'
 
 export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { signedIn: boolean; providers: LoginProvider[]; collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname()
   const t = useT()
+  const askLogin = useLoginSheet()
+  const activeIndex = activeNavIndex(pathname)
   const [page, setPage] = useState<ArchivePage | null>(null)
   const [error, setError] = useState(false)
   const [retry, setRetry] = useState(0)
@@ -51,6 +54,15 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
         <button className={styles.toggle} onClick={onToggle} aria-label="사이드바 닫기" aria-expanded={true}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16m7-12-3 4 3 4"/></svg></button>
       </>}
     </div>
+    {/* 11/21 사용자: 데스크톱은 하단 탭의 메뉴(홈·탐색·만들기·대화·프로필)를 사이드바 위쪽에 — 접으면 아이콘만. */}
+    <nav aria-label={t('주요')} className={styles.menu}>
+      {NAV_ITEMS.map((it, i) => {
+        const inner = <><svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" clipRule="evenodd">{it.icon}</svg><span className={styles.menuLabel}>{t(it.label)}</span></>
+        return !signedIn && it.auth
+          ? <button key={it.href} type="button" className={styles.menuItem} title={t(it.label)} onClick={() => askLogin(it.href)}>{inner}</button>
+          : <TransitionLink key={it.href} href={it.href} prefetch={true} className={styles.menuItem} title={t(it.label)} aria-current={i === activeIndex ? 'page' : undefined}>{inner}</TransitionLink>
+      })}
+    </nav>
     <div className={styles.body} inert={collapsed} aria-hidden={collapsed}>
     {signedIn && <div className={styles.heading}><h2>{t('채팅')}</h2><TransitionLink href="/archive">{t('대화 관리')}</TransitionLink></div>}
     {signedIn ? <div className={styles.list}>

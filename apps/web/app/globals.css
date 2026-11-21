@@ -379,6 +379,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* nav */
 /* 화면 가장자리에서 띄운 글래스 바. 홈 바 여백은 바깥에 두어 탭 높이를 유지한다. */
 /* 11/19 iOS 크롬: 아래 도구 막대가 접혀도 fixed 기준이 늦게 따라와 탭 밑에 빈칸이 생겼다 — nav.tsx 가 그 차이(--vv-shift)만큼 내린다. */
+/* 11/21 사용자: 데스크톱은 메뉴가 왼쪽 사이드바에 있어 하단 탭을 숨긴다(사이드바가 있는 화면만, nav--side). DOM 은 남겨 .app-shell:has(.nav) 배치는 그대로. */
+@media (min-width: 1024px) { .nav.nav--side { display: none !important; } }
 .nav { position: fixed; left: 16px; right: 16px; bottom: calc(var(--nav-bottom) - var(--vv-shift, 0px)); z-index: 30;
   width: calc(100% - 32px); max-width: min(var(--nav-w), calc(var(--shell-w) - 32px)); margin: 0 auto; height: 56px;
   display: flex; align-items: center; justify-content: space-around; padding-inline: 8px;
