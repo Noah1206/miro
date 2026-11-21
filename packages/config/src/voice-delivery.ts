@@ -34,7 +34,8 @@ export function taggedSpeech(text: string, speech: unknown): string | null {
   const stripped = VOCAL_TAGS.reduce((s, tag) => s.split(tag).join(''), speech)
   if (stripped.includes('[')) return null
   // 대사 글자는 순서대로 다 있어야 하고, 그 사이에 더한 글자는 소리 글자뿐이어야 한다.
-  const want = text.replace(/\s+/g, '')
+  // 11/22: 문장부호(… , . ! ? ~ -)는 비교하지 않는다 — 모델이 '…'를 ','로 바꾸거나 빼기만 해도 탈락해 신음 없는 화면 대사가 읽혔다(그 방 5줄 중 4줄).
+  const want = text.replace(/[\s….,!?~\-]+/g, '')
   let i = 0
   for (const c of stripped.replace(/\s+/g, '')) {
     if (i < want.length && c === want[i]) i++

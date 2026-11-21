@@ -498,14 +498,17 @@ function UserBubble({ text }: { text: string }) {
         for (const r of Array.from(range.getClientRects())) { if (r.width < 1) continue; left = Math.min(left, r.left); right = Math.max(right, r.right); rows.add(Math.round(r.top)) }
       }
       if (!lines || rows.size < 2 || right <= left) return
-      el.style.width = `${Math.ceil(right - left + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 2}px`
+      // 11/22: 방금 보낸 말풍선은 올라오는 애니메이션(scale .98) 중이라 화면 크기로 재면 작게 나와 줄이 다시 꺾이고 원래 폭으로 되돌아갔다 — 배율을 나눠 실제 크기로.
+      const scale = el.getBoundingClientRect().width / el.offsetWidth || 1
+      el.style.width = `${Math.ceil((right - left) / scale + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 2}px`
       if (el.offsetHeight > h) el.style.width = ''  // 줄이 늘면(다시 꺾이면) 되돌린다
     }
     fit()
     // 웹 글꼴이 늦게 오면 대체 글꼴로 잰 폭이 남는다 — 글꼴이 준비되면 다시 잰다.
     void document.fonts?.ready.then(fit)
     window.addEventListener('resize', fit)
-    return () => window.removeEventListener('resize', fit)
+    el.addEventListener('animationend', fit)
+    return () => { window.removeEventListener('resize', fit); el.removeEventListener('animationend', fit) }
   }, [text])
   return <p ref={ref} className={styles.userBubble}><Emphasis text={text} /></p>
 }
