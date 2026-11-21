@@ -29,18 +29,23 @@ export function Segmented<V extends string>({ name, value, onChange, options }: 
   name?: string; value: V; onChange: (v: V) => void; options: Array<{ value: V; label: string; hint?: string; unveil?: boolean }>
 }) {
   // 언베일 칸(11/3): 고르면 홈 언베일 토글과 같은 빨강·자홍·보라 그라데이션.
-  const unveilOn = { background: 'linear-gradient(115deg, #ff1f5a 0%, #e0119d 55%, #9b1cff 100%)', color: '#fff', boxShadow: '0 0 16px rgb(255 31 90 / .35)' }
+  const unveilOn = { background: 'linear-gradient(115deg, #ff1f5a 0%, #e0119d 55%, #9b1cff 100%)', boxShadow: '0 0 16px rgb(255 31 90 / .35)' }
+  const n = options.length
+  const index = Math.max(0, options.findIndex(o => o.value === value))
   return (
-    <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 4, padding: 4, borderRadius: 999, background: 'var(--color-surface-3)' }}>
+    <div role="radiogroup" style={{ position: 'relative', display: 'grid', gridTemplateColumns: `repeat(${n}, 1fr)`, gap: 4, padding: 4, borderRadius: 999, background: 'var(--color-surface-3)' }}>
       {name && <input type="hidden" name={name} value={value} />}
+      {/* 11/21 사용자: 고른 칸의 흰 알약이 옆으로 미끄러진다 — 칸 하나 너비 + 간격(4px)만큼씩 옮긴다. */}
+      <span aria-hidden style={{ position: 'absolute', top: 4, bottom: 4, left: 4, width: `calc((100% - ${8 + 4 * (n - 1)}px) / ${n})`, borderRadius: 999,
+        background: '#fff', transform: `translateX(calc(${index} * (100% + 4px)))`, transition: 'transform 260ms cubic-bezier(.3,.7,.2,1), background 260ms',
+        ...(options[index]?.unveil ? unveilOn : {}) }} />
       {options.map(o => {
         const on = o.value === value
         return (
           <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(o.value)}
-            style={{ minHeight: 48, padding: '8px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', textAlign: 'center',
-              background: on ? '#fff' : 'transparent', color: on ? '#16161a' : 'var(--color-text-secondary)',
-              fontSize: fieldFont, fontWeight: on ? 'var(--weight-bold)' : 400, transition: 'background 160ms, color 160ms',
-              ...(on && o.unveil ? unveilOn : {}) }}>
+            style={{ position: 'relative', minHeight: 48, padding: '8px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', textAlign: 'center',
+              background: 'transparent', color: on ? (o.unveil ? '#fff' : '#16161a') : 'var(--color-text-secondary)',
+              fontSize: fieldFont, fontWeight: on ? 'var(--weight-bold)' : 400, transition: 'color 200ms' }}>
             {o.label}
             {o.hint && <span className="t-caption" style={{ display: 'block', marginTop: 2, color: on ? (o.unveil ? '#ffe0ec' : '#5c5c66') : 'var(--color-text-tertiary)' }}>{o.hint}</span>}
           </button>
