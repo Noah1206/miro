@@ -200,16 +200,12 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
           {choices.length > 0 && <button type="button" className={styles.tile} onClick={() => go('length')}><MenuIcon name="length"/><span>{t('출력량 설정')}</span></button>}
         </div>
       </section>
+      {/* 11/21 사용자: 캐릭터 정보·이전 대화 보기·대화 내려받기·알림·접근 권한 줄은 지웠다. */}
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
-        {characterHref && row(characterHref, 'character', t('캐릭터 정보'))}
-        {row(archiveHref, 'archive', t('이전 대화 보기'))}
         {row(`/chat/${sessionId}/novel`, 'download', t('웹소설로 만들기'))}
-        {/* 11/16 대화 원문 TXT — 파일 내려받기라 화면 전환 링크가 아니라 일반 링크. */}
-        <a href={`/api/chat-export/${sessionId}`} download className={styles.row} onClick={close}><MenuIcon name="download"/><span>{t('대화 내려받기 (TXT)')}</span><Chevron/></a>
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>
-        {row('/my/permissions', 'settings', t('알림·접근 권한'))}
         <InstallAppButton className={styles.row} onOpen={close}><MenuIcon name="download"/><span>{t('홈 화면에 추가')}</span><Chevron/></InstallAppButton>
       </section>
     </RoomPage>}
