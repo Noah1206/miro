@@ -331,6 +331,9 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .detail-head { padding-inline: 24px !important; }
 }
 .create-page { max-width: 560px; }
+/* 11/21 사용자: 버튼 글자는 흰색이거나 확실히 다른 색이어야 한다 — 흰색 같은데 흰색이 아닌 회색(#b3b3b3·#969696)은 금지.
+   만들기 화면의 버튼 안에서는 회색 글자 변수를 흰색으로 돌린다(비활성 #545454 와 흰 바탕 위 짙은 글자는 그대로). */
+.create-page :is(button, [role="button"], [role="tab"]) { --color-text-secondary: var(--color-text-primary); --color-text-tertiary: var(--color-text-primary); --tab-inactive: var(--color-text-primary); }
 .create-intro-editor { height: min(560px, 70dvh); }
 .create-photo-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 /* 10/28: 데스크톱 전(1024 미만)엔 미리보기 버튼은 오른쪽에 고정, 입력 탭 7개만 옆으로 밀린다 — 앞 4개 + '인트로' 반만 보인다. */
