@@ -125,3 +125,82 @@ export async function writeNextChapter(sessionId: string, userId: string): Promi
     throw e
   }
 }
+
+
+/* ── 11/21 사용자: 웹소설은 AI 가 화를 나눠 다시 쓰지 않고, 유저가 화를 만들고 화 이름을 정하고 대화 목록에서 골라 넣는다(본문 = 대화 원문 그대로). ── */
+
+export type NovelTurn = { turn: number; preview: string }
+const TITLE_MAX = 60
+
+async function ownedRoom(sessionId: string, userId: string) {
+  const [room] = await db.select({ name: characters.name, persona: roleplaySessions.userPersona })
+    .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))).limit(1)
+  return room ?? null
+}
+
+/** 화면에 보이는 장면 기록만(숨긴 줄·문자·사진 제외) — 웹소설 쓰기와 같은 기준. */
+async function sceneRows(sessionId: string) {
+  return sceneMessages(await db.select().from(messages)
+    .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt)))
+    .orderBy(asc(messages.turnIndex), asc(messages.createdAt)))
+    .filter(m => (m.kind === 'text' || m.kind === 'live_scene') && m.content.trim())
+}
+
+/** 한 턴 = 유저 말 + 캐릭터 답(서술·대사·속마음) — 대화 원문 그대로 이름: 대사 꼴로. */
+function turnText(rows: Awaited<ReturnType<typeof sceneRows>>, name: string, persona: string): string {
+  return rows.map(m => {
+    if (m.kind === 'live_scene') return `[장면] ${m.content}`
+    if (m.role === 'user') return `${persona}: ${m.content}`
+    const blocks = m.blocks.filter(b => typeof b.text === 'string' && b.text.trim() && !endingTitle([{ text: b.text as string }]))
+    if (!blocks.length) return m.content.split('\n').filter(l => !endingTitle([{ text: l }])).join('\n')
+    return blocks.map(b => b.type === 'thought' ? `(${b.speaker ?? name} 속마음) ${b.text}`
+      : b.type === 'dialogue' || b.type === 'npc' ? `${b.speaker ?? name}: ${b.text}` : String(b.text)).join('\n')
+  }).join('\n\n')
+}
+
+/** 골라 넣기 목록 — 턴 번호와 짧은 미리보기(유저 말 → 캐릭터 첫 줄). 인트로(0 이하)도 한 턴으로. */
+export async function novelTurns(sessionId: string, userId: string): Promise<NovelTurn[] | null> {
+  const room = await ownedRoom(sessionId, userId)
+  if (!room) return null
+  const rows = await sceneRows(sessionId)
+  const byTurn = new Map<number, typeof rows>()
+  for (const m of rows) byTurn.set(Math.max(0, m.turnIndex), [...(byTurn.get(Math.max(0, m.turnIndex)) ?? []), m])
+  return [...byTurn.entries()].map(([turn, ms]) => {
+    const user = ms.find(m => m.role === 'user')?.content.trim()
+    const reply = ms.find(m => m.role !== 'user')?.content.replace(/\s+/g, ' ').trim()
+    const preview = [user, reply].filter(Boolean).join(' → ')
+    return { turn, preview: preview.length > 90 ? `${preview.slice(0, 90)}…` : preview }
+  })
+}
+
+/** 화 저장(새 화면 끝에 추가, n 이 있으면 그 화를 고친다). 본문은 고른 턴들의 원문을 대화 순서대로 이어 붙인다. */
+export async function saveUserChapter(sessionId: string, userId: string, input: { n?: number; title: string; turns: number[] }): Promise<NovelChapter[]> {
+  const room = await ownedRoom(sessionId, userId)
+  if (!room) throw new NovelError('not_found')
+  const title = input.title.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, TITLE_MAX)
+  const picked = [...new Set(input.turns.filter(Number.isInteger))].sort((a, b) => a - b)
+  if (!title || !picked.length) throw new NovelError('nothing')
+  const rows = (await sceneRows(sessionId)).filter(m => picked.includes(Math.max(0, m.turnIndex)))
+  const persona = room.persona?.name?.trim() || '주인공'
+  const text = turnText(rows, room.name, persona)
+  await db.insert(sessionNovels).values({ sessionId, userId }).onConflictDoNothing()
+  const [novel] = await db.select({ chapters: sessionNovels.chapters }).from(sessionNovels).where(eq(sessionNovels.sessionId, sessionId)).limit(1)
+  const list = [...(novel?.chapters ?? [])]
+  const chapter: NovelChapter = { n: 0, title, text, throughTurn: picked.at(-1)!, turns: picked }
+  const at = input.n ? list.findIndex(c => c.n === input.n) : -1
+  if (at >= 0) list[at] = chapter; else list.push(chapter)
+  const chapters = list.map((c, i) => ({ ...c, n: i + 1 }))
+  await db.update(sessionNovels).set({ chapters, status: 'idle', updatedAt: new Date() }).where(eq(sessionNovels.sessionId, sessionId))
+  return chapters
+}
+
+/** 화 지우기 — 뒤 화 번호는 하나씩 당겨진다. */
+export async function deleteUserChapter(sessionId: string, userId: string, n: number): Promise<NovelChapter[]> {
+  const room = await ownedRoom(sessionId, userId)
+  if (!room) throw new NovelError('not_found')
+  const [novel] = await db.select({ chapters: sessionNovels.chapters }).from(sessionNovels).where(eq(sessionNovels.sessionId, sessionId)).limit(1)
+  const chapters = (novel?.chapters ?? []).filter(c => c.n !== n).map((c, i) => ({ ...c, n: i + 1 }))
+  await db.update(sessionNovels).set({ chapters, updatedAt: new Date() }).where(eq(sessionNovels.sessionId, sessionId))
+  return chapters
+}
