@@ -21,6 +21,8 @@ export type TurnState = {
   /** 한도 도달 시 UI 가 Pro 안내 / 초기화 대기를 구분해 보여준다. */
   /** attend: 오늘 출석 체크를 안 했다(11/10) — 충전 시트 대신 출석 안내를 띄운다. */
   limit: { plan: 'free' | 'pro'; resetsAt: string; attend?: boolean } | null
+  /** 11/21 사용자: 안전 필터로 막힌 턴 — 글 한 줄 대신 아래에서 올라오는 포스터(빨간 X 스티커)로 보인다. */
+  blocked?: boolean
   /**
    * 생성이 실패했지만 오류 문구를 띄우지 않는다 — 캐릭터가 아직 쓰는 중인 것처럼 점을 계속 돌린다.
    * 유저가 손쓸 수 있는 실패(한도·안전·세션 없음)는 해당하지 않는다. 그건 말해 줘야 풀린다.
@@ -93,7 +95,7 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
       }
       // 답을 못 만든 것은 유저가 고칠 수 있는 일이 아니다. 오류 문구 대신 기다림을 이어 둔다.
       case 'generation': return { error: null, notice: null, limit: null, keepWaiting: true }
-      case 'safety': return { ...fail(msg('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')), ...(opts.mode === 'chat' && r.unveil ? { unveil: r.unveil } : {}) }
+      case 'safety': return { ...fail(msg('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')), blocked: true, ...(opts.mode === 'chat' && r.unveil ? { unveil: r.unveil } : {}) }
       default: return { error: null, notice: null, limit: null }
     }
   }

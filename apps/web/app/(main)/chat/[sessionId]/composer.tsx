@@ -320,7 +320,20 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <TransitionLink href="/my" style={{ flex: 'none', padding: '6px 12px', borderRadius: 8, background: 'var(--color-accent)', color: 'var(--color-white, #fff)', fontWeight: 650 }}>{t('출석하러 가기')}</TransitionLink>
           </motion.div>
         )}
-        {state.error && !state.limit && (
+        {/* 11/21 사용자: 안전 필터로 막힌 턴은 글 한 줄 대신 아래에서 올라오는 포스터 — 왼쪽에 빨간 X 스티커. */}
+        {state.error && !state.limit && state.blocked && (
+          <motion.div key="blocked" role="alert" className={styles.blockedPoster}
+            initial={{ opacity: 0, y: 48 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}>
+            <span className={styles.blockedSticker} aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </span>
+            <span className={styles.blockedText}>
+              <strong>{t('이 내용으로는 대화를 이어갈 수 없어요')}</strong>
+              <span>{t('다른 상황으로 이야기해 주세요.')}</span>
+            </span>
+          </motion.div>
+        )}
+        {state.error && !state.limit && !state.blocked && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
             {t(state.error)}
           </motion.p>
