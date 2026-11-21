@@ -801,3 +801,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .composer:has(.suggest) { background: linear-gradient(180deg, #00000000, #000 16px); }
 :global([data-chat-theme='dm-light']) .composer:has(.suggest) { background: linear-gradient(180deg, #ffffff00, #fff 16px); }
 :global([data-chat-theme='talk']) .composer:has(.suggest) { background: linear-gradient(180deg, #b2c7d900, #b2c7d9 16px); }
+/* 11/21 사용자(스크린샷 기준): 대화 속 사진은 어떤 사진이 와도 같은 크기 — 글 폭을 꽉 채운 정사각형(잘라서 맞춤, 얼굴 쪽 위를 살림), 위아래 글과의 간격 약 20px.
+   다른 테마도 정사각형으로(폭은 테마 그대로). 만들어지는 중인 자리도 같은 칸. */
+.photo { aspect-ratio: 1 / 1; object-fit: cover; object-position: center 25%; }
+.flow .photo { margin-block: 6px; }
+.flow .inlinePhotos { gap: 8px; }
+.photoMakingTile { aspect-ratio: 1 / 1; }
+.flow .photoMakingTile { width: 100%; border-radius: 8px; }
