@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TransitionLink } from '@/components/ui'
 import { characterStorySummary, characterTags } from '@/lib/character-card-copy'
 import { useT } from '@/lib/i18n/client'
@@ -15,6 +15,9 @@ import { AfterMount } from '@/components/after-mount'
 export function HomeHero({ items }: { items: HomeCard[] }) {
   const t = useT()
   const [i, setI] = useState(0)
+  // 11/21 사용자(휴대폰): 손가락으로 밀면 한 장씩 — 가로로 40px 넘게, 세로보다 많이 움직였을 때만. 민 직후의 탭은 링크로 넘기지 않는다.
+  const touch = useRef<{ x: number; y: number } | null>(null)
+  const swiped = useRef(false)
   const n = items.length
   useEffect(() => {
     if (n < 2) return
@@ -29,12 +32,19 @@ export function HomeHero({ items }: { items: HomeCard[] }) {
   const blurb = characterStorySummary(c)
   const go = (d: number) => setI(v => ((v + d) % n + n) % n)
   return (
-    <section className={styles.hero} aria-label={t('추천 작품')}>
+    <section className={styles.hero} aria-label={t('추천 작품')}
+      onTouchStart={e => { touch.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY }; swiped.current = false }}
+      onTouchEnd={e => {
+        const s = touch.current; touch.current = null
+        if (!s || n < 2) return
+        const dx = e.changedTouches[0]!.clientX - s.x, dy = e.changedTouches[0]!.clientY - s.y
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) { swiped.current = true; go(dx < 0 ? 1 : -1) }
+      }}>
       {n > 1 && <button type="button" className={styles.side} aria-label={prev.name} onClick={() => go(-1)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={prev.images[0]} alt="" loading="lazy" />
       </button>}
-      <TransitionLink href={href} className={styles.main} aria-label={c.name}>
+      <TransitionLink href={href} className={styles.main} aria-label={c.name} draggable={false} onClick={e => { if (swiped.current) { e.preventDefault(); swiped.current = false } }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={c.id} src={c.images[0]} alt="" className={styles.art} fetchPriority="high" />
         <div className={styles.copy}>
