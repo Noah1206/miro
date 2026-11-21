@@ -25,8 +25,10 @@ CONTROLNET = 'xinsir/controlnet-canny-sdxl-1.0'   # 11/4 구도 고정(레퍼런
 NEGATIVE_BASE = ('lowres, bad anatomy, bad hands, extra digits, worst quality, low quality, jpeg artifacts, watermark, signature, '
                  'child, loli, young, flat chest, sweatdrop')   # 어려 보이는 그림 차단은 언베일에서도 항상 유지
 # 11/8 사용자 지정 기본 광택(일상·언베일 모두) — 젖은 장면 단어·구릿빛 보정은 프롬프트에서 따로
+# 11/22 사용자 품질 기준(모든 콘텐츠): 반질반질한 빛 채광 + 깨끗함 + 약간 촉촉 — 깨끗함(선명한 초점·깨끗한 선·피부 디테일)을 더했다.
 GLOSS = (', (shiny skin:1.3), (glossy skin:1.2), glowing skin, dewy skin, glistening body, oiled skin highlights, shiny face, soft glow, '
-         'plump glossy pink lips, cinematic lighting, soft rim light, depth of field, realistic lighting')
+         'plump glossy pink lips, cinematic lighting, soft rim light, depth of field, realistic lighting, '
+         'clean skin, clean lineart, sharp focus, detailed skin texture')
 GLOSS_LIGHT = ', soft skin sheen, soft glow, cinematic lighting, soft rim light, depth of field'   # 11/9 표지 전용(사용자: 표지만 광택 약하게) — 프롬프트에 'soft sheen' 을 넣으면 이것('cover art' 는 가짜 글씨가 생김)
 gloss = lambda p: '' if '1girl' not in p or 'matte skin' in p else GLOSS_LIGHT if 'soft sheen' in p else GLOSS.replace(' oiled skin highlights,', '') if 'pale porcelain skin' in p else GLOSS   # 하얀 피부가 구릿빛으로 가면 프롬프트에 (pale porcelain skin:1.2). 남자 단독 그림엔 안 붙인다(11/8, 마른 아들이 근육질로 나옴)
 # 11/9 시선 태그(사용자: "카메라 보면 안 된다니까 — 태그로 나눠서 안 볼 땐 확실하게"): 프롬프트 맨 앞 [away] = 카메라 절대 안 봄, [viewer] = 카메라 봄.
@@ -36,6 +38,11 @@ AWAY_NEG = '(looking at viewer:1.7), (eye contact:1.6), (staring at viewer:1.5),
 _VIEWER_WORDS = re.compile(r'\(?(looking at viewer|eye contact|looking at camera|staring at viewer|glaring at viewer)(:[\d.]+)?\s*\)?,?\s*')
 # 11/9 광택 태그(사용자: "광택을 추가하는 태그"): [gloss] = soft sheen(약한 광택)을 지우고 기본 GLOSS + 아래 강화 단어. matte 부정도 붙인다.
 GLOSS_TAG = '(glossy skin:1.4), (shiny skin:1.3), (skin highlights:1.2), (glossy lips:1.2), (shiny hair:1.2), '
+# 11/22 사용자: 색기 있는 그림(언베일·nsfw)은 마님처럼 '완전 촉촉' — 마님 세트에서 확정된 젖음 태그를 자동으로 붙인다(프롬프트에 이미 젖음이 있으면 그대로).
+# 단부루 학습 태그(sweat·shiny skin·wet·steaming body)라 LoRA 들이 알아듣는다. ponytail: 작품마다 세기가 다르면 프롬프트에 직접 쓰면 이게 빠진다.
+MOIST = (', (wet skin:1.5), (soaking wet body:1.4), (shiny skin:1.6), (glossy skin:1.5), (heavy sweat:1.4), sweat drops, '
+         'water droplets on skin, steaming body, flushed cheeks')
+moist = lambda p, unveil: MOIST if (unveil or 'nsfw' in p) and not re.search(r'wet skin|soaking wet|dripping wet', p) else ''
 def gaze(p: str):
     """줄 앞 태그([away]/[viewer]/[gloss], 여러 개 가능)를 풀어 (프롬프트, 추가 부정) 을 돌려준다. 이름은 예전 그대로."""
     pre, neg = '', []
@@ -118,7 +125,7 @@ class Gen:
         g = torch.Generator('cuda').manual_seed(seed)
         # 어려 보임 차단은 부정 프롬프트 맨 앞(잘리더라도 남게).
         prompt, gneg = gaze(prompt)   # [away]/[viewer] 시선 태그
-        p, n = TRIGGER[variant] + prompt + gloss(prompt), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, gneg, neg] if x)
+        p, n = TRIGGER[variant] + prompt + gloss(prompt) + moist(prompt, unveil), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, gneg, neg] if x)
         ref_img = Image.open(io.BytesIO(ref)).convert('RGB') if ref else Image.new('RGB', (224, 224))
         self.pipe.set_ip_adapter_scale([ref_scale, face_scale] if ref else [0.0, 0.0])
         ref_img = [ref_img, ref_img]
@@ -235,7 +242,8 @@ def image_api(body: dict):
 
 @app.local_entrypoint()
 def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, out: str = 'output/lora-test',
-         prompts: str = '', variant: str = '', seeds: str = '7', neg: str = '', unveil: bool = False, scales: str = '', hires: str = 'off',
+         prompts: str = '', variant: str = '', seeds: str = '7', neg: str = '', unveil: bool = False, scales: str = '', hires: str = 'on',   # 11/22 사용자: 화질 기본 — 업스케일 재생성 켬(끄려면 --hires off)
+        
          hr_scales: str = '', hr_strength: float = 0.4, inits: str = '', faces: str = '', face_scale: float = 0.5, ref_scale: float = 0.0,
          init_strengths: str = '0.65', ctrls: str = '', ctrl_scale: float = 0.6, ctrl_end: float = 0.6,
          ctrl_tops: str = '', redo_tops: str = '', redo_prompts: str = '', redo_strength: float = 0.85, redo_from: float = 0.0,
@@ -249,7 +257,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
     ws = [float(x) for x in scales.split(',')] if scales else [scale]
     hs = {'off': [False], 'on': [True], 'both': [False, True]}[hires]
     hrs = [float(x) for x in hr_scales.split(',')] if hr_scales else [0.0]   # 2단계 LoRA 강도(0 = 1단계와 같게)
-    grid = bool(scales) or hires != 'off' or bool(hr_scales)
+    grid = bool(scales) or hires == 'both' or bool(hr_scales)   # 11/22 업스케일이 기본(on)이 돼도 파일 이름은 예전 그대로(<n>-<v>-s<seed>.png) — 비교(both)일 때만 긴 이름
     # 11/4 --inits / --faces: 쉼표로 프롬프트 줄마다 밑그림·얼굴 레퍼런스 파일(줄 수와 같게, 빈 칸은 없음)
     per = lambda s: [(open(x, 'rb').read() if x else None) for x in s.split(',')] if s else [None] * len(lines)
     ini, fac, ctl, msk = per(inits), per(faces), per(ctrls), per(masks)
