@@ -143,7 +143,8 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
     ...previews.map((p) => ({ url: p.url, kind: 'new' as const })),
   ].sort((a, b) => imageOrder.indexOf(a.url) - imageOrder.indexOf(b.url))
   const main = items[0]?.url ?? null
-  const side = main ? 'min(280px, 50cqw)' : 'min(180px, 32.3cqw)'
+  // 11/21 사용자: 빈 사진 칸을 더 크게(180px·32.3cqw → 220px·44cqw).
+  const side = main ? 'min(280px, 50cqw)' : 'min(220px, 44cqw)'
   const full = items.length >= maxCount
 
   // 폼 제출용 실제 파일 input — 순서가 바뀔 때마다 DataTransfer 로 다시 채운다.
@@ -235,20 +236,23 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         </motion.button>
       </div>
 
-      {/* 11/21 사용자: '+' 밑변은 대표 사진 밑변과 같은 높이 — 글씨 줄 간격을 줄여 글씨+'+' 가 사진 높이 안에 들어가게(줄 1.8 일 땐 넘쳐서 '+' 가 밀려 내려갔다). 추가 사진이 여러 줄이면 그때만 길어진다. */}
-      <div style={{ flex: 1, minWidth: 0, minHeight: side, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10 }}>
-      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위. 항목마다 한 줄, 폭이 모자라면 한 줄에 맞는 크기까지만. */}
-      {/* 11/21 사용자: 글씨를 조금 키우고(최대 17px) 4줄을 '+' 위 남는 높이에 고르게 펼쳐 빈칸을 없앤다. */}
-      <ul style={{ flex: 1, minHeight: 0, margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', color: 'var(--color-text-tertiary)', fontSize: `min(17px, calc((100cqw - ${side} - 28px) * 0.047))`, lineHeight: 1.35, whiteSpace: 'nowrap' }}>
+      {/* 11/21 사용자: 사진 칸을 키우면서 옆을 다시 짰다 — 맨 위 흰 '업로드' 버튼(칸 폭 전체), 그 아래 안내(줄바꿈 허용·글씨 키움), 추가 사진. */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {!full && <button type="button" onClick={pick} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
+        style={{ width: '100%', minHeight: 48, borderRadius: 12, border: 0, background: '#fff', color: '#16161a', cursor: 'pointer', font: 'inherit', fontSize: 16, fontWeight: 700 }}>
+        {t('업로드')}
+      </button>}
+      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다. */}
+      <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 4, color: 'var(--color-text-tertiary)', fontSize: 'clamp(13px, 3.6cqw, 16px)', lineHeight: 1.45, wordBreak: 'keep-all' }}>
         {/* 11/21 사용자: 같은 뜻을 다른 말로(조금 더 짧게). */}
         <li>{t('PNG·JPG·WebP·HEIC 형식만 올릴 수 있어요')}</li>
         <li>{t('정사각형(1:1)이 가장 좋고, 장당 5MB까지예요')}</li>
         <li>{t('규정에 맞지 않는 사진은 내려갈 수 있어요')}</li>
         <li>{t('남의 그림·사진은 허락을 받은 뒤 올려 주세요')}</li>
       </ul>
-      {/* 나머지 사진 줄 — 10/28 부터 처음에도 보인다: 사진은 모두 '+' 로 넣는다. 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
-      {(
-        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(2, min(56px, 10cqw))', gap: 6 }}>
+      {/* 나머지 사진 줄 — 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
+      {items.length > 1 && (
+        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 64px))', gap: 6 }}>
           <AnimatePresence initial={false}>
             {items.slice(1).map((it, i) => (
               // 드래그(li, 네이티브)와 애니메이션(motion.div)을 분리한다 — 대표 사진 칸과 같은 이유.
@@ -267,16 +271,6 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
               </li>
             ))}
           </AnimatePresence>
-          {!full && (
-            <li>
-              <button type="button" onClick={pick} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
-                style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: '#fff',
-                  border: 0, borderRadius: 'var(--radius-sm)', color: '#16161a' }}>
-                {/* 11/21 사용자: '+' 대신 흰 업로드 버튼(위 화살표 + 받침). */}
-                <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" /></svg>
-              </button>
-            </li>
-          )}
         </ul>
       )}
       </div>
