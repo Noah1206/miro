@@ -721,7 +721,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 @media (max-width: 767px) { .inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height: 52px; } }
 /* 11/19 사용자: 채팅방 헤더 높이를 거의 반(62 → 34px, 상단 안전 영역 별도)으로, 아래로 갈수록 투명하게.
    투명한 아래쪽으로 대화가 비치도록 헤더를 대화 위에 겹친다(음수 아래 여백 = 헤더 높이, 대화 위 여백이 그만큼 늘어난다). */
-:global([data-chat-theme]) .header.header { box-sizing: border-box; height: calc(64px + env(safe-area-inset-top, 0px)); min-height: 0; padding: env(safe-area-inset-top, 0px) 12px 0; padding-top: calc(15px + env(safe-area-inset-top, 0px)); padding-bottom: 15px; margin-bottom: calc(-64px - env(safe-area-inset-top, 0px)); border-bottom: 0; background: linear-gradient(180deg, #1e1e1e 0%, #1e1e1e 60%, #1e1e1eb3 100%); transition: height .28s cubic-bezier(.2,.8,.2,1), margin .28s cubic-bezier(.2,.8,.2,1), padding .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease, transform .28s cubic-bezier(.2,.8,.2,1); }
+:global([data-chat-theme]) .header.header { box-sizing: border-box; height: calc(64px + env(safe-area-inset-top, 0px)); min-height: 0; padding: env(safe-area-inset-top, 0px) 12px 0; padding-top: calc(15px + env(safe-area-inset-top, 0px)); padding-bottom: 15px; margin-bottom: calc(-64px - env(safe-area-inset-top, 0px)); border-bottom: 0; background: #1e1e1e; /* 11/21 사용자: 아래쪽이 70% 투명이라 대화가 비쳐 겹쳐 보였다 — 불투명으로 */ transition: height .28s cubic-bezier(.2,.8,.2,1), margin .28s cubic-bezier(.2,.8,.2,1), padding .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease, transform .28s cubic-bezier(.2,.8,.2,1); }
 :global([data-header-hidden='true']) .header.header.header { height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
 .header > a:first-child { min-height: 32px; }
 .header > a:first-child::after { inset: -6px; }
@@ -785,3 +785,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .suggestCard { font-size: 13.5px; line-height: 1.55; }
 /* 11/21 사용자: 추천 답변 카드 높이만 조금 낮게(위아래 여백 12→8px). */
 .suggestCard { padding-top: 8px; padding-bottom: 8px; }
+
+/* 11/21 사용자: 추천 답변 카드 안 양옆 여백 줄이기(16px → 10px). */
+.suggestCard { padding-inline: 10px; }
