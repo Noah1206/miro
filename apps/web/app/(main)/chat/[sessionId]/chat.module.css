@@ -788,3 +788,11 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* 11/21 사용자: 추천 답변 카드 안 양옆 여백 줄이기(16px → 10px). */
 .suggestCard { padding-inline: 10px; }
+/* 11/21 사용자: 추천 답변을 띄운 채 스크롤하면 카드 뒤로 대화가 비쳐 겹쳐 보였다 — 카드·로딩 말풍선을 같은 색의 불투명 면으로. */
+.suggestCard { background: color-mix(in srgb, #fff 6%, #1e1e1e); }
+.suggestCard:hover { background: color-mix(in srgb, #fff 10%, #1e1e1e); }
+.suggestDots { background: color-mix(in srgb, #fff 9%, #1e1e1e); }
+:global([data-chat-theme='dm']) .suggestCard { background: #1a1a1a; }
+:global([data-chat-theme='dm']) .suggestCard:hover { background: #242424; }
+:global([data-chat-theme='dm-light']) .suggestCard, :global([data-chat-theme='talk']) .suggestCard { background: #f1f1f1; }
+:global([data-chat-theme='dm-light']) .suggestDots, :global([data-chat-theme='talk']) .suggestDots { background: #f0f0f0; }
