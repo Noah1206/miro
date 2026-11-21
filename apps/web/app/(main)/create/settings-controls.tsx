@@ -24,27 +24,25 @@ export function SelectField({ name, value, onChange, placeholder, options }: {
   )
 }
 
-/** 두세 칸 나눔 버튼 — 고른 칸만 라벤더 테두리·옅은 라벤더 면. */
+/** 두세 칸 나눔 버튼 — 11/21 사용자: 알약 모양 회색 바탕 안에서 고른 칸만 흰 알약·굵은 글자(그 전엔 칸마다 테두리·고른 칸 라벤더). */
 export function Segmented<V extends string>({ name, value, onChange, options }: {
   name?: string; value: V; onChange: (v: V) => void; options: Array<{ value: V; label: string; hint?: string; unveil?: boolean }>
 }) {
   // 언베일 칸(11/3): 고르면 홈 언베일 토글과 같은 빨강·자홍·보라 그라데이션.
-  const unveilOn = { border: '1.5px solid #ff3d7f', background: 'linear-gradient(115deg, rgb(255 31 90 / .22) 0%, rgb(224 17 157 / .22) 55%, rgb(155 28 255 / .22) 100%), var(--color-surface-2)',
-    color: '#ffe0ec', boxShadow: '0 0 16px rgb(255 31 90 / .35)' }
+  const unveilOn = { background: 'linear-gradient(115deg, #ff1f5a 0%, #e0119d 55%, #9b1cff 100%)', color: '#fff', boxShadow: '0 0 16px rgb(255 31 90 / .35)' }
   return (
-    <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 8 }}>
+    <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 4, padding: 4, borderRadius: 999, background: 'var(--color-surface-3)' }}>
       {name && <input type="hidden" name={name} value={value} />}
       {options.map(o => {
         const on = o.value === value
         return (
           <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(o.value)}
-            style={{ minHeight: 56, padding: '10px 12px', borderRadius: 12, cursor: 'pointer', textAlign: 'center',
-              border: `1.5px solid ${on ? 'var(--color-lavender-300)' : 'var(--color-border)'}`,
-              background: on ? 'color-mix(in srgb, var(--color-lavender-300) 14%, var(--color-surface-2))' : 'var(--color-surface-2)',
-              color: on ? 'var(--color-lavender-200)' : 'var(--color-text-secondary)', fontSize: fieldFont, fontWeight: on ? 'var(--weight-semibold)' : 400,
+            style={{ minHeight: 48, padding: '8px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', textAlign: 'center',
+              background: on ? '#fff' : 'transparent', color: on ? '#16161a' : 'var(--color-text-secondary)',
+              fontSize: fieldFont, fontWeight: on ? 'var(--weight-bold)' : 400, transition: 'background 160ms, color 160ms',
               ...(on && o.unveil ? unveilOn : {}) }}>
             {o.label}
-            {o.hint && <span className="t-caption" style={{ display: 'block', marginTop: 2, color: on ? 'var(--color-lavender-300)' : 'var(--color-text-tertiary)' }}>{o.hint}</span>}
+            {o.hint && <span className="t-caption" style={{ display: 'block', marginTop: 2, color: on ? (o.unveil ? '#ffe0ec' : '#5c5c66') : 'var(--color-text-tertiary)' }}>{o.hint}</span>}
           </button>
         )
       })}
