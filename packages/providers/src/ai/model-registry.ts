@@ -4,7 +4,7 @@ import { AI_TASKS, STRONG_TASKS, type AITask } from './tasks'
 
 const isTask = (task: string): task is AITask => (AI_TASKS as readonly string[]).includes(task)
 export const ModelDefinitionSchema = z.object({
-  id: z.string().min(1), provider: z.enum(['gemini', 'openai', 'anthropic', 'cloudflare', 'gateway', 'miro-slm', 'mock', 'replicate', 'openrouter']),
+  id: z.string().min(1), provider: z.enum(['gemini', 'openai', 'anthropic', 'cloudflare', 'gateway', 'miro-slm', 'mock', 'replicate', 'openrouter', 'deepseek', 'xai']),
   providerModelId: z.string().min(1), tier: z.enum(['small', 'standard', 'premium']),
   /** 없어진 작업 이름(10/2 moderation)은 버린다 — env 의 레지스트리를 고치기 전에 배포돼도 AI 전체가 멈추지 않게. */
   capabilities: z.array(z.string()).min(1).transform(list => list.filter(isTask)),

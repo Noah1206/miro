@@ -40,6 +40,9 @@ export function providerFromEnv(name: string | undefined, model?: string): AIPro
       // Vertex 는 열에 한 번쯤 '참여할 수 없다'는 답을 돌려줬고(실제 방에선 네 번 연속) AI Studio 는 한 번도 없었다. AI Studio 가 막히면(429) Vertex 로 넘어간다.
       ? new OpenAICompatibleProvider('openrouter', e.OPENROUTER_API_KEY, model, 'https://openrouter.ai/api/v1', { provider: { data_collection: 'deny', require_parameters: true,
         ...(model.startsWith('google/') ? { order: ['google-ai-studio', 'google-vertex'] } : { sort: 'throughput' }) } }) : null
+    // 11/22 언베일 방 전용 직접 길(OpenRouter 수수료 약 5.5% 절감) — 성인 콘텐츠를 허용하는 공급자만. 키가 없으면 null 이라 OpenRouter 항목이 예비로 남는다.
+    case 'deepseek': return e.DEEPSEEK_API_KEY && model ? new OpenAICompatibleProvider('deepseek', e.DEEPSEEK_API_KEY, model, 'https://api.deepseek.com/v1') : null
+    case 'xai': return e.XAI_API_KEY && model ? new OpenAICompatibleProvider('xai', e.XAI_API_KEY, model, 'https://api.x.ai/v1') : null
     case 'miro-slm': return e.MIRO_SLM_URL && (model || e.MIRO_SLM_MODEL) ? new MiroSLMProvider(e.MIRO_SLM_URL, e.MIRO_SLM_API_KEY ?? '', (model || e.MIRO_SLM_MODEL)!) : null
     default: return null
   }
