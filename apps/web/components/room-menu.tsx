@@ -206,7 +206,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {row(`/chat/${sessionId}/novel`, 'download', t('웹소설로 만들기'))}
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>
-        <InstallAppButton className={styles.row} onOpen={close}><MenuIcon name="download"/><span>{t('홈 화면에 추가')}</span><Chevron/></InstallAppButton>
+        <InstallAppButton className={styles.row} onOpen={back}><MenuIcon name="download"/><span>{t('홈 화면에 추가')}</span><Chevron/></InstallAppButton>
       </section>
     </RoomPage>}
   </>
