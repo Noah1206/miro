@@ -53,3 +53,6 @@
   .adultControl[data-intense] .adultKnob::after { content: '19'; color: #000; font-size: 10px; font-weight: 900; letter-spacing: -.4px; line-height: 1; }
   .adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); background: #fff; }  /* 44 - 22 - 1×2 */
 }
+/* 11/22 사용자: 19 토글이 켜졌을 때 그라데이션·빛 대신 단색, 그림자 없음. */
+.adultControl[data-intense][data-on] .adultTrack { background: #ff2e6e; box-shadow: none; animation: none; }
+.adultControl[data-intense][data-on] .adultKnob { box-shadow: none; }
