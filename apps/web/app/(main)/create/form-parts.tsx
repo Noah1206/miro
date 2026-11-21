@@ -234,10 +234,11 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         </motion.button>
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, minHeight: side, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
-      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위. 항목마다 한 줄. 글씨 16px(4줄이 '+' 바로 위까지), 폭이 모자라면 한 줄에 맞는 크기까지만. */}
-      {/* 11/21 사용자: 글씨를 조금 키워 아래 '+' 와의 빈칸을 줄였다(16px·×0.0455·줄 1.7 → 17.5px·×0.05·줄 1.8). */}
-      <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--color-text-tertiary)', fontSize: `min(17.5px, calc((100cqw - ${side} - 28px) * 0.05))`, lineHeight: 1.8, whiteSpace: 'nowrap' }}>
+      {/* 11/21 사용자: '+' 밑변은 대표 사진 밑변과 같은 높이 — 글씨 줄 간격을 줄여 글씨+'+' 가 사진 높이 안에 들어가게(줄 1.8 일 땐 넘쳐서 '+' 가 밀려 내려갔다). 추가 사진이 여러 줄이면 그때만 길어진다. */}
+      <div style={{ flex: 1, minWidth: 0, minHeight: side, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10 }}>
+      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위. 항목마다 한 줄, 폭이 모자라면 한 줄에 맞는 크기까지만. */}
+      {/* 11/21 사용자: 글씨를 조금 키우고(최대 17px) 4줄을 '+' 위 남는 높이에 고르게 펼쳐 빈칸을 없앤다. */}
+      <ul style={{ flex: 1, minHeight: 0, margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', color: 'var(--color-text-tertiary)', fontSize: `min(17px, calc((100cqw - ${side} - 28px) * 0.047))`, lineHeight: 1.35, whiteSpace: 'nowrap' }}>
         <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
         <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
         <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
