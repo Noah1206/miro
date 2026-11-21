@@ -268,7 +268,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
   // 인트로의 상황 서술(role narrator)은 블록 없이 글만 저장된다 — 캐릭터 말풍선이 아니라 장면 서술로 그린다(10/5).
   if (m.role === 'narrator' && m.kind === 'text' && !m.blocks.length) m = { ...m, blocks: [{ type: 'narrative', text: m.content }] }
   const reality = m.blocks.find((b) => b.type === 'reality') as { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
-  if (m.role === 'user') return <div className={styles.userRow}><BubbleTime m={m}/><p className={styles.userBubble}><Emphasis text={m.content} /></p></div>
+  if (m.role === 'user') return <div className={styles.userRow}><BubbleTime m={m}/><UserBubble text={m.content} /></div>
   if (m.kind === 'hidden') return <p data-hidden-message className="t-caption" style={{ fontStyle: 'italic' }}>{m.content}</p>
   if (m.kind === 'call_record') return <SceneMeta><span data-call-record>☏ {m.content}</span></SceneMeta>
   if (m.kind === 'live_scene' && m.blocks.some(b => b.type === 'story_date')) return <div className={styles.storyDateMarker} data-story-date-marker><span>{m.content}</span></div>
@@ -460,4 +460,30 @@ function StatusCard({ blocks, open }: { blocks: Array<Record<string, unknown>>; 
     {text ? <pre className={styles.statusText}>{text}</pre>
       : <ul className={styles.statusStats}>{stats.map(([k, v]) => <li key={k}><span>{k}</span><b>{v}</b></li>)}</ul>}
   </details>
+}
+
+/**
+ * 11/22 사용자: 내 말풍선이 여러 줄로 꺾이면 오른쪽에 빈 공간이 남았다 — 브라우저는 꺾인 상자를 가장 긴 줄에 맞춰 줄이지 않는다.
+ * 그려진 뒤 실제 가장 긴 줄 너비를 재서 말풍선 폭을 거기에 맞춘다(화면 폭이 바뀌면 다시 잰다).
+ */
+function UserBubble({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const fit = () => {
+      el.style.width = ''
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const rects = Array.from(range.getClientRects())
+      if (rects.length < 2) return
+      const line = Math.max(...rects.map(r => r.right)) - Math.min(...rects.map(r => r.left))
+      const cs = getComputedStyle(el)
+      el.style.width = `${Math.ceil(line + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 1}px`
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [text])
+  return <p ref={ref} className={styles.userBubble}><Emphasis text={text} /></p>
 }
