@@ -17,10 +17,12 @@ import { msg } from '@/lib/i18n'
 /** 11/21 사용자: 검색 화면의 추천 검색어 — 많이 찾는 분위기 태그 5개. */
 const SUGGESTED = [msg('현대물'), msg('하렘'), msg('순애'), msg('판타지'), msg('로맨스')]
 
-export function SearchScreen({ groups = [], filterCatalog, initialPage, isResults = false, resultsPath = '/search/results' }: {
+export function SearchScreen({ groups = [], filterCatalog, initialPage, initialKey = '', isResults = false, resultsPath = '/search/results' }: {
   groups?: DiscoveryGroup[]; filterCatalog?: DiscoveryCard[]; isResults?: boolean; resultsPath?: '/search/results' | '/explore'
   /** 필터·검색어 없는 첫 목록(서버가 섞어 넘긴다, 10/27) — 있으면 화면이 같은 목록을 다시 받지 않는다. */
   initialPage?: CardPage
+  /** 첫 목록이 어떤 정렬·필터의 목록인지(탐색 = 'sort=ranking'). */
+  initialKey?: string
 }) {
   const t = useT()
   const router = useRouter()
@@ -36,8 +38,12 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
   relations.forEach(v => canonical.append('relation', v))
   tags.forEach(tag => canonical.append('tag', tag))
   // 11/20 사용자: 태그 위 All / Rank — Rank 는 대화량 순(서버 sort=ranking).
-  const rank = params.get('sort') === 'ranking'
+  // 11/22 사용자: 탐색 탭은 처음부터 Rank — 주소에 정렬이 없으면 Rank, All 을 누르면 sort=all 로 남긴다.
+  const rankDefault = resultsPath === '/explore'
+  const sortParam = params.get('sort')
+  const rank = sortParam ? sortParam === 'ranking' : rankDefault
   if (rank) canonical.set('sort', 'ranking')
+  else if (rankDefault) canonical.set('sort', 'all')
   const key = canonical.toString()
   const optionCounts = useMemo(() => filterCatalog && !genres.length && !relations.length ? discoveryOptionCounts(filterCatalog, groups, tags, query) : undefined, [filterCatalog, groups, key])
   const [draft, setDraft] = useState(query)
@@ -75,7 +81,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
   // 11/20 사용자: 홈 검색 아이콘으로 오면 입력칸에 바로 커서(검색 화면만 — 탐색·결과 화면은 아님). 화면 전환 뒤에도 잡히게 그린 다음 한 번 더.
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => { if (!isResults) requestAnimationFrame(() => inputRef.current?.focus()) }, [isResults])
-  const [result, setResult] = useState<{ key: string; page: CardPage } | null>(() => initialPage ? { key: '', page: initialPage } : null)
+  const [result, setResult] = useState<{ key: string; page: CardPage } | null>(() => initialPage ? { key: initialKey, page: initialPage } : null)
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
   const [retry, setRetry] = useState(0)
@@ -94,11 +100,12 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     setBusy(true); setFailed(false)
     try {
       const next = new URLSearchParams(key)
+      if (next.get('sort') === 'all') next.delete('sort')   // 'all' 은 화면 표시용 — 서버엔 정렬 없이(기본)
       const response = await fetch(`/api/home/cards?${next}`, { signal: controller.signal, cache: 'no-store' })
       if (!response.ok) throw new Error('LOAD_FAILED')
       const incoming: CardPage = await response.json()
       if (controller.signal.aborted) return
-      if (!key) {
+      if (!next.size) {
         // Shuffle the complete visible catalog once per load, keeping its order stable while browsing.
         for (let index = incoming.items.length - 1; index > 0; index--) {
           const other = Math.floor(Math.random() * (index + 1))
@@ -141,7 +148,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     {isResults && <section className={styles.filters} aria-labelledby="search-filters">
       <h2 id="search-filters" className="sr-only">{t('검색 필터')}</h2>
       <div className={styles.sortTabs} role="tablist" aria-label={t('정렬')}>
-        <button type="button" role="tab" aria-selected={!rank} onClick={() => { const next = new URLSearchParams(key); next.delete('sort'); update(next) }}>All</button>
+        <button type="button" role="tab" aria-selected={!rank} onClick={() => { const next = new URLSearchParams(key); if (rankDefault) next.set('sort', 'all'); else next.delete('sort'); update(next) }}>All</button>
         <span aria-hidden>/</span>
         <button type="button" role="tab" aria-selected={rank} onClick={() => { const next = new URLSearchParams(key); next.set('sort', 'ranking'); update(next) }}>Rank</button>
       </div>
