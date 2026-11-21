@@ -74,10 +74,11 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
       <div role="tablist" className="create-tabs" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)', containerType: 'inline-size' }}>
         {/* 11/21 사용자: 처음 보이는 건 탭 4개까지, 나머지는 가로로 밀어서 — 탭 하나 = 탭 줄 폭의 1/4. */}
         <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'flex-start', gap: 0 }}>
-          {TABS.filter((x) => x.key !== 'preview' && !hidden.includes(x.key)).map((x) => {
+          {/* 11/21 사용자: 미리보기도 같은 가로 스크롤 탭으로(그 전엔 줄 끝의 작은 눈 아이콘 버튼). 데스크톱은 오른쪽에 늘 보여 탭을 숨긴다(create-preview-tab). */}
+          {TABS.filter((x) => !hidden.includes(x.key)).map((x) => {
             const active = x.key === tab
             return (
-              <button key={x.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${x.key}`} onClick={() => onTab(x.key)}
+              <button key={x.key} type="button" role="tab" className={x.key === 'preview' ? 'create-preview-tab' : undefined} aria-selected={active} aria-controls={`panel-${x.key}`} onClick={() => onTab(x.key)}
                 style={{
                   position: 'relative', flex: '0 0 25cqi', padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
@@ -91,20 +92,6 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
             )
           })}
         </div>
-        <button type="button" role="tab" className="create-preview-tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
-          style={{
-            position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 44, padding: '12px 10px', marginLeft: 12, borderRadius: 0,
-            border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
-            background: 'transparent',
-            color: tab === 'preview' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-            transition: 'background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard)',
-          }}>
-          {tab === 'preview' && <motion.span layoutId="create-tab-underline" transition={spring.default} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
-          <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" />
-          </svg>
-          {t('미리보기')}
-        </button>
       </div>
     </header>
   )
