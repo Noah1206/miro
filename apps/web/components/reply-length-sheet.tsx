@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { Sheet } from '@/components/ui/sheet'
 import { Button } from '@/components/ui'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import { chatModelFamily, selectedChatChoice } from '@/lib/ai/model-presentation'
@@ -39,8 +38,11 @@ export function useChatThinking(): [Thinking, (v: Thinking) => void] {
   return [value, set]
 }
 
-/** 채팅방 메뉴의 '출력량 설정' 팝업. 고른 길이는 지금 모델의 같은 회사 길이 선택지로 바꿔 저장된다(모델 선택과 같은 저장소). */
-export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; onClose: () => void; choices: ChatModelChoice[] }) {
+/**
+ * 채팅방 메뉴의 '출력량 설정'. 고른 길이는 지금 모델의 같은 회사 길이 선택지로 바꿔 저장된다(모델 선택과 같은 저장소).
+ * 11/21 사용자: 팝업 대신 채팅방 설정 안의 따로 된 화면 — 이 패널을 그 화면이 그린다(open 은 화면이 열려 있을 때 true).
+ */
+export function ReplyLengthPanel({ open, onClose, choices }: { open: boolean; onClose: () => void; choices: ChatModelChoice[] }) {
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const { model, setModel } = useChatModel()
@@ -54,8 +56,8 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
   // 막대를 실제로 움직였을 때만 저장한다 — 안 고른 사람은 작품 권장값(없으면 빠름)을 그대로 쓴다.
   const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); if (think !== thinking) setThinking(think); onClose() }
 
-  return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.78, full: 0.92 }}>
-    <div className="stack" style={{ gap: 12, padding: '0 var(--space-4) var(--space-5)' }}>
+  return <>
+    <div className="stack" style={{ gap: 12, padding: '4px 0 var(--space-5)' }}>
       <p className="t-caption" style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{t('캐릭터 답변 한 번의 길이예요. 길수록 토큰을 더 써요.')}</p>
       {/* 11/10 사용자: 출력량·생각 강도 모두 만들기 화면의 단계 막대로 — 막대로 고르고, 고른 단계의 설명·최대 토큰은 아래 한 줄로. */}
       <StepSlider label={t('출력량')} value={pick} onChange={v => setPick(v as Length)} steps={OPTIONS.map(o => ({ value: o.value, label: t(o.label) }))} />
@@ -77,5 +79,5 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
       </div>}
       <Button variant="primary" full onClick={apply} disabled={!variant(pick)}>{t('적용')}</Button>
     </div>
-  </Sheet>
+  </>
 }

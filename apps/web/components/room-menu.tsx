@@ -1,5 +1,7 @@
 'use client'
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 import { useRoomControls } from '@/components/room-controls'
 import type { UserPersona } from '@miro/domain'
 import type { CharacterEntry } from '@/lib/character-entry'
@@ -10,17 +12,15 @@ import { Button, LogoMark, Sheet, useToast } from '@/components/ui'
 import { CharacterPhoto } from '@/components/character-visual'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { InstallAppButton } from '@/components/pwa-install'
-import { Drawer } from '@/components/ui/drawer'
 import { TransitionLink } from '@/components/ui/transition-link'
 import { useWallet } from '@/components/wallet/provider'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import { ChatModelOptions } from '@/app/(main)/chat/[sessionId]/model-picker'
-import { MemoryGraphView } from '@/app/(main)/chat/[sessionId]/memory-graph'
 import { useImmersive } from '@/app/(main)/chat/[sessionId]/immersive'
 import { RoomVoicePanel, type RoomVoice } from '@/components/room-voice'
 import { RoomGallery } from '@/components/room-gallery'
-import { ReplyLengthSheet } from '@/components/reply-length-sheet'
+import { ReplyLengthPanel } from '@/components/reply-length-sheet'
 import styles from './room-menu.module.css'
 import sheetStyles from './push-subscribe.module.css'
 
@@ -45,6 +45,45 @@ function MenuIcon({ name }: { name: IconName }) {
 }
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
+type Screen = 'main' | 'persona' | 'model' | 'length'
+const SCREENS = new Set<string>(['main', 'persona', 'model', 'length'])
+
+/**
+ * 11/21 사용자: ☰ 를 누르면 서랍 대신 화면 전체가 '채팅방 설정' 페이지로 — 머리의 < 로 바로 채팅방으로 돌아온다.
+ * 페르소나·AI 모델·출력량도 각자 따로 된 페이지(같은 방법). 주소에 ?menu=… 를 남겨 브라우저 뒤로 가기도 같은 순서로 돌아간다
+ * (주소만 바꾸고 서버를 다시 부르지 않는다 — history.pushState). 대화방의 상태(음성·모델 고르기)를 그대로 쓰려고 대화방 안에서 그린다.
+ */
+function useRoomScreen() {
+  const v = useSearchParams().get('menu')
+  // 서버에서 그릴 땐 열지 않는다(페이지는 body 에 그린다) — 새로고침으로 ?menu 가 남아 있어도 화면이 살아난 뒤에 연다.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const screen = mounted && v && SCREENS.has(v) ? v as Screen : null
+  const pushed = useRef(0)
+  const go = (next: Screen) => { const u = new URL(window.location.href); u.searchParams.set('menu', next); window.history.pushState(null, '', u); pushed.current++ }
+  // 이 화면에서 연 페이지면 한 칸 뒤로, 주소로 바로 들어온 경우(새로고침)는 메뉴 표시만 지운다.
+  const back = () => {
+    if (pushed.current > 0) { pushed.current--; window.history.back(); return }
+    const u = new URL(window.location.href); u.searchParams.delete('menu'); window.history.replaceState(null, '', u)
+  }
+  return { screen, go, back }
+}
+
+function RoomPage({ title, onBack, children, footer }: { title: string; onBack: () => void; children: ReactNode; footer?: ReactNode }) {
+  const t = useT()
+  // 머리가 숨을 때 움직이는(transform) 조상 밖으로 — 화면 전체를 덮게 body 에 그린다(같은 React 트리라 대화방 상태는 그대로).
+  return createPortal(<div className={styles.page} role="dialog" aria-modal="true" aria-label={title}>
+    <header className={styles.pageHead}>
+      <button type="button" className={`${styles.pageBack} back-press`} aria-label={t('뒤로')} onClick={onBack}>
+        <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <h2>{title}</h2>
+    </header>
+    <div className={styles.pageBody}>{children}</div>
+    {footer && <div className={styles.pageFoot}>{footer}</div>}
+  </div>, document.body)
+}
+
 /** Existing room controls share one drawer; detail panels expand in place. */
 export function RoomMenu({ sessionId, initialPersona, characterName, profile: initialProfile, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0, messenger = false, roomVoice }: {
   sessionId: string; initialPersona: UserPersona | null; characterName: string
@@ -58,24 +97,26 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const { available, soon, on, toggle } = useImmersive()
   const toast = useToast()
   const { wallet, openRecharge, refreshBalance, live } = useWallet()
-  const menuId = useId()
-  const [open, setOpen] = useState(false)
-  const [panel, setPanel] = useState<Panel | null>(null)
-  const [lengthOpen, setLengthOpen] = useState(false)
+  const { screen, go, back } = useRoomScreen()
+  const open = screen !== null
   const { request } = useRoomControls()
+  const goRef = useRef(go); goRef.current = go
   useEffect(() => {
     if (!request) return
-    setPanel(request.panel); setOpen(true)
+    goRef.current('main'); if (request.panel === 'persona' || request.panel === 'model') goRef.current(request.panel)
     void refreshProfile(); void refreshBalance()
   }, [request, refreshProfile, refreshBalance])
-  // 11/21 사용자: 첫 안내(코치마크)가 목소리 고르기를 짚을 때 메뉴를 열고, 안내가 끝나면 닫는다.
+  // 11/21 사용자: 첫 안내(코치마크)가 목소리 고르기를 짚을 때 설정 페이지를 열고, 안내가 끝나면 닫는다.
+  const openRef = useRef(open); openRef.current = open
+  const backRef = useRef(back); backRef.current = back
   useEffect(() => {
-    const show = () => { setPanel(null); setOpen(true) }
-    const hide = () => setOpen(false)
+    const show = () => { if (!openRef.current) goRef.current('main') }
+    const hide = () => { if (openRef.current) backRef.current() }
     window.addEventListener('miro:coach-open-menu', show); window.addEventListener('miro:coach-close-menu', hide)
     return () => { window.removeEventListener('miro:coach-open-menu', show); window.removeEventListener('miro:coach-close-menu', hide) }
   }, [])
-  const close = () => setOpen(false)
+  // 다른 페이지로 넘어가는 링크는 그대로 이동(설정 페이지 표시는 대화방 주소에 남아 뒤로 오면 다시 보인다).
+  const close = () => {}
   const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('AI 모델'), theme: t('채팅방 테마'), memory: t('기억 노트'), note: t('유저노트') }
   const tiles: Panel[] = ['persona', 'model', 'memory', 'note']   // 11/19 사용자: 채팅방 테마 고르기 삭제(늘 기본 테마)
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
@@ -124,17 +165,20 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         </svg>
       </span>
     </button>}
-    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
+    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} onClick={() => { go('main'); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
+    {screen === 'persona' && <RoomPage title={titles.persona} onBack={back}><ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/></RoomPage>}
+    {screen === 'model' && <RoomPage title={titles.model} onBack={back}><ChatModelOptions choices={choices}/></RoomPage>}
+    {screen === 'length' && <RoomPage title={t('출력량 설정')} onBack={back}><ReplyLengthPanel open onClose={back} choices={choices}/></RoomPage>}
+    {screen === 'main' && <RoomPage title={t('채팅방 설정')} onBack={back} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       {/* 11/19 사용자: 채팅방 메뉴에서는 갤러리를 뺀다 — 문자방 메뉴에는 그대로. */}
       {messenger && <RoomGallery sessionId={sessionId} open={open}/>}
       <section className={styles.account} aria-label={t('내 프로필')}>
         <TransitionLink href="/my" className={styles.identity} aria-label={t('내 프로필')} onClick={close}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <span className="avatar-default"><LogoMark size={20} label=""/></span>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></TransitionLink>
         <div className={styles.wallet} aria-label={t('보유 토큰')}>
           <p className={styles.balance} aria-live="polite"><img src="/miro-token.svg" alt="" aria-hidden="true" width={24} height={24} decoding="async"/><strong data-room-balance={wallet?.available} data-wallet-live={live} data-wallet-observed-at={wallet?.observedAt}>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong><span className="sr-only">{t('미로 토큰')}</span></p>
-          <button type="button" onClick={() => { close(); openRecharge() }}>{t('충전하기')}</button>
+          <button type="button" onClick={() => { back(); openRecharge() }}>{t('충전하기')}</button>
         </div>
       </section>
       <section className={styles.section} aria-label={t('내 설정')}>
@@ -148,18 +192,12 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {/* 11/17 대화 기억은 서랍 안 패널 대신 따로 된 페이지로 — 기억과 캐릭터가 생각하는 나를 크게 본다. */}
         <div className={styles.grid}>{tiles.map(id => id === 'memory' || id === 'note' ? <TransitionLink key={id} href={`/chat/${sessionId}/${id}`} className={styles.tile} onClick={close}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
-        </TransitionLink> : <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
+        </TransitionLink> : <button key={id} type="button" className={styles.tile} onClick={() => go(id as Screen)}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
         </button>)}
-          {/* 11/10 출력량 설정 — 서랍 대신 팝업(크랙·베이비챗 참고). 모델 선택과 같은 저장소를 쓴다. */}
-          {choices.length > 0 && <button type="button" className={styles.tile} aria-haspopup="dialog" onClick={() => { close(); setLengthOpen(true) }}><MenuIcon name="length"/><span>{t('출력량 설정')}</span></button>}
+          {/* 11/21 출력량 설정 — 팝업 대신 따로 된 페이지. 모델 선택과 같은 저장소를 쓴다. */}
+          {choices.length > 0 && <button type="button" className={styles.tile} onClick={() => go('length')}><MenuIcon name="length"/><span>{t('출력량 설정')}</span></button>}
         </div>
-        {panel && <div id={`${menuId}-detail`} role="region" aria-labelledby={`${menuId}-${panel}`} className={styles.detail}>
-          <div className={styles.detailHead}><strong>{titles[panel]}</strong><button type="button" aria-label={t('상세 설정 닫기')} onClick={() => { document.getElementById(`${menuId}-${panel}`)?.focus(); setPanel(null) }}>×</button></div>
-          {panel === 'persona' && <ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/>}
-          {panel === 'memory' && <MemoryGraphView sessionId={sessionId} refreshKey={turnCount}/>}
-          {panel === 'model' && <ChatModelOptions choices={choices}/>}
-        </div>}
       </section>
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
@@ -173,7 +211,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {row('/my/permissions', 'settings', t('알림·접근 권한'))}
         <InstallAppButton className={styles.row} onOpen={close}><MenuIcon name="download"/><span>{t('홈 화면에 추가')}</span><Chevron/></InstallAppButton>
       </section>
-    </Drawer>
-    <ReplyLengthSheet open={lengthOpen} onClose={() => setLengthOpen(false)} choices={choices}/>
+    </RoomPage>}
   </>
 }
