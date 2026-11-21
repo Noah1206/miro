@@ -337,7 +337,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 @media (max-width: 1023px) {
   .create-tabs { overflow: visible !important; }
   .create-tabs > div { flex: 1 1 0 !important; min-width: 0; overflow-x: auto; scrollbar-width: none; container-type: inline-size; gap: 0 !important; justify-content: flex-start !important; }
-  .create-tabs > div > button { flex: 0 0 auto !important; min-width: calc(100cqw / 5.5); justify-content: center; white-space: nowrap; padding-inline: 8px !important; }
+  /* 11/21 사용자: 처음 보이는 탭은 정확히 4개 — 탭 하나 = 탭 줄 폭의 1/4(그 전 1/5.5 최소 폭이라 5개 넘게 보였다). */
+  .create-tabs > div > button { flex: 0 0 calc(100cqw / 4) !important; min-width: 0; justify-content: center; white-space: nowrap; padding-inline: 8px !important; }
 }
 @media (min-width: 1024px) {
   .app-shell:has(.create-page) { --shell-w: 1200px; }
