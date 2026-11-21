@@ -595,3 +595,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .route-progress[data-phase="done"] { width: 100%; opacity: 0; transition: width 200ms ease-out, opacity 250ms ease 150ms; }
 @keyframes route-progress-grow { from { width: 0 } 15% { width: 45% } to { width: 82% } }
 @media (prefers-reduced-motion: reduce) { .route-progress[data-phase="loading"] { animation: none; width: 60%; } }
+/* 11/21 사용자: 화면 이동·첫 접속 로딩 = 화면 정가운데 동그랗게 돌아가는 고리(라벤더). */
+.route-spinner { display: block; width: 34px; height: 34px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--color-lavender-500) 22%, transparent); border-top-color: var(--color-lavender-500); animation: route-spin .8s linear infinite; }
+@keyframes route-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .route-spinner { animation-duration: 2s; } }
