@@ -129,3 +129,6 @@
 
 /* 11/12 사용자(크랙식 알림): 숫자 대신 종 오른쪽 위 8px 빨간 점. */
 .bellDot { position: absolute; top: 5px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ff6352; pointer-events: none; }
+
+/* 11/21 사용자: 데스크톱은 홈 검색창을 지운다(머리의 검색 아이콘으로). 취향 고르기는 남긴다. */
+@media (min-width: 1024px) { .searchBar { display: none; } }
