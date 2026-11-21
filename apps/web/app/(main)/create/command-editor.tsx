@@ -52,6 +52,8 @@ export function CommandEditor({ name, defaultValue = [], adultAllowed = false }:
   )
 }
 
+/** 11/22 사용자: 필수 칸에 빨간 * — 칸 안 오른쪽 끝. */
+export const REQUIRED_MARK: React.CSSProperties = { flex: 'none', color: 'var(--color-danger)', fontSize: 15, fontWeight: 700, lineHeight: 1 }
 const field: React.CSSProperties = { width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }
 /** 이 편집기는 캐릭터 폼 안에 있다 — 한 줄 입력에서 Enter 가 캐릭터를 게시해 버리지 않게. */
 const noSubmit = (e: React.KeyboardEvent) => { if (e.key === 'Enter') e.preventDefault() }
@@ -79,14 +81,16 @@ export function NewCommand({ onDone, adultAllowed, initialName = '' }: { onDone:
   return <div className="stack" style={{ gap: 10, padding: '12px', ...box(false) }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', ...box(false) }}>
       <span className="t-body" style={{ color: 'var(--color-text-tertiary)' }}>/</span>
-      <input value={name} onKeyDown={noSubmit} onChange={e => setName(e.target.value.replace(/\s+/g, ''))} maxLength={COMMAND_LIMITS.name} placeholder={t('이름')} aria-label={t('명령어 이름')} style={field} />
+      <input value={name} onKeyDown={noSubmit} onChange={e => setName(e.target.value.replace(/\s+/g, ''))} maxLength={COMMAND_LIMITS.name} placeholder={t('이름')} aria-label={t('명령어 이름')} aria-required style={field} />
+      <span aria-hidden style={REQUIRED_MARK}>*</span>
     </div>
     <div style={{ padding: '6px 10px', ...box(false) }}>
       <input value={hint} onKeyDown={noSubmit} onChange={e => setHint(e.target.value)} maxLength={COMMAND_LIMITS.hint} placeholder={t('한 줄 설명')} aria-label={t('명령어 설명')} style={field} />
     </div>
-    <div style={{ padding: '6px 10px 3px', ...box(false) }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '6px 10px 3px', ...box(false) }}>
       <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={3} maxLength={COMMAND_LIMITS.prompt} aria-label={t('명령어 지시')}
-        placeholder={t('AI에게 줄 프롬프트')} style={{ ...field, resize: 'none' }} />
+        placeholder={t('AI에게 줄 프롬프트')} aria-required style={{ ...field, resize: 'none' }} />
+      <span aria-hidden style={{ ...REQUIRED_MARK, paddingTop: 4 }}>*</span>
     </div>
     <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} hint={t('켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.')} />
     {adultAllowed && <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} hint={t('켜면 언베일을 켠 대화방에서만 실행돼요.')} />}

@@ -4,6 +4,7 @@ import type { CharacterEnding } from '@miro/domain'
 import { useT } from '@/lib/i18n/client'
 import { shrinkImage } from '@/lib/shrink-image'
 import { box, fieldFont } from './form-parts'
+import { REQUIRED_MARK } from './command-editor'
 import { uploadSituationImage } from './actions'
 
 export const ENDING_LIMIT = 10
@@ -50,7 +51,11 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
       {on && rows.map(r => (
         <div key={r.id} className="stack" style={{ gap: 8, padding: 12, borderRadius: 12, border: '1px solid var(--color-border)' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input value={r.name} maxLength={20} placeholder={t('엔딩 이름 (예: 내일이 온다)')} aria-label={t('엔딩 이름')} onChange={e => patch(r.id, { name: e.target.value })} style={{ ...input, flex: 1 }} />
+            <div style={{ position: 'relative', flex: 1, display: 'flex' }}>
+              {/* 11/22 사용자: 필수 칸에 빨간 * — 이름·조건이 비면 그 엔딩은 저장 때 빠진다. */}
+              <input value={r.name} maxLength={20} placeholder={t('엔딩 이름 (예: 내일이 온다)')} aria-label={t('엔딩 이름')} aria-required onChange={e => patch(r.id, { name: e.target.value })} style={{ ...input, flex: 1, paddingRight: 26 }} />
+              <span aria-hidden style={{ ...REQUIRED_MARK, position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>*</span>
+            </div>
             <button type="button" aria-label={t('엔딩 빼기')} onClick={() => setRows(rs => rs.filter(x => x.id !== r.id))}
               style={{ width: 36, height: 36, flex: 'none', borderRadius: 18, border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>×</button>
           </div>
@@ -60,8 +65,11 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
               {t('최소 턴')}<input value={r.minTurns} inputMode="numeric" aria-label={t('최소 턴')} onChange={e => patch(r.id, { minTurns: e.target.value })} style={{ ...input, width: 64 }} />
             </label>
           </div>
-          <textarea value={r.condition} maxLength={500} rows={2} aria-label={t('엔딩 조건')} placeholder={t('어떤 일이 일어나면 이 엔딩인가요? 예) 피오와 카라가 모두 살아 있고 잿빛 뿔을 물리쳤다.')}
-            onChange={e => patch(r.id, { condition: e.target.value })} style={area} />
+          <div style={{ position: 'relative' }}>
+            <textarea value={r.condition} maxLength={500} rows={2} aria-label={t('엔딩 조건')} aria-required placeholder={t('어떤 일이 일어나면 이 엔딩인가요? 예) 피오와 카라가 모두 살아 있고 잿빛 뿔을 물리쳤다.')}
+            onChange={e => patch(r.id, { condition: e.target.value })} style={{ ...area, paddingRight: 28 }} />
+            <span aria-hidden style={{ ...REQUIRED_MARK, position: 'absolute', right: 12, top: 12 }}>*</span>
+          </div>
           <textarea value={r.epilogue} maxLength={1000} rows={2} aria-label={t('에필로그')} placeholder={t('에필로그 분위기 (선택) — AI가 결말 장면을 이 느낌으로 맺어요.')}
             onChange={e => patch(r.id, { epilogue: e.target.value })} style={area} />
           <input value={r.hint} maxLength={20} placeholder={t('엔딩 힌트 (선택, 사용자에게 보여요)')} aria-label={t('엔딩 힌트')} onChange={e => patch(r.id, { hint: e.target.value })} style={input} />
