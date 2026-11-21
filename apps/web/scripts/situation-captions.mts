@@ -8,6 +8,8 @@
  *   npx tsx --env-file=../../.env scripts/situation-captions.mts --test <slug> [장수]       # 몇 장 시험(쓰기 없음)
  *   npx tsx --env-file=../../.env scripts/situation-captions.mts --plan                    # 작품·장수·예상 비용(쓰기 없음)
  *   npx tsx --env-file=../../.env scripts/situation-captions.mts --apply --limit-usd 4     # 설명을 만들어 DB 반영
+ *
+ * 11/22 사용자: 기본은 Gemini(일반·언베일 모두, 성인 필터 끔). --anthropic = 일반 사진만 Claude, --openrouter = 예전 OpenRouter(grok).
  */
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
@@ -55,8 +57,10 @@ async function captionAnthropic(src: string, work: Work): Promise<{ text: string
   return { text, usd: (j.usage?.input_tokens ?? 0) * ANTHROPIC_PRICE.in + (j.usage?.output_tokens ?? 0) * ANTHROPIC_PRICE.out }
 }
 
-// 11/19 사용자: 언베일 사진은 Gemini 로 — 공식 안전 설정(BLOCK_NONE)으로 성인 장면 필터를 끈다(--gemini, 언베일 사진만).
-const GEMINI = process.argv.includes('--gemini')
+// 11/19 사용자: 언베일 사진은 Gemini 로 — 공식 안전 설정(BLOCK_NONE)으로 성인 장면 필터를 끈다.
+// 11/22 사용자: OpenRouter 잔액이 바닥나 기본을 Gemini 로(일반·언베일 모두). 예전 길은 --openrouter.
+const OPENROUTER = process.argv.includes('--openrouter')
+const GEMINI = !ANTHROPIC && !OPENROUTER
 const GEMINI_PRICE = { in: 0.5 / 1e6, out: 3 / 1e6 }   // flash 어림
 
 async function captionGemini(src: string, work: Work): Promise<{ text: string; usd: number }> {
@@ -114,7 +118,7 @@ const rows = await db.select({ id: characters.id, slug: characters.slug, name: c
   .from(characters).where(sql`${characters.isPublic} and ${characters.deletedAt} is null and ${characters.audience} = 'male' and ${characters.slug} like 'official-m-%'`)
 const works: Work[] = rows.map(r => {
   const have = new Set((r.situationImages ?? []).map(e => pathOf(e.image)))
-  return { id: r.id, slug: r.slug ?? '', name: r.name, images: (r.images ?? []).filter(src => !have.has(pathOf(src)) && !(ANTHROPIC && isUnveil(src)) && !(GEMINI && !isUnveil(src))),
+  return { id: r.id, slug: r.slug ?? '', name: r.name, images: (r.images ?? []).filter(src => !have.has(pathOf(src)) && !(ANTHROPIC && isUnveil(src))),
     context: contextOf(ai[r.slug ?? '']?.personality ?? r.personality ?? '') }
 }).filter(w => w.images.length)
 
