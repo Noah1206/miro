@@ -53,20 +53,20 @@ export function NoteEditor({ sessionId, initial, initialPresets }: { sessionId: 
     <div className={`create-page ${styles.noteForm}`}>
       {/* 11/21 사용자: 페르소나와 같은 모양 — 칸 위 굵은 이름표 + 분홍 안내, 채운 칸, 글자 수는 칸 밑 오른쪽. */}
       <div className={form.group}>
-        <span className={form.label}>{t('내 노트 보관함')}</span>
+        <span className={form.label}>{t('내 노트 보관함')}<b aria-hidden>*</b></span>
         <SelectField name="preset" value={picked} onChange={pick}
           options={[{ value: NEW, label: t('새 노트') }, ...presets.map(p => ({ value: p.id, label: p.title }))]} />
       </div>
 
       <div className={form.group}>
-        <label htmlFor="note-title" className={form.label}>{t('제목')}</label>
+        <label htmlFor="note-title" className={form.label}>{t('제목')}<b aria-hidden>*</b></label>
         <input id="note-title" className={form.input} value={title} maxLength={TITLE_MAX} placeholder={t('예: 경호원 설정')} autoComplete="off"
           onChange={(e) => { setTitle(e.target.value); setStatus(null) }} />
         <span className={form.count}>{title.length}/{TITLE_MAX}</span>
       </div>
 
       <div className={form.group}>
-        <label htmlFor="note-text" className={form.label}>{t('내용')}</label>
+        <label htmlFor="note-text" className={form.label}>{t('내용')}<b aria-hidden>*</b></label>
         <textarea id="note-text" className={form.input} value={text} maxLength={MAX} rows={7} aria-label={t('유저노트')}
           placeholder={t('예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.')}
           onChange={(e) => { setText(e.target.value); setStatus(null) }} />

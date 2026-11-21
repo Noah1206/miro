@@ -35,20 +35,20 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
         <input id={nameId} className={styles.input} name="name" value={name} onChange={e => setName(e.target.value)} maxLength={PERSONA_LIMITS.name} required autoComplete="off" placeholder={t('이름을 입력하세요')} />
         <span className={styles.count}>{name.length}/{PERSONA_LIMITS.name}</span>
       </div>
-      {/* 11/21 사용자: 나이 칸(비워도 된다). */}
+      {/* 11/21 사용자: 나이 칸(비워도 된다). 같은 날: 모든 칸 이름표에 빨간 별표. */}
       <div className={styles.group}>
-        <label htmlFor={ageId} className={styles.label}>{t('나이')}</label>
+        <label htmlFor={ageId} className={styles.label}>{t('나이')}<b aria-hidden>*</b></label>
         <input id={ageId} className={styles.input} name="age" value={age} onChange={e => setAge(e.target.value)} maxLength={PERSONA_LIMITS.age} autoComplete="off" inputMode="numeric" placeholder={t('나이를 입력하세요')} />
       </div>
       <div className={styles.group} role="group" aria-label={t('성별')}>
-        <span className={styles.label}>{t('성별')}</span>
+        <span className={styles.label}>{t('성별')}<b aria-hidden>*</b></span>
         <input type="hidden" name="gender" value={gender} />
         <div className={styles.genderRow}>
           {GENDERS.map(g => <button key={g.value} type="button" aria-pressed={gender === g.value} onClick={() => setGender(g.value)}>{t(g.label)}</button>)}
         </div>
       </div>
       <div className={styles.group}>
-        <label htmlFor={aboutId} className={styles.label}>{t(guide === undefined ? '상세정보' : '이 세계에서의 나')}{guide !== undefined && <b aria-hidden>*</b>}</label>
+        <label htmlFor={aboutId} className={styles.label}>{t(guide === undefined ? '상세정보' : '이 세계에서의 나')}<b aria-hidden>*</b></label>
         <textarea id={aboutId} className={styles.input} name="description" value={about} onChange={e => setAbout(e.target.value)} maxLength={PERSONA_LIMITS.description} rows={7} required={guide !== undefined}
           placeholder={guide || t('이렇게 적어 보세요\n\n· 외모: 키, 머리 모양, 인상\n· 성격·말투: 무뚝뚝하지만 다정함, 존댓말\n· 좋아하는 것 / 싫어하는 것\n· 직업·특징: 대학원생, 밤샘이 잦음\n· 캐릭터와의 사이: 오래된 이웃')} />
         <span className={styles.count}>{about.length.toLocaleString()}/{PERSONA_LIMITS.description.toLocaleString()}</span>
