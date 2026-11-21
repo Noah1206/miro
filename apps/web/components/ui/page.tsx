@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import { fadeUp, stagger } from '@/lib/motion/tokens'
 import { TransitionLink } from './transition-link'
+import { canGoBack } from '@/lib/motion/view-transition'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -22,7 +23,9 @@ export function Back({ href, label = msg('뒤로'), bold, size }: { href: string
   const t = useT()
   // bold = 사진 위에 배경 없이 올리는 굵은 <(11/5 캐릭터 상세)
   return (
-    <TransitionLink href={href} direction="back" aria-label={t(label)} className="hit back-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: bold ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontSize: 'var(--font-caption)', padding: '6px 0', ...(bold ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' } : {}) }}>
+    // 11/21 사용자: < 는 무조건 바로 전에 있던 페이지로 — 앱 안에서 들어왔으면 브라우저 뒤로, 주소로 바로 들어온 경우만 href 로.
+    <TransitionLink href={href} direction="back" aria-label={t(label)} className="hit back-press"
+      onClick={e => { if (canGoBack()) { e.preventDefault(); window.history.back() } }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: bold ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontSize: 'var(--font-caption)', padding: '6px 0', ...(bold ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' } : {}) }}>
       <svg aria-hidden width={size ?? (bold ? 26 : 18)} height={size ?? (bold ? 26 : 18)} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={bold ? 2.75 : 1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
     </TransitionLink>
   )

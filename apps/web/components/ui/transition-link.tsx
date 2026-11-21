@@ -1,8 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { forwardRef, useEffect, type ComponentProps, type MouseEvent } from 'react'
-import { settleNavigation, startNavigation } from '@/lib/motion/view-transition'
+import { forwardRef, useEffect, useRef, type ComponentProps, type MouseEvent } from 'react'
+import { notePageChange, settleNavigation, startNavigation } from '@/lib/motion/view-transition'
 
 type Props = ComponentProps<typeof Link> & { direction?: 'forward' | 'back' }
 
@@ -23,7 +23,8 @@ export const TransitionLink = forwardRef<HTMLAnchorElement, Props>(function Tran
 /** 루트 레이아웃에 하나. pathname 이 바뀌면 진행 중인 전환을 마무리한다. */
 export function ViewTransitionResolver() {
   const pathname = usePathname()
-  useEffect(() => { settleNavigation() }, [pathname])
+  const first = useRef(true)
+  useEffect(() => { settleNavigation(); if (first.current) first.current = false; else notePageChange() }, [pathname])
   useEffect(() => {
     const onPop = () => { document.documentElement.dataset.nav = 'back' }
     window.addEventListener('popstate', onPop); return () => window.removeEventListener('popstate', onPop)

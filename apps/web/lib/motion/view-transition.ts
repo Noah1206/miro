@@ -12,3 +12,14 @@ export function startNavigation(_direction: 'forward' | 'back', navigate: () => 
 
 /** Retained for existing layout callers; navigation no longer waits for settlement. */
 export function settleNavigation() {}
+
+/**
+ * 11/21 사용자: < 는 무조건 바로 전에 있던 페이지로. 이 탭에서 앱 안으로 몇 칸 들어왔는지 센다 —
+ * 새 페이지로 가면 +1, 브라우저 뒤로(popstate)로 돌아오면 -1. 0 이면(주소로 바로 들어옴·새로고침) 뒤로 갈 앱 안 페이지가 없다.
+ * 주소만 바꾸는 ?menu 같은 이동은 페이지가 바뀌지 않아 세지 않는다.
+ */
+let depth = 0
+let poppedAt = 0
+if (typeof window !== 'undefined') window.addEventListener('popstate', () => { poppedAt = Date.now() })
+export function notePageChange() { if (Date.now() - poppedAt < 1500) { depth = Math.max(0, depth - 1); poppedAt = 0 } else depth++ }
+export const canGoBack = () => depth > 0
