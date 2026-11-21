@@ -144,3 +144,12 @@ export async function myLoreSources(): Promise<Array<{ id: string; name: string;
   // 시작 설정 전용 표시(scene)는 다른 작품에선 뜻이 없어 뺀다.
   return rows.map(r => ({ id: r.id, name: r.name, lore: r.lore.map(({ scene: _scene, ...e }) => e) }))
 }
+
+/** 11/21 사용자: 만들기 머리의 '불러오기' — 내 임시저장 목록(최신순). 고르면 그 작품의 편집 화면으로 간다. */
+export async function myDrafts(): Promise<Array<{ id: string; name: string; createdAt: string }>> {
+  const user = await requireUser()
+  const rows = await db.select({ id: characters.id, name: characters.name, createdAt: characters.createdAt }).from(characters)
+    .where(and(eq(characters.ownerId, user.id), eq(characters.isDraft, true), isNull(characters.deletedAt)))
+    .orderBy(desc(characters.createdAt)).limit(50)
+  return rows.map(r => ({ id: r.id, name: r.name, createdAt: r.createdAt.toISOString() }))
+}

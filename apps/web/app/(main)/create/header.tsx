@@ -1,10 +1,42 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
+import { Sheet } from '@/components/ui/sheet'
 import { spring } from '@/lib/motion/tokens'
 import { msg } from '@/lib/i18n'
-import { useT } from '@/lib/i18n/client'
+import { useLanguage, useT } from '@/lib/i18n/client'
+import { myDrafts } from './actions'
+
+/** 11/21 사용자: 임시저장 왼쪽 아이콘 — 내 임시저장 중 하나를 골라 불러온다(그 작품의 편집 화면으로). 목록은 열 때마다 새로 읽는다. */
+function DraftPicker() {
+  const t = useT()
+  const language = useLanguage()
+  const [open, setOpen] = useState(false)
+  const [drafts, setDrafts] = useState<Awaited<ReturnType<typeof myDrafts>> | null>(null)
+  const show = () => { setOpen(true); setDrafts(null); myDrafts().then(setDrafts, () => setDrafts([])) }
+  return <>
+    <button type="button" onClick={show} aria-label={t('임시저장 불러오기')} className="hit"
+      style={{ display: 'grid', placeItems: 'center', width: 36, height: 44, background: 'none', border: 0, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+      <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9.5a2 2 0 0 0-2-2h-7l-2-2.5H5a2 2 0 0 0-2 2z" /><path d="M12 11v5M9.5 13.5 12 16l2.5-2.5" />
+      </svg>
+    </button>
+    <Sheet open={open} onClose={() => setOpen(false)} title={t('임시저장 불러오기')}>
+      <div style={{ display: 'grid', gap: 4, paddingBottom: 'var(--space-4)' }}>
+        {drafts === null && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', padding: '12px 0' }}>{t('불러오는 중')}</p>}
+        {drafts?.length === 0 && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', padding: '12px 0' }}>{t('임시저장한 캐릭터가 없어요')}</p>}
+        {drafts?.map(d => (
+          <TransitionLink key={d.id} href={`/my/characters/${d.id}/edit`} onClick={() => setOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 52, padding: '8px 12px', borderRadius: 12, background: 'var(--color-surface-3)', color: 'var(--color-text-primary)' }}>
+            <span style={{ fontWeight: 'var(--weight-semibold)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name.trim() || t('이름 없음')}</span>
+            <span className="t-caption" style={{ flex: 'none', color: 'var(--color-text-tertiary)' }}>{new Date(d.createdAt).toLocaleDateString(language, { month: 'short', day: 'numeric' })}</span>
+          </TransitionLink>
+        ))}
+      </div>
+    </Sheet>
+  </>
+}
 
 /** 일상·연락 탭은 관계 탭에 합쳤고, 외형도 관계 탭으로 옮기고 그 자리에 명령어 탭을 뒀다(10/19). */
 export type CreateTab = 'profile' | 'personality' | 'commands' | 'lore' | 'relationship' | 'intro' | 'status' | 'endings' | 'situations' | 'voice' | 'settings' | 'advanced' | 'preview'
@@ -61,8 +93,10 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
         {/* 10/20: '아직 필요' 안내도 화면에서 지운다(사용자 요청) — 읽어 주는 기기에만 알리고, 자리는 버튼을 오른쪽으로 미는 빈칸. */}
         <span className="sr-only" aria-live="polite">{missingHint}</span>
         <span style={{ flex: 1 }} />
+        {buttons === 'create' && <DraftPicker />}
+        {/* 11/21 사용자: 임시저장·게시 글자를 키웠다(caption → body). */}
         {buttons === 'create' && <button type="submit" name="intent" value="draft" disabled={!canDraft || pending}
-          style={{ minHeight: 44, padding: '4px 6px', background: 'none', border: 0, color: canDraft && !pending ? 'var(--color-text-secondary)' : 'var(--color-text-disabled)', cursor: canDraft && !pending ? 'pointer' : 'default', fontSize: 'var(--font-caption)' }}>{t('임시저장')}</button>}
+          style={{ minHeight: 44, padding: '4px 6px', background: 'none', border: 0, color: canDraft && !pending ? 'var(--color-text-secondary)' : 'var(--color-text-disabled)', cursor: canDraft && !pending ? 'pointer' : 'default', fontSize: 'var(--font-body-size)' }}>{t('임시저장')}</button>}
         <button type={canSubmit ? 'submit' : 'button'} name="intent" value="publish" disabled={pending || (!canSubmit && !onBlocked)} aria-disabled={!canSubmit}
           onClick={canSubmit ? undefined : onBlocked} className="hit" style={chip(true, canSubmit && !pending)}>
           {buttons === 'save' ? (pending ? t('저장 중') : t('저장')) : (pending ? t('게시 중') : t('게시'))}
@@ -99,8 +133,8 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
 
 function chip(primary: boolean, on: boolean): React.CSSProperties {
   return {
-    minHeight: 32, padding: '4px 10px', borderRadius: 'var(--radius-button)', border: 0, cursor: on ? 'pointer' : 'default',
-    fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)',
+    minHeight: 36, padding: '4px 14px', borderRadius: 'var(--radius-button)', border: 0, cursor: on ? 'pointer' : 'default',
+    fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)',
     background: primary && on ? 'var(--color-accent)' : 'var(--color-surface-2)',
     color: primary && on ? 'var(--color-accent-on)' : on ? 'var(--color-text-primary)' : 'var(--color-text-disabled)',
   }
