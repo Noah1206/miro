@@ -198,6 +198,11 @@ export async function recommendableModels(userId: string): Promise<Array<{ id: s
 }
 
 /** 캐릭터의 권장 설정을 채팅 첫 선택값으로(10/28). 후보에 없으면 null — 서버 기본(첫 모델)을 쓴다. */
+/** 11/21 사용자: 채팅방에 들어왔을 때 기본 출력량은 다섯 단계의 가운데('조금 길게', plus) — 같은 모델의 plus 선택지로. 없으면 그대로. 사용자가 고른 값(저장소)이 있으면 그쪽이 이긴다. */
+export function middleLength(choices: ChatModelChoice[], id: string | undefined): string | undefined {
+  const mid = id?.replace(/:[a-z]+$/, ':plus')
+  return mid && choices.some(c => c.id === mid) ? mid : id
+}
 export function recommendedChoice(choices: ChatModelChoice[], rec: { model: string; length: ChatLength } | null | undefined): string | null {
   if (!rec) return null
   const id = choiceId(rec.model, rec.length)

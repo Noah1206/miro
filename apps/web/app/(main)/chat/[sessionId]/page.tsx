@@ -22,7 +22,7 @@ import { getPersona, needsPersona } from '@/lib/persona'
 import { WorldIntro } from './world-intro'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
-import { chatModelOptions, recommendedChoice } from '@/lib/ai/chat-models'
+import { chatModelOptions, middleLength, recommendedChoice } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
 import { getT } from '@/lib/i18n/server'
@@ -125,7 +125,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} soon={voicePaused()} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName} voiceSpeakers={Object.keys(rec?.ensembleVoices ?? {})}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={middleLength(modelOptions.choices, recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id)} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} soon={voicePaused()} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName} voiceSpeakers={Object.keys(rec?.ensembleVoices ?? {})}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <ChatSiteHeader unveil={unveilOn} unread={unread} profile={profile} />
         <header className={styles.header}>
