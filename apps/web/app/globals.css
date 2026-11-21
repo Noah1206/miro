@@ -610,3 +610,5 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-preview > .intro-preview .intro-status { border: 0 !important; border-radius: 10px !important; background: #1b1b1c !important; }
 /* 11/21 사용자: 상세 인트로의 사람 말 줄 — 채팅방 대사와 같이 굵은 흰 글씨. */
 .intro-speech { margin: 0; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; word-break: keep-all; }
+/* 11/21 사용자: 상세 인트로의 상태창도 채팅방과 같은 글씨(15px·1.45). */
+.intro-preview > .intro-preview .intro-status pre { font-size: 15px !important; line-height: 1.45 !important; padding: 2px 14px 14px !important; }

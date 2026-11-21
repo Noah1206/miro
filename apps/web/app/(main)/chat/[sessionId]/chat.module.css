@@ -825,3 +825,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo']:first-child,
 :global([data-chat-theme='miro']) .messageLine:not([data-opening]) + .messageLine[data-opening][data-kind='photo'] { border-top-left-radius: 16px; border-top-right-radius: 16px; padding-top: 14px; }
 :global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo']:not(:has(+ .messageLine[data-opening])) { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding-bottom: 14px; }
+/* 11/21 사용자(스크린샷 기준): 상태창 글씨를 키운다 — 12.5px → 15px, 줄 간격 1.45. */
+.statusText { font-size: 15px; line-height: 1.45; padding: 2px 14px 14px; }
