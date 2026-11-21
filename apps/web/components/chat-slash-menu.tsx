@@ -1,9 +1,11 @@
 'use client'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { TransitionLink } from '@/components/ui'
+import { createPortal } from 'react-dom'
+import { Sheet, TransitionLink } from '@/components/ui'
 import { useRoomControls } from '@/components/room-controls'
 import { useWallet } from '@/components/wallet/provider'
 import { searchCommands, type LibraryCommand } from '@/app/(main)/create/commands'
+import { NewCommand } from '@/app/(main)/create/command-editor'
 import { useT } from '@/lib/i18n/client'
 import styles from './chat-slash-menu.module.css'
 
@@ -18,11 +20,14 @@ const icons = {
   theme: <Icon><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-4h3a4 4 0 0 0 4-4c0-5-4-10-9-10Z"/><path d="M7 10h.01M10 7h.01M15 8h.01" strokeWidth="3"/></Icon>,
   memory: <Icon><path d="M4 4h12l4 4v12H4zM14 4v6h6M8 13h8M8 17h5"/></Icon>,
   message: <Icon><path d="M21 12a8 8 0 0 1-8 8H8l-5 2v-6a8 8 0 0 1 6-13h4a8 8 0 0 1 8 9Z"/></Icon>,
+  create: <Icon><path d="M12 5v14M5 12h14"/></Icon>,
   wallet: <Icon><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18M16 14h2"/></Icon>,
 }
 
 /** The slash palette exposes existing room controls and selectable server-owned commands. */
-export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null, onSlash, hideTrigger = false }: {
+export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null, onSlash, hideTrigger = false, adultAllowed = false }: {
+  /** 11/22 직접 만들기의 '언베일 전용' 스위치 — 만들기 화면과 같은 기준(만 19세 이상). 서버도 미성년이면 [언베일] 을 뗀다. */
+  adultAllowed?: boolean
   /** 11/6 사용자: 도구 줄의 '/' 버튼은 지운다 — 입력칸에 '/' 를 치면 뜨는 목록은 그대로. */
   hideTrigger?: boolean
   commands: Array<{ name: string; hint: string }>; messengerHref?: string
@@ -36,6 +41,9 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
   const { openRoomPanel, setPickerOpen } = useRoomControls()
   const { openRecharge } = useWallet()
   const [open, setOpen] = useState(false)
+  const [making, setMaking] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const [library, setLibrary] = useState(false)
   const [query, setQuery] = useState('')
   const [rows, setRows] = useState<LibraryCommand[] | null>(null)
@@ -115,6 +123,10 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
           : rows.map((command, i) => <button key={command.id} type="button" role="menuitem" className={styles.row} data-active={typing && own.length + i === active || undefined} onClick={() => pick({ name: command.name, sourceId: command.id })}>
             {icons.library}<span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint || command.prompt}</span>
           </button>)}
+        {/* 11/22 사용자: 채팅방에서도 명령어를 직접 만든다 — 라이브러리에 저장되고(공개 선택) 바로 이 대화에 적용된다. */}
+        <button type="button" role="menuitem" className={styles.row} onClick={() => { setOpen(false); setMaking(true) }}>
+          {icons.create}<span className={styles.name}>{t('직접 만들기')}</span><span className={styles.description}>{t('새 명령어를 만들어 바로 적용')}</span>
+        </button>
       </> : <>
         {row(icons.library, t('라이브러리'), t('명령어를 찾아 대화에 적용'), () => { setLibrary(true); setOpen(true) })}
         {row(icons.persona, t('페르소나'), t('대화에서 사용할 내 정보'), () => openRoomPanel('persona'))}
@@ -127,5 +139,8 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
         </button>)}</div>}
       </>}
     </div>}
+    {mounted && createPortal(<Sheet open={making} onClose={() => setMaking(false)} title={t('명령어 직접 만들기')}>
+      <div style={{ padding: '0 var(--space-4) var(--space-5)' }}><NewCommand adultAllowed={adultAllowed} onDone={cmd => { setMaking(false); onPick({ name: cmd.name, sourceId: cmd.sourceId }) }} /></div>
+    </Sheet>, document.body)}
   </div>
 }

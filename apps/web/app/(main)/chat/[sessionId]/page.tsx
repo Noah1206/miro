@@ -40,6 +40,7 @@ import { fillCharacterMacros } from '@miro/domain'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
 import { modalImageReady } from '@/lib/ai/modal-image'
 import { customSceneId } from '@/lib/photo-scenes'
+import { isMinor } from '@/lib/payments/minor'
 
 /** 처음 들어온 대화 화면에서 짚어 주는 기능(10/19). 화면에 없는 버튼(테마에 따라 다름)은 건너뛴다. */
 const CHAT_COACH: CoachStep[] = [
@@ -54,6 +55,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const t = await getT()
   const user = await currentUser()
   if (!user) redirect('/login')
+  // 11/22 `/` 목록 명령어 직접 만들기의 언베일 전용 스위치 — 만들기 화면과 같은 기준. 다른 조회와 겹쳐 돌린다.
+  const minor = isMinor(user.id).catch(() => true)
   const { sessionId } = await params
   // 11/16 잘린 주소(/chat/991da667 같은)로 들어오면 DB 가 uuid 형식 오류를 내 500 이 됐다 — 없는 방으로 처리한다.
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) notFound()
@@ -163,7 +166,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* 11/21 사용자: 대화방마다 처음 들어왔을 때 무조건 한 번 — 방마다 따로 기억한다. */}
         <CoachMarks storageKey={`miro:tour:chat:v2:${sessionId}`} steps={CHAT_COACH} />
         {/* 11/13 사용자: '이 세계에서의 나'는 선택 — 카드가 떠 있어도 입력창을 같이 보여 준다. */}
-        {<ChatComposer sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies?.map(fill) : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
+        {<ChatComposer adultAllowed={!(await minor)} sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies?.map(fill) : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
           persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
           photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />}
       </section>

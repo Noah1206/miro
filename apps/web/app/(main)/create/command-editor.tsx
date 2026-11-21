@@ -56,7 +56,7 @@ const field: React.CSSProperties = { width: '100%', background: 'none', border: 
 /** 이 편집기는 캐릭터 폼 안에 있다 — 한 줄 입력에서 Enter 가 캐릭터를 게시해 버리지 않게. */
 const noSubmit = (e: React.KeyboardEvent) => { if (e.key === 'Enter') e.preventDefault() }
 
-function NewCommand({ onDone, adultAllowed }: { onDone: (cmd: CharacterCommand) => void; adultAllowed: boolean }) {
+export function NewCommand({ onDone, adultAllowed }: { onDone: (cmd: CharacterCommand) => void; adultAllowed: boolean }) {
   const t = useT()
   const [name, setName] = useState('')
   const [hint, setHint] = useState('')

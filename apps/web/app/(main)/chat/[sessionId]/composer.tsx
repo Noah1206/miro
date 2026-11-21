@@ -32,7 +32,9 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력란과 설정 메뉴에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo, firstReplies }: {
+export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo, firstReplies, adultAllowed = false }: {
+  /** 11/22 `/` 목록의 명령어 직접 만들기에서 '언베일 전용' 스위치를 보여 줄지(만 19세 이상). */
+  adultAllowed?: boolean
   sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; messengerHref?: string
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
@@ -391,7 +393,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <ModelPicker {...modelOptions} place="up" disabled={pending || calendarPending || !ready}/>
             <ChatInputMore disabled={awaiting || calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 11/4 사용자: 사진·✳︎·/·추천은 입력창 아래 도구 줄로 내렸다. 페르소나 드롭다운·마이크는 뺐다. */}
-            <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
+            <ChatSlashMenu commands={commands} adultAllowed={adultAllowed} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
               onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
               onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
           </div>

@@ -2555,5 +2555,7 @@
  "화를 만들고 이름을 정한 뒤, 넣을 대화를 골라 나만의 웹소설로 엮어요.": "Create chapters, name them, and pick conversations to make your own web novel.",
  "화를 추가하고 이름을 정한 뒤, 넣을 대화를 골라 주세요.": "Add a chapter, name it, then pick the conversations to include.",
  "다른 상황으로 이야기해 주세요.": "Try a different situation.",
- "이 내용으로는 대화를 이어갈 수 없어요": "This conversation can't continue like this"
+ "이 내용으로는 대화를 이어갈 수 없어요": "This conversation can't continue like this",
+  "명령어 직접 만들기": "Create a command",
+  "새 명령어를 만들어 바로 적용": "Make a new command and use it now"
 }
