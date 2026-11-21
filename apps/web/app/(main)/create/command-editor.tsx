@@ -79,14 +79,14 @@ export function NewCommand({ onDone, adultAllowed, initialName = '' }: { onDone:
   return <div className="stack" style={{ gap: 10, padding: '12px', ...box(false) }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', ...box(false) }}>
       <span className="t-body" style={{ color: 'var(--color-text-tertiary)' }}>/</span>
-      <input value={name} onKeyDown={noSubmit} onChange={e => setName(e.target.value.replace(/\s+/g, ''))} maxLength={COMMAND_LIMITS.name} placeholder={t('이름 — 예) 일기')} aria-label={t('명령어 이름')} style={field} />
+      <input value={name} onKeyDown={noSubmit} onChange={e => setName(e.target.value.replace(/\s+/g, ''))} maxLength={COMMAND_LIMITS.name} placeholder={t('이름')} aria-label={t('명령어 이름')} style={field} />
     </div>
     <div style={{ padding: '6px 10px', ...box(false) }}>
-      <input value={hint} onKeyDown={noSubmit} onChange={e => setHint(e.target.value)} maxLength={COMMAND_LIMITS.hint} placeholder={t('한 줄 설명 — 예) 오늘 하루를 일기로 돌아본다')} aria-label={t('명령어 설명')} style={field} />
+      <input value={hint} onKeyDown={noSubmit} onChange={e => setHint(e.target.value)} maxLength={COMMAND_LIMITS.hint} placeholder={t('한 줄 설명')} aria-label={t('명령어 설명')} style={field} />
     </div>
     <div style={{ padding: '6px 10px 3px', ...box(false) }}>
       <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={3} maxLength={COMMAND_LIMITS.prompt} aria-label={t('명령어 지시')}
-        placeholder={t('AI에게 줄 프롬프트 — 예) 오늘 하루를 일기 형식으로 돌아보는 장면을 써 줘')} style={{ ...field, resize: 'none' }} />
+        placeholder={t('AI에게 줄 프롬프트')} style={{ ...field, resize: 'none' }} />
     </div>
     <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} hint={t('켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.')} />
     {adultAllowed && <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} hint={t('켜면 언베일을 켠 대화방에서만 실행돼요.')} />}

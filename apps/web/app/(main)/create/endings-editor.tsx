@@ -7,7 +7,6 @@ import { box, fieldFont } from './form-parts'
 import { uploadSituationImage } from './actions'
 
 export const ENDING_LIMIT = 10
-const GRADES: CharacterEnding['grade'][] = ['N', 'R', 'SR', 'SSR']
 type Row = { id: number; name: string; grade: CharacterEnding['grade']; minTurns: string; condition: string; epilogue: string; hint: string; image: string; uploading?: boolean; error?: string }
 
 /**
@@ -56,9 +55,7 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
               style={{ width: 36, height: 36, flex: 'none', borderRadius: 18, border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>×</button>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginRight: 2 }}>{t('등급')}</span>
-            {GRADES.map(g => <button key={g} type="button" aria-pressed={r.grade === g} onClick={() => patch(r.id, { grade: g })} style={chip(r.grade === g)}>{g}</button>)}
-            <span style={{ flex: 1 }} />
+            {/* 11/22 사용자: 등급(N·R·SR·SSR) 칸 삭제 — 값은 그대로 저장된다(기존 엔딩은 원래 등급, 새 엔딩은 N). */}
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-text-secondary)' }}>
               {t('최소 턴')}<input value={r.minTurns} inputMode="numeric" aria-label={t('최소 턴')} onChange={e => patch(r.id, { minTurns: e.target.value })} style={{ ...input, width: 64 }} />
             </label>
