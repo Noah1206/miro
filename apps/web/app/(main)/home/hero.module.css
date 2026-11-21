@@ -32,6 +32,10 @@
   .side img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; filter: brightness(.55); transition: filter .25s, transform .4s; }
   .side:hover img { filter: brightness(.7); transform: scale(1.03); }
   .arrow { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; border: 0; border-radius: 50%; background: rgb(0 0 0 / .45); color: #fff; cursor: pointer; }
+  /* 11/21 사용자: 붙는 쪽 모서리는 둥글기 없이 — 세 카드가 한 장처럼(바깥 네 모서리만 둥글게). */
+  .side + .main { border-radius: 0; }
+  .side:first-child { border-radius: 16px 0 0 16px; }
+  .main + .side { border-radius: 0 16px 16px 0; }
   .arrowPrev { left: 20px; }
   .arrowNext { right: 20px; }
 }
