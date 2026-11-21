@@ -269,9 +269,10 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           {!full && (
             <li>
               <button type="button" onClick={pick} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
-                style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'var(--color-surface-2)',
-                  border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-white)' }}>
-                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: '#fff',
+                  border: 0, borderRadius: 'var(--radius-sm)', color: '#16161a' }}>
+                {/* 11/21 사용자: '+' 대신 흰 업로드 버튼(위 화살표 + 받침). */}
+                <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" /></svg>
               </button>
             </li>
           )}

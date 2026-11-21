@@ -336,7 +336,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section></div>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
           <input type="hidden" name="audience" value={audience} />
-          <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 아래 캐릭터 칸 밑의 \'캐릭터 추가\'로 인물을 더할 수 있어요.')}>
+          {/* 11/21 사용자: 아래 설명 글은 지웠다. */}
+          <Section title={t('작품 형식')}>
             <Card>
               <input type="hidden" name="ensembleVoices" value={castMode === 'multi' ? castJson(cast) : '{}'} />
               <input type="hidden" name="ensemblePhotos" value={castMode === 'multi' ? castPhotosJson(cast) : '{}'} />
