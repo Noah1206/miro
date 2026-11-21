@@ -9,7 +9,6 @@ import { db, messages, characters, roleplaySessions } from '@miro/db'
 import { pickAutoVoice, voiceOptions } from '@/lib/voice'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
-import { unreadContactCount } from '@/lib/ops/archive'
 import { ChatSiteHeader } from './site-header'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
@@ -65,7 +64,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 11/21 사용자('이어서 진행하러 갈 때 너무 늦게 들어가진다'): 아래 두 묶음도 처음부터 같이 읽는다 — 전엔 첫 묶음이 끝난 뒤 차례로 읽어
   // 긴 방에서 0.3~0.4초가 더 걸렸다(운영 실측: 첫 묶음 ~0.5초 + 목소리 ~0.17초 + 언베일·안 읽은 수 ~0.23초). 먼저 끝나 거절돼도 처리되게 catch 를 걸어 둔다.
   const voiceData = feature('characterVoice') ? Promise.all([voiceOptions(user.id), db.select({ o: roleplaySessions.voiceOverrides }).from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).limit(1)]) : null
-  const extras = Promise.all([homeUnveilEnabled(user.id), unreadContactCount(user.id)])
+  const extras = homeUnveilEnabled(user.id)
   voiceData?.catch(() => {}); extras.catch(() => {})
   const [loaded, all, modelOptions, mature, adult, media, profile, rec, myPersona, needPersona] = await Promise.all([
     session,
@@ -97,7 +96,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })() : undefined
   if (!loaded || !mature) notFound()
   // 11/6: 언베일 표지 캐릭터는 언베일을 안 켠 사람에게 대화 속 사진(인트로·상황 사진)도 흐린다.
-  const [unveilOn, unread] = await extras
+  const unveilOn = await extras
   // 11/12: 표지가 언베일이 아니어도 인트로에 노골적인 글이 있는 작품이면 같이 가린다(lib/explicit-text). 글은 아래 items 에서 가림 문구로 바꾼다.
   const introExplicit = all.some(m => m.turnIndex <= 0 && ((m.kind === 'text' && explicitText(m.content)) || (m.kind === 'photo' && isUnveilPhoto(m.content))))
   const veilPhotos = (!!rec?.coverUnveil || introExplicit) && !unveilOn
@@ -133,7 +132,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   return (
     <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={middleLength(modelOptions.choices, recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id)} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} soon={voicePaused()} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName} voiceSpeakers={Object.keys(rec?.ensembleVoices ?? {})}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
-        <ChatSiteHeader unveil={unveilOn} unread={unread} profile={profile} />
+        <ChatSiteHeader unveil={unveilOn} profile={profile} />
         <header className={styles.header}>
           <Back href="/archive" />
           <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{/* 11/12 사용자: 헤더에 작품·캐릭터 사진 없이 이름만 */}<h1 className={styles.title}>{coverTitle({ slug: loaded.characterSlug, name: loaded.characterName })}</h1></div></div>
