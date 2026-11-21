@@ -26,7 +26,7 @@ export default async function PayoutPage() {
           {t('사업소득 3.3%(소득세 3%·지방소득세 0.3%)를 원천징수한 뒤 보내 드려요.')}
         </p>
       </section>
-      {!payoutOpen() ? <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('출금 신청은 12월 11일부터 받아요(개인정보 처리방침 개정 시행일).')}</p> : <PayoutForm withdrawable={withdrawable} krwPerToken={PAYOUT_KRW_PER_TOKEN} minTokens={Math.ceil(PAYOUT_MIN_KRW / PAYOUT_KRW_PER_TOKEN)} />}
+      {!payoutOpen() ? <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('출금 신청은 12월 22일부터 받아요(약관 개정 시행일).')}</p> : <PayoutForm withdrawable={withdrawable} krwPerToken={PAYOUT_KRW_PER_TOKEN} minTokens={Math.ceil(PAYOUT_MIN_KRW / PAYOUT_KRW_PER_TOKEN)} />}
       {history.length > 0 && (
         <section aria-label={t('신청 내역')} style={{ marginTop: 24 }}>
           <strong className="t-caption" style={{ display: 'block', color: 'var(--color-text-secondary)', marginBottom: 8 }}>{t('신청 내역')}</strong>

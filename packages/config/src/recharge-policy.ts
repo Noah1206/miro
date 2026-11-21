@@ -1,15 +1,15 @@
 /**
  * 확정된 가격과 제공량 안내 — 2026-09-16 사용자 결정.
  *
- * 기준 단가 10원/unit 에서 상위 구간일수록 보너스를 키운다. 안내용이며
- * 실제 판매는 여전히 MIRO_RECHARGE_PRODUCTS 가 채워져야 열린다.
+ * 11/22 사용자: 1미로 = 1원(기본) — 지급량을 28/3배로(2,800원 = 2,800미로), 큰 상품 보너스 비율은 그대로. 안내용이며
+ * 실제 판매는 여전히 MIRO_RECHARGE_PRODUCTS 가 채워져야 열린다(운영 값도 같은 배수로 바꿨다). 기존 잔액은 숫자 그대로 둔다(사용자 결정).
  */
 export const PLANNED_RECHARGE_TIERS = [
-  { priceKRW: 3000, units: 300 },
-  { priceKRW: 7000, units: 800 },
-  { priceKRW: 14000, units: 1800 },
-  { priceKRW: 30000, units: 4200 },
-  { priceKRW: 50000, units: 7500 },
+  { priceKRW: 3000, units: 2800 },
+  { priceKRW: 7000, units: 7500 },
+  { priceKRW: 14000, units: 16800 },
+  { priceKRW: 30000, units: 39200 },
+  { priceKRW: 50000, units: 70000 },
 ] as const
 
 /** 가입 보상 — 2026-10-16: 첫 가입 설정을 마치면 1,000토큰, 7일 뒤 소멸. 계정당 한 번. */

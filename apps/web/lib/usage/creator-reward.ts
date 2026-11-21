@@ -23,10 +23,10 @@ const REWARD_PROVIDERS = [CREATOR_REWARD_PROVIDER, CREATOR_REWARD_FREE_PROVIDER]
 export const VOICE_REWARD_RATE = 0.03
 export const VOICE_REWARD_PROVIDER = 'voice_reward'
 export const VOICE_REWARD_FREE_PROVIDER = 'voice_reward_free'
-export const VOICE_REWARD_DAILY_CAP_PER_PAYER = 100
+export const VOICE_REWARD_DAILY_CAP_PER_PAYER = 930   // 11/22 1미로 = 1원 개편: 100 → 930(같은 원화 가치)
 const VOICE_PROVIDERS = [VOICE_REWARD_PROVIDER, VOICE_REWARD_FREE_PROVIDER]
 /** 11/11 어뷰징 막기 — 한 사람이 같은 크리에이터에게 하루(한국 시간)에 만들어 줄 수 있는 대화 보상 상한, 보상에서 빼는 새 계정 기간. */
-export const REWARD_DAILY_CAP_PER_PAYER = 900   // 11/12 비율을 3배(10→30%)로 올리며 같이 3배 — 한 사람이 하루 3,000 토큰을 쓸 때까지라는 기준은 그대로
+export const REWARD_DAILY_CAP_PER_PAYER = 8400   // 11/12 비율을 3배(10→30%)로 올리며 같이 3배 — 한 사람이 하루 3,000 토큰을 쓸 때까지라는 기준은 그대로. 11/22 1미로 = 1원 개편: 900 → 8,400(같은 원화 가치)
 export const REWARD_NEW_ACCOUNT_DAYS = 3
 /** 보상 기록의 externalRef = '예약 id|캐릭터 id' — 예약 id 로 한 번만 지급하고, 캐릭터 id 로 작품별 수익을 묶는다. */
 const refOf = (reservationId: string, characterId: string) => `${reservationId}|${characterId}`
@@ -34,7 +34,8 @@ const KST_DAY_START = sql`date_trunc('day', now() at time zone 'Asia/Seoul') at 
 /** 2단계 응원하기(11/11) — 충전한 토큰으로 만든 사람을 응원하면, 만든 사람이 그 70%를 받는다(베이비챗 첫 등급과 같은 비율). */
 export const CHEER_PROVIDER = 'creator_cheer'
 export const CHEER_SHARE = 0.7
-export const CHEER_AMOUNTS = [100, 300, 500, 1000] as const
+/** 11/22 1미로 = 1원 개편: [100, 300, 500, 1000] → 10배(1,000원~10,000원). */
+export const CHEER_AMOUNTS = [1000, 3000, 5000, 10000] as const
 
 /** 턴 차감이 확정된 뒤 같은 트랜잭션에서 부른다. */
 export async function accrueCreatorReward(tx: UsageTransaction, opts: { reservationId: string; payerId: string; characterId: string }): Promise<void> {

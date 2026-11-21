@@ -1,5 +1,5 @@
 import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition } from '@miro/providers'
-import { POLICY, tokenPricing, tokenQuote, tokensForCost, productionRuntime } from '@miro/config'
+import { POLICY, tokenPricing, tokenQuote, tokenRates, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
 /** 11/19 사용자: 오픈 이벤트 — 11/20~11/26(KST) 채팅방 Haiku 대화는 토큰을 깎지 않는다(음성 턴은 평소대로). ponytail: 날짜 고정, 다음 이벤트 때 env 로. */
@@ -35,7 +35,9 @@ const SCENE_TURN_TOKENS: Record<string, number> = {
   'Claude Sonnet 5.5': 120, 'Claude Haiku 5.5': 29, 'GPT 6 Luna': 28, 'GPT 6.1 Terra': 70, 'GPT 6 Astra': 330,
   'GPT 5.6 Sol': 150, 'GPT 5.6 Terra': 111, 'GPT-5.5': 185, 'GPT-5.4': 125, 'Gemma 4 31B': 30, 'DeepSeek V4.1 Flash': 30,
 }
-/** 11/21 사용자: 그 플랫폼보다 낮게, 거부감 들지 않게 — 표 값의 70%. 예전 값보다 낮아지는 모델은 예전 값 그대로. */
+/** 11/21 사용자: 그 플랫폼보다 낮게, 거부감 들지 않게 — 표 값의 70%.
+ *  11/22 1미로 = 1원 개편: 표 값(그 플랫폼의 원 단위)이 이제 미로와 같은 단위라 그대로 최소 차감이 된다. 예전 계산이 9배 커졌으므로 '예전 값보다 낮으면 예전 값' 하한은 없앴다.
+ *  실제 차감 = max(원가 기반, 이 최소) 라 원가 보호는 그대로다. */
 const TURN_TOKEN_RATIO = 0.7
 /** 예전 계산의 '보통 장면' 최소 차감 대비 표 값(× 비율)의 배수 — 표에 없으면 1. */
 function turnScale(model: ModelDefinition, pricing: ReturnType<typeof tokenPricing>) {
@@ -45,7 +47,7 @@ function turnScale(model: ModelDefinition, pricing: ReturnType<typeof tokenPrici
   // 3.8 Flash 는 3.7 Flash 보다 늘 1 높게(비율을 곱한 뒤에도).
   const target = name === 'Gemini 3.8 Flash' ? Math.round(SCENE_TURN_TOKENS['Gemini 3.7 Flash']! * TURN_TOKEN_RATIO) + 1 : Math.round(listed * TURN_TOKEN_RATIO)
   const scene = liftTurnTokens(tokenQuote(model, POLICY.chatTier.miro.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE) + nudge(model.providerModelId)
-  return Math.max(1, target / scene)
+  return target / scene
 }
 /**
  * 11/21 사용자: 비싼 모델은 기간 한정 20% 할인 — 지금 값이 할인가, 정가 = 할인가 ÷ 0.8. 2026-12-31(KST)이 지나면 정가가 자동으로 적용된다.
@@ -139,8 +141,25 @@ function displayName(id: string) {
  * 원가 비중을 그만큼 낮춰 견적·예약·차감·최소 차감이 한 값으로 같이 움직인다. 직결(claude-opus-5-5)과 OpenRouter(anthropic/claude-opus-5.5) 이름 모두.
  */
 export const PREMIUM_CHARGE = 1.5
-const pricingFor = (model: ModelDefinition, base = tokenPricing()) =>
-  /claude-(fable|opus)-/.test(model.providerModelId) ? { ...base, costShare: base.costShare / PREMIUM_CHARGE } : base
+const pricingFor = (model: ModelDefinition, base = tokenPricing()) => {
+  let costShare = base.costShare
+  if (/claude-(fable|opus)-/.test(model.providerModelId)) costShare /= PREMIUM_CHARGE
+  // 11/22 1미로 = 1원: 원가 기반 차감이 최소 차감보다 커져 할인이 화면에만 있었다 — 할인 기간엔 원가 기반 차감에도 같은 할인(최소 차감은 turnScale 이 표 값으로 맞춘다).
+  if (promoActive(model)) costShare /= 1 - TURN_PROMO.rate
+  return costShare === base.costShare ? base : { ...base, costShare }
+}
+/**
+ * 11/22 1미로 = 1원: 실제 차감 = max(원가 기반, 최소 차감) 인데 원가 기반이 최소보다 커져, 화면 '보통 한 턴'도 원가 기준 추정으로 보여 준다.
+ * 운영 7일 실측(11/15~22): 한 턴 원가 ≈ 대화 호출 원가(입력은 캐시 할인 없이 계산됨), 일반 방 입력 약 1.6만·언베일 약 3만 토큰, 출력은 길이별.
+ * ponytail: 고정 추정치 — 캐시가 제대로 먹거나 대화 길이 분포가 바뀌면 다시 재서 고친다.
+ */
+const TYPICAL_INPUT = { normal: 16_000, adult: 30_000 }
+const TYPICAL_OUTPUT: Record<ChatLength, number> = { short: 1700, scene: 2000, plus: 2500, long: 2800, saga: 3000 }
+function typicalCostTokens(model: ModelDefinition, length: ChatLength, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {
+  const input = adult ? TYPICAL_INPUT.adult : TYPICAL_INPUT.normal
+  const rates = tokenRates(model, input)
+  return tokensForCost((input * rates.inputCost + TYPICAL_OUTPUT[length] * rates.outputCost) / 1e6, pricing)
+}
 /** A cheap renderer still shares its envelope with the server-pinned verifier. */
 function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {
   const quote = tokenQuote(model, output, pricing)
@@ -158,7 +177,8 @@ export async function chatModelOptions(_userId: string, adult = false) {
       const pricing = pricingFor(model, base)
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
-      const typical = Math.round(Math.min(quote.maximumTokens, Math.round((liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId)) * turnScale(model, pricing))) * promoScale(model))
+      const floorTypical = Math.round(Math.round((liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId)) * turnScale(model, pricing)) * promoScale(model))
+      const typical = Math.min(quote.maximumTokens, Math.max(floorTypical, typicalCostTokens(model, length, pricing, adult)))
       return { id: choiceId(key, length), name: displayName(model.providerModelId) + (freeChatTurn(model.id) ? ' · 무료' : ''), provider: model.provider, length: tier.replyLength,
         maximumTokens: quote.maximumTokens, typicalTokens: typical, maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId), free: freeChatTurn(model.id),
         ...(promoActive(model) ? { listTokens: Math.round(typical / (1 - TURN_PROMO.rate)), discountRate: TURN_PROMO.rate } : {}) }
