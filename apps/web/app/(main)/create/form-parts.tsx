@@ -239,7 +239,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 11/21 사용자: 사진 칸을 키우면서 옆을 다시 짰다 — 맨 위 흰 '업로드' 버튼(칸 폭 전체), 그 아래 안내(줄바꿈 허용·글씨 키움), 추가 사진. */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {!full && <button type="button" onClick={pick} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
-        style={{ width: '100%', minHeight: 48, borderRadius: 12, border: 0, background: '#fff', color: '#16161a', cursor: 'pointer', font: 'inherit', fontSize: 16, fontWeight: 700 }}>
+        style={{ alignSelf: 'flex-start', width: '70%', minWidth: 120, minHeight: 48, borderRadius: 12, border: 0, background: '#fff', color: '#16161a', cursor: 'pointer', font: 'inherit', fontSize: 16, fontWeight: 700 }}>{/* 11/21 사용자: 칸 폭 전체 → 오른쪽을 줄여 70%·왼쪽 정렬 */}
         {t('업로드')}
       </button>}
       {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다. */}
