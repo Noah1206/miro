@@ -45,6 +45,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const t = useT()
   const { append, live, setLive, calendarPending, remove } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
+  // 막힌 턴 토스트는 4초 뒤 스스로 걷힌다.
+  useEffect(() => { if (!state.blocked) return; const id = setTimeout(() => setState(st => st.blocked ? { ...st, error: null, blocked: false } : st), 4000); return () => clearTimeout(id) }, [state.blocked])
   const [pending, setPending] = useState(false)
   // 추천 답변(11/3) — 후보 3개와 실패 문구.
   const [suggest, setSuggest] = useState<SuggestState>(() => firstReplies?.length ? firstReplies.map(asSuggestion) : null)
@@ -320,10 +322,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <TransitionLink href="/my" style={{ flex: 'none', padding: '6px 12px', borderRadius: 8, background: 'var(--color-accent)', color: 'var(--color-white, #fff)', fontWeight: 650 }}>{t('출석하러 가기')}</TransitionLink>
           </motion.div>
         )}
-        {/* 11/21 사용자: 안전 필터로 막힌 턴은 글 한 줄 대신 아래에서 올라오는 포스터 — 왼쪽에 빨간 X 스티커. */}
+        {/* 11/21 사용자: 안전 필터로 막힌 턴은 글 한 줄 대신 아래에서 올라오는 토스트 — 왼쪽에 빨간 X 스티커, 4초 뒤 사라진다. */}
         {state.error && !state.limit && state.blocked && (
-          <motion.div key="blocked" role="alert" className={styles.blockedPoster}
-            initial={{ opacity: 0, y: 48 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}>
+          <div key="blocked" className={styles.blockedToastWrap}><motion.div role="alert" className={styles.blockedPoster}
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ type: 'spring', stiffness: 420, damping: 32 }}>
             <span className={styles.blockedSticker} aria-hidden>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </span>
@@ -331,7 +333,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
               <strong>{t('이 내용으로는 대화를 이어갈 수 없어요')}</strong>
               <span>{t('다른 상황으로 이야기해 주세요.')}</span>
             </span>
-          </motion.div>
+          </motion.div></div>
         )}
         {state.error && !state.limit && !state.blocked && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>

@@ -842,3 +842,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .blockedText { display: grid; gap: 3px; min-width: 0; }
 .blockedText strong { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.4; }
 .blockedText span { font-size: 13px; color: #fff; opacity: .8; line-height: 1.45; }
+/* 11/21 사용자: 포스터 말고 토스트 — 화면 아래 입력창 바로 위에 떠서 가운데 정렬, 작고 둥근 알약. */
+.blockedToastWrap { position: fixed; left: 0; right: 0; bottom: calc(var(--composer-h, 140px) + 12px + env(safe-area-inset-bottom, 0px)); z-index: 70; display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
+.blockedToastWrap .blockedPoster { margin: 0; max-width: 420px; padding: 10px 18px 10px 10px; border-radius: 999px; gap: 10px; background: #2b2b2d; pointer-events: auto; }
+.blockedToastWrap .blockedSticker { width: 34px; height: 34px; border-width: 2px; }
+.blockedToastWrap .blockedSticker svg { width: 16px; height: 16px; }
+.blockedToastWrap .blockedText strong { font-size: 14px; }
+.blockedToastWrap .blockedText span { font-size: 12px; }
