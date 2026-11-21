@@ -182,23 +182,21 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
           <button type="button" onClick={() => { back(); openRecharge() }}>{t('충전하기')}</button>
         </div>
       </section>
-      <section className={styles.section} aria-label={t('내 설정')}>
-        <h3>{t('내 설정')}</h3>
-        {/* 음성 모드(11/9 사용자: 헤더 대신 메뉴 안) — 켜면 캐릭터 답장을 목소리로 듣는다. 이 탭이 아이폰 소리 잠금도 푼다. */}
+      {/* 11/21 사용자: 음성 모드는 따로 된 칸 — 켜면 바로 아래 캐릭터별 목소리 고르기. 이 탭이 아이폰 소리 잠금도 푼다. */}
+      {(available || soon) && <section className={styles.section} aria-label={t('음성 모드')}>
+        <h3>{t('음성')}</h3>
         {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={voiceToggle} data-coach="voice-pick"><span>{t('음성 모드')}</span><i aria-hidden /></button>}
         {/* 11/12 음성 서버가 멈춘 동안: 켤 수 없는 줄로 '곧 열림' 만 알린다. */}
         {!available && soon && <button type="button" disabled className={styles.voiceRow}><span>{t('음성 모드')}</span><em>{t('곧 열림')}</em></button>}
-        {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}
         {available && on && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
-        {/* 11/17 대화 기억은 서랍 안 패널 대신 따로 된 페이지로 — 기억과 캐릭터가 생각하는 나를 크게 본다. */}
-        <div className={styles.grid}>{tiles.map(id => id === 'memory' || id === 'note' ? <TransitionLink key={id} href={`/chat/${sessionId}/${id}`} className={styles.tile} onClick={close}>
-          <MenuIcon name={id}/><span>{titles[id]}</span>
-        </TransitionLink> : <button key={id} type="button" className={styles.tile} onClick={() => go(id as Screen)}>
-          <MenuIcon name={id}/><span>{titles[id]}</span>
-        </button>)}
-          {/* 11/21 출력량 설정 — 팝업 대신 따로 된 페이지. 모델 선택과 같은 저장소를 쓴다. */}
-          {choices.length > 0 && <button type="button" className={styles.tile} onClick={() => go('length')}><MenuIcon name="length"/><span>{t('출력량 설정')}</span></button>}
-        </div>
+      </section>}
+      {/* 11/21 사용자: 두 줄 칸(타일) 대신 모두 한 줄 — 페르소나·AI 모델·출력량은 따로 된 페이지, 기억 노트·유저노트는 각 페이지로. */}
+      <section className={`${styles.section} ${styles.actions}`} aria-label={t('내 설정')}>
+        <h3>{t('내 설정')}</h3>
+        {tiles.map(id => id === 'memory' || id === 'note'
+          ? <TransitionLink key={id} href={`/chat/${sessionId}/${id}`} className={styles.row} onClick={close}><MenuIcon name={id}/><span>{titles[id]}</span><Chevron/></TransitionLink>
+          : <button key={id} type="button" className={styles.row} onClick={() => go(id as Screen)}><MenuIcon name={id}/><span>{titles[id]}</span><Chevron/></button>)}
+        {choices.length > 0 && <button type="button" className={styles.row} onClick={() => go('length')}><MenuIcon name="length"/><span>{t('출력량 설정')}</span><Chevron/></button>}
       </section>
       {/* 11/21 사용자: 캐릭터 정보·이전 대화 보기·대화 내려받기·알림·접근 권한 줄은 지웠다. */}
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
