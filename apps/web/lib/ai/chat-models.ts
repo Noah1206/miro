@@ -59,7 +59,8 @@ const promoActive = (model: ModelDefinition, now = Date.now()) => promoModel(mod
 /** 11/18 사용자: 고르는 목록에서 뺀 모델(예비 역할 gpt-5.4-mini 는 그대로 — 목록에만 안 뜬다). */
 // 11/21 사용자: 겹쳐 보이는 모델은 같은 계열의 최신 하나만 — Opus 5.5(5·4.6 뺌), GPT 6.1 Sol·Terra(6 Sol·5.6 Sol·5.6 Terra 뺌), GPT-5.5(5.4 뺌).
 // GPT 6 Luna·Gemma 4·DeepSeek 도 뺀다. 예전에 골라 둔 방은 기본 모델로 이어진다.
-const HIDDEN_CHAT_MODELS = /(^|\/)(gpt-(5\.4(-(mini|nano))?|5\.6-(luna|sol|terra)|6-luna|6-sol)$|claude-opus-(4[.-]6|5)$|gemma-4-|deepseek-)/
+// 11/21 사용자: Haiku 도 사용자가 고르지 못하게 뺀다(일반·언베일 방 모두). 전에 Haiku 를 골라 둔 방은 기본 모델로 이어진다.
+const HIDDEN_CHAT_MODELS = /(^|\/)(gpt-(5\.4(-(mini|nano))?|5\.6-(luna|sol|terra)|6-luna|6-sol)$|claude-opus-(4[.-]6|5)$|claude-haiku-|gemma-4-|deepseek-)/
 export type ChatTier = (typeof POLICY.chatTier)[keyof typeof POLICY.chatTier]
 export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
