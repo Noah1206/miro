@@ -91,3 +91,6 @@
   .recentList button { min-height: 52px; font-size: 19px; }
   .rankNum { width: 28px; height: 28px; font-size: 14px; }
 }
+
+/* 11/21 사용자: 뒤로 버튼에 마우스를 올리면 생기는 40px 네모가 옆 입력칸에 가려졌다 — 버튼 칸을 44px 로 넓혀 네모가 칸 안에 들어가게. */
+.backSearch > a.back-press { flex: none; width: 44px; justify-content: center; }
