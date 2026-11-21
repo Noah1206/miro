@@ -16,8 +16,9 @@ import { myLoreSources } from './actions'
  */
 
 /** 필수 표시용 별표. 색으로만 구분하지 않는다 — aria-hidden 이고 실제 required 는 input 에 있다. */
-function Star() {
-  return <span aria-hidden style={{ color: 'var(--color-text-tertiary)', marginRight: 2, fontSize: '0.85em', verticalAlign: 'super' }}>*</span>
+/** 11/21 사용자: 별표를 키우고 빨간색으로(그 전 회색·0.85em 위첨자). '*' 글자는 원래 위쪽에 앉아 위첨자 없이 둔다. */
+export function Star() {
+  return <span aria-hidden style={{ color: 'var(--color-danger)', marginLeft: 2, fontSize: '1.15em', lineHeight: 1 }}>*</span>
 }
 
 /**

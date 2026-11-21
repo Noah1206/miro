@@ -12,7 +12,7 @@ import { CreateHeader, StepNav, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { CreatePolicySheet } from './policy-sheet'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, Counter, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, LoreEditor, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
+import { ChoiceChips, Counter, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, LoreEditor, PresetTags, Star, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
 import { BgmEditor } from './bgm-editor'
 import type { Bgm } from '@/lib/bgm'
@@ -566,7 +566,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="settings" show={tab === 'settings'}>
           {/* 10/28: 카테고리 칸은 화면에서 지웠다(사용자 요청) — 저장값은 그대로 보낸다. */}
           <input type="hidden" name="category" value={category} />
-          <Section title={t('해시태그')}>
+          {/* 11/21 사용자: 게시에 꼭 필요한 칸인데 별표가 없었다. */}
+          <Section title={t('해시태그')} required>
             {/* 10/28: 접는 버튼 없이 바로 펼쳐 둔다(사용자 요청). */}
             <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={setHashtags}
               groups={DISCOVERY_GROUPS.map(g => ({ label: g.title, options: g.tags }))} />
@@ -640,10 +641,10 @@ function Panel({ id, show, order, children }: { id: string; show: boolean; order
 }
 
 /** 섹션 — 제목은 카드 바깥. */
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Section({ title, subtitle, required, children }: { title: string; subtitle?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <section style={{ marginTop: 'var(--space-6)' }}>
-      {title && <h2 className="t-title-3" style={{ marginBottom: subtitle ? 4 : 12 }}>{title}</h2>}
+      {title && <h2 className="t-title-3" style={{ marginBottom: subtitle ? 4 : 12 }}>{title}{required && <Star />}</h2>}
       {subtitle && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 12 }}>{subtitle}</p>}
       {children}
     </section>
