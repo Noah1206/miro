@@ -22,9 +22,12 @@ const SYSTEM = `너는 캐릭터 채팅 앱의 '상황별 사진' 설명을 쓴�
 - 어디인지·무엇을 하고 있는지·표정이나 감정이 드러나게(예: "체육관 탈의실에서 땀에 젖은 채 수건으로 몸을 닦으며 부끄러워할 때").
 - 성인 장면이면 행위를 숨기지 말고 사실대로 짧게 쓴다. 미성년자처럼 쓰지 않는다(모든 인물은 성인).
 - 겉모습은 머리색 하나 정도로 짧게. 괄호·'추정' 같은 말 없이, 80자 안에서 끝낸다.
-- 설명·따옴표·번호 없이 그 한 줄만.`
+- 설명·따옴표·번호 없이 그 한 줄만.
+- 사진에 작품 제목·인물 이름·등급·자막처럼 읽을 수 있는 글자가 박혀 있으면(표지·인물 소개 카드) 설명 대신 정확히 '글씨' 두 글자만 쓴다. 말풍선 속 하트·물방울·효과선 같은 그림 기호는 글자로 치지 않는다.`
 
 const pathOf = (src: string) => src.split('?')[0]!
+/** 11/22 사용자: 표지(제목 글씨)·인물 카드(이름·등급 글씨)가 상황 사진으로 떠서 대화 중에 보였다 — 캡션 모델이 '글씨'라고 답한 사진은 등록하지 않는다. */
+const HAS_TEXT = (caption: string) => /^글씨[.。]?$/.test(caption.trim())
 const isUnveil = (src: string) => /\/unveil-[^/?]+(\?|$)/.test(src)
 
 async function dataUrl(src: string): Promise<string> {
@@ -121,7 +124,7 @@ if (argv[0] === '--test') {
   if (!w) { console.log('no unregistered photos for', argv[1]); process.exit(0) }
   const n = Number(argv[2] ?? 3)
   const sample = [...w.images.filter(s => !isUnveil(s)).slice(0, n), ...w.images.filter(isUnveil).slice(0, 1)]
-  for (const src of sample) console.log(JSON.stringify({ src: src.split('/').pop(), ...(await caption(src, w)) }))
+  for (const src of sample) { const c = await caption(src, w); console.log(JSON.stringify({ src: src.split('/').pop(), ...c, ...(HAS_TEXT(c.text) ? { skip: 'text' } : {}) })) }
   process.exit(0)
 }
 
@@ -141,6 +144,7 @@ for (const w of works) {
       try {
         const { text, usd } = await caption(src, w)
         spent += usd
+        if (HAS_TEXT(text)) { console.log(JSON.stringify({ skip: src.slice(-40), reason: 'text' })); continue }
         if (text) entries.push({ keywords: [], image: src, situation: text, ...(isUnveil(src) ? { adult: true as const } : {}) })
       } catch (e) { console.log(JSON.stringify({ skip: src.slice(-40), error: (e as Error).message.slice(0, 120) })) }
     }
