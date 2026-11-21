@@ -127,6 +127,9 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
         <button type="button" role="menuitem" className={styles.row} onClick={() => { setOpen(false); setMaking(true) }}>
           {icons.create}<span className={styles.name}>{t('직접 만들기')}</span><span className={styles.description}>{t('새 명령어를 만들어 바로 적용')}</span>
         </button>
+        <TransitionLink href="/my/commands" role="menuitem" className={styles.row} onClick={() => setOpen(false)}>
+          {icons.library}<span className={styles.name}>{t('라이브러리 전체 보기')}</span><span className={styles.description}>{t('명령어를 찾아보고 관리')}</span>
+        </TransitionLink>
       </> : <>
         {row(icons.library, t('라이브러리'), t('명령어를 찾아 대화에 적용'), () => { setLibrary(true); setOpen(true) })}
         {row(icons.persona, t('페르소나'), t('대화에서 사용할 내 정보'), () => openRoomPanel('persona'))}

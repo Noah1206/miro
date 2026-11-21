@@ -117,6 +117,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href="/my/characters" label={t('내가 만든 캐릭터')} icon="characters" />
           <MenuRow href="/my/likes" label={t('좋아요한 캐릭터')} icon="heart" />
           <MenuRow href="/persona?next=/my" label={t('페르소나')} icon="persona" />
+          <MenuRow href="/my/commands" label={t('명령어 라이브러리')} icon="document" />
         </MenuSection>
         {/* 11/20 사용자: 로그아웃·계정 삭제를 한 블록으로 — 누르면 아래로 두 줄이 펼쳐진다. */}
         <details className={`${styles.menuItems} ${styles.faq}`}>
