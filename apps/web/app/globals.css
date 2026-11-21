@@ -552,7 +552,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .create-stepnav .create-step-prev { width: 44px; padding: 0; display: grid; place-items: center; }
 .create-step-count { font-size: 12px; color: var(--color-text-tertiary, var(--color-text-secondary)); }
 .create-step-prev, .create-step-next { min-height: 44px; padding: 0 18px; border-radius: 999px; font: inherit; font-size: var(--font-caption, 14px); cursor: pointer; }
-.create-step-prev { border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); }
+.create-step-prev { border: 1px solid var(--color-border); background: transparent; color: var(--color-text-primary); } /* 11/21 사용자: ← 화살표는 흰색(그 전 회색 secondary) */
 .create-step-next { border: 0; background: var(--color-accent); color: var(--color-accent-on, #fff); font-weight: 600; }
 @media (min-width: 1024px) { .create-stepnav { padding-right: 40px; } }
 
