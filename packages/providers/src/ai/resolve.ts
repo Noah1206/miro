@@ -111,6 +111,8 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
  * ponytail: 가격은 원래 레지스트리 값을 쓴다(OpenRouter Gemini 는 약 10% 비쌈). 어긋나면 상대 레지스트리에 OpenRouter 항목을 직접 적어 덮는다.
  */
 function sharedChatModels(into: 'main' | 'adult'): object[] {
+  // 11/22 사용자(비용): MIRO_ADULT_BORROW=0 이면 언베일 방은 일반 방 모델(Claude·Gemini·GPT)을 빌리지 않고 언베일 레지스트리 모델만 — 빼면 예전처럼 빌린다.
+  if (into === 'adult' && process.env.MIRO_ADULT_BORROW === '0') return []
   const raw = process.env[into === 'adult' ? 'MIRO_MODEL_REGISTRY' : 'MIRO_ADULT_MODEL_REGISTRY']
   if (!raw || !process.env.OPENROUTER_API_KEY) return []
   const vendor: Record<string, string> = { anthropic: 'anthropic', gemini: 'google', openai: 'openai', openrouter: '' }
