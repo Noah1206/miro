@@ -235,7 +235,8 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
 
       <div style={{ flex: 1, minWidth: 0, minHeight: side, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
       {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위. 항목마다 한 줄. 글씨 16px(4줄이 '+' 바로 위까지), 폭이 모자라면 한 줄에 맞는 크기까지만. */}
-      <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--color-text-tertiary)', fontSize: `min(16px, calc((100cqw - ${side} - 28px) * 0.0455))`, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
+      {/* 11/21 사용자: 글씨를 조금 키워 아래 '+' 와의 빈칸을 줄였다(16px·×0.0455·줄 1.7 → 17.5px·×0.05·줄 1.8). */}
+      <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--color-text-tertiary)', fontSize: `min(17.5px, calc((100cqw - ${side} - 28px) * 0.05))`, lineHeight: 1.8, whiteSpace: 'nowrap' }}>
         <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
         <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
         <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
