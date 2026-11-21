@@ -94,6 +94,7 @@ export class AnthropicProvider implements AIProvider {
     const submitted = response.content.find((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === 'tool_use' && b.name === 'submit')
     return {
       blocked: response.stop_reason === 'refusal',
+      blockReason: response.stop_reason === 'refusal' ? 'refusal' : undefined,
       text: submitted ? JSON.stringify(unstring(submitted.input, schema)) : response.content.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('').trim(),
       provider: 'anthropic', model: response.model,
       inputTokens: response.usage.input_tokens + (response.usage.cache_read_input_tokens ?? 0) + (response.usage.cache_creation_input_tokens ?? 0),

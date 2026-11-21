@@ -9,7 +9,7 @@ type CompletionChunk = { model?: string; usage?: Usage; error?: unknown;
 async function streamCompletion(response: Response, req: GenerationRequest, provider: string, requestedModel: string, start: number): Promise<GenerationResult> {
   if (!response.body) throw new Error('provider_stream_incomplete')
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
-  let buffer = '', data: string[] = [], text = '', model = requestedModel, finish: string | null = null, blocked = false, ended = false
+  let buffer = '', data: string[] = [], text = '', model = requestedModel, finish: string | null = null, blocked = false, blockReason: string | undefined, ended = false
   let usage: Usage | undefined
   const dispatch = () => {
     if (!data.length) return
@@ -21,7 +21,7 @@ async function streamCompletion(response: Response, req: GenerationRequest, prov
     if (chunk.usage) usage = chunk.usage
     const choice = chunk.choices?.find(c => c.index === undefined || c.index === 0)
     if (choice?.finish_reason) finish = choice.finish_reason
-    if (choice?.delta?.refusal || finish === 'content_filter') blocked = true
+    if (choice?.delta?.refusal || finish === 'content_filter') { blocked = true; blockReason = choice?.delta?.refusal ? 'refusal' : 'content_filter' }
     const delta = choice?.delta?.content
     if (delta && !blocked) { text += delta; req.onText!(text) }
   }
@@ -42,7 +42,7 @@ async function streamCompletion(response: Response, req: GenerationRequest, prov
     // Never accept a proxy disconnect as a finished answer, even if the partial JSON happens to parse.
     if (!ended || !finish) throw new Error('provider_stream_incomplete')
     return { text: text.trim(), provider, model, inputTokens: usage?.prompt_tokens ?? null, outputTokens: usage?.completion_tokens ?? null,
-      cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0, latencyMs: Date.now() - start, blocked, truncated: finish === 'length' }
+      cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0, latencyMs: Date.now() - start, blocked, blockReason, truncated: finish === 'length' }
   } finally { await reader.cancel().catch(() => {}); reader.releaseLock() }
 }
 
@@ -120,9 +120,11 @@ export class OpenAICompatibleProvider implements AIProvider {
       usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } }
     }
     const choice = body.choices?.[0]
+    const refused = !!choice?.message?.refusal, filtered = choice?.finish_reason === 'content_filter'
     return {
-      // 공급자 필터·거절은 Gemini 의 차단과 같게 — 다른 모델로 돌려 피하지 않는다.
-      blocked: choice?.finish_reason === 'content_filter' || !!choice?.message?.refusal,
+      // 공급자 필터·거절. 언베일 방이면 다른 언베일 모델로 그 턴만 폴백(adult-fallback.ts) — 같은 모델을 우회하지는 않는다.
+      blocked: filtered || refused,
+      blockReason: refused ? 'refusal' : filtered ? 'content_filter' : undefined,
       text: (choice?.message?.content ?? '').trim(),
       provider: this.name, model: body.model ?? this.model,
       inputTokens: body.usage?.prompt_tokens ?? null,

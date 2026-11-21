@@ -22,9 +22,9 @@ export async function collectOpsAlerts(now = new Date()): Promise<OpsAlert[]> {
   // 마지막 오류는 가장 최근 실패의 오류 문구(예전 max() 는 비어 '기록 없음'으로 보였다).
   // 아직 진행 중인 호출(reserved: 시작 때 성공=false 로 넣고, 정산은 그 요청이 끝난 뒤)은 뺀다 — 11/19 00:11 다른 크론 요청의 캐릭터 작업 4건이 진행 중이라 '4건 중 4건 실패·기록 없음' 오경보.
   const [ai] = await db.select({
-    total: sql<number>`count(*) filter (where ${aiUsage.ok} or coalesce(${aiUsage.error}, '') <> 'content_blocked')::int`,
-    failed: sql<number>`count(*) filter (where not ${aiUsage.ok} and coalesce(${aiUsage.error}, '') <> 'content_blocked')::int`,
-    lastError: sql<string | null>`(array_agg(${aiUsage.error} order by ${aiUsage.createdAt} desc) filter (where not ${aiUsage.ok} and ${aiUsage.error} is not null and ${aiUsage.error} <> 'content_blocked'))[1]`,
+    total: sql<number>`count(*) filter (where ${aiUsage.ok} or coalesce(${aiUsage.error}, '') not like 'content_blocked%')::int`,
+    failed: sql<number>`count(*) filter (where not ${aiUsage.ok} and coalesce(${aiUsage.error}, '') not like 'content_blocked%')::int`,
+    lastError: sql<string | null>`(array_agg(${aiUsage.error} order by ${aiUsage.createdAt} desc) filter (where not ${aiUsage.ok} and ${aiUsage.error} is not null and ${aiUsage.error} not like 'content_blocked%'))[1]`,
   }).from(aiUsage).where(and(gte(aiUsage.createdAt, quarter), ne(aiUsage.status, 'reserved')))
   if (ai && ai.total >= 3 && ai.failed * 2 >= ai.total) {
     out.push({ key: 'ai_failures', title: 'AI 제공자 장애 의심', detail: `최근 15분 호출 ${ai.total}건 중 ${ai.failed}건 실패. 마지막 오류: ${(ai.lastError ?? '').slice(0, 120) || '기록 없음'}` })

@@ -65,6 +65,8 @@ export function flatPrompt(req: Pick<GenerationRequest, 'prompt' | 'promptPrefix
 
 export type GenerationResult = {
   blocked?: boolean
+  /** 11/22 진단용 — 왜 막혔나: refusal(모델 자발 거절)·content_filter(공급자 필터)·empty(빈 응답)·provider 고유 사유. ai_usage.error 에 붙는다. */
+  blockReason?: string
   text: string
   provider: string
   model: string
@@ -79,7 +81,8 @@ export type GenerationResult = {
 }
 
 export class AIContentBlockedError extends Error {
-  constructor() { super('content_blocked') }
+  readonly reason?: string
+  constructor(reason?: string) { super(reason ? `content_blocked:${reason}` : 'content_blocked'); this.reason = reason }
 }
 
 export interface AIProvider {

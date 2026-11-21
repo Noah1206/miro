@@ -83,9 +83,11 @@ export class GeminiProvider implements AIProvider {
     const finishReason = [...chunks].reverse().find(c => c.candidates?.[0]?.finishReason)?.candidates?.[0]?.finishReason ?? ''
     const blockReason = chunks.find(c => c.promptFeedback?.blockReason)?.promptFeedback?.blockReason
     const usage = [...chunks].reverse().find(c => c.usageMetadata)?.usageMetadata
+    const safetyFinish = ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'RECITATION', 'IMAGE_SAFETY'].includes(finishReason)
+    const promptBlocked = !!blockReason && blockReason !== 'BLOCK_REASON_UNSPECIFIED'
     return {
-      blocked: !!blockReason && blockReason !== 'BLOCK_REASON_UNSPECIFIED'
-        || ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'RECITATION', 'IMAGE_SAFETY'].includes(finishReason),
+      blocked: promptBlocked || safetyFinish,
+      blockReason: promptBlocked ? blockReason : safetyFinish ? finishReason : undefined,
       text: chunks.map(visibleText).join('').trim(),
       provider: 'gemini', model: [...chunks].reverse().find(c => c.modelVersion)?.modelVersion ?? this.model,
       inputTokens: usage?.promptTokenCount ?? null,
