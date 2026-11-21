@@ -6,10 +6,12 @@ import styles from './chat.module.css'
 export type SuggestState = Suggestion[] | 'loading' | null
 
 /** 추천 답변 버튼(11/3) — 입력창 위 줄. 누르는 즉시 자리(빈 카드 3장)를 띄우고, 받으면 그 자리에 채운다. */
-export function SuggestButton({ sessionId, disabled, loading, onChange, onError }: { sessionId: string; disabled?: boolean; loading: boolean; onChange: (s: SuggestState) => void; onError: (e: string) => void }) {
+export function SuggestButton({ sessionId, disabled, loading, open = false, onChange, onError }: { sessionId: string; disabled?: boolean; loading: boolean; open?: boolean; onChange: (s: SuggestState) => void; onError: (e: string) => void }) {
   const t = useT()
-  return <button type="button" className={styles.suggestPill} disabled={disabled || loading} aria-busy={loading} aria-label={t('추천 답변')} title={t('추천 답변')}
+  return <button type="button" className={styles.suggestPill} disabled={disabled || loading} aria-busy={loading} aria-expanded={open} aria-label={t('추천 답변')} title={t('추천 답변')}
     onClick={async () => {
+      // 11/22 사용자: 후보가 떠 있을 때 한 번 더 누르면 바로 닫힌다.
+      if (open) { onChange(null); return }
       onChange('loading'); onError('')
       const r = await suggestReplies(sessionId)
       if ('error' in r) { onChange(null); onError(r.error) } else onChange(r.options)

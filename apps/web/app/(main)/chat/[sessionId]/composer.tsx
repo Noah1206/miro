@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition, type ComponentProps } from 
 import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon, TransitionLink, useToast } from '@/components/ui'
+import { Pressable, TransitionLink, useToast } from '@/components/ui'
 import { ATTENDANCE_GRANT, MIN_TURN_BALANCE } from '@miro/config'
 import styles from './chat.module.css'
 import glass from '@/components/chat-composer-glass.module.css'
@@ -396,9 +396,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </div>
         <div className={styles.composerBar}>
           {/* 11/6 사용자: 추천 답변은 보내기 버튼 바로 옆 */}
-          <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} loading={suggest === 'loading'} onChange={setSuggest} onError={setSuggestError} />
+          <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} loading={suggest === 'loading'} open={Array.isArray(suggest)} onChange={setSuggest} onError={setSuggestError} />
           <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
-            {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
+            {/* 11/22 사용자: 기다리는 동안에도 빙글이 대신 원래 보내기 모양(비활성) */}<ChatSendIcon />
           </Pressable>
         </div>
         </div>
