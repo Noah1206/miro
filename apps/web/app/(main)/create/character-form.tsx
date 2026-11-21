@@ -461,7 +461,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 인트로 — 다른 탭과 같은 자리에 펼친다(10/19, 전에는 전체 화면이라 필수인 첫 장면과 게시 버튼이 서로 가려졌다). 칸은 닫혀도 DOM 에 남는다. ── */}
         <Panel id="intro" show={tab === 'intro'}>
-          <Section title={t('첫 장면')}>
+          {/* 11/21 사용자: 섹션 제목 '첫 장면'이 바로 아래 칸 이름과 겹쳐 지웠다. */}
+          <Section title="">
             <Card>
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label={t('첫 장면')} required hint={t('대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.')}>
@@ -640,7 +641,7 @@ function Panel({ id, show, order, children }: { id: string; show: boolean; order
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <section style={{ marginTop: 'var(--space-6)' }}>
-      <h2 className="t-title-3" style={{ marginBottom: subtitle ? 4 : 12 }}>{title}</h2>
+      {title && <h2 className="t-title-3" style={{ marginBottom: subtitle ? 4 : 12 }}>{title}</h2>}
       {subtitle && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 12 }}>{subtitle}</p>}
       {children}
     </section>
