@@ -303,7 +303,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
   return (
     // Page 는 transform 을 걸어 sticky 를 깨뜨리므로 쓰지 않는다.
-    <main id="main" tabIndex={-1} className="page create-page" style={{ paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
+    <main id="main" tabIndex={-1} className="page create-page" style={{ paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 0 } : {}) /* 11/21 사용자: 이전·다음 줄 밑 빈칸이 커서 뺐다 — 아래 여백·안전 영역은 그 줄(create-stepnav)이 갖는다. */, outline: 'none' }}>
       <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
         <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit}
