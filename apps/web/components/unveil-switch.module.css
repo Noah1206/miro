@@ -55,5 +55,5 @@
   .adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); background: #fff; }  /* 44 - 22 - 1×2 */
 }
 /* 11/22 사용자: 19 토글이 켜졌을 때 그라데이션·빛 대신 단색, 그림자 없음. */
-.adultControl[data-intense][data-on] .adultTrack { background: #ff2e6e; box-shadow: none; animation: none; }
+.adultControl[data-intense][data-on] .adultTrack { background: rgb(255 46 110 / .5); box-shadow: none; animation: none; } /* 같은 날: 단색 투명도 약 50% */
 .adultControl[data-intense][data-on] .adultKnob { box-shadow: none; }
