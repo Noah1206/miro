@@ -10,6 +10,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, StepNav, type CreateTab } from './header'
 import { CreateTour } from './tour'
+import { CreatePolicySheet } from './policy-sheet'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, Counter, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, LoreEditor, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
@@ -311,6 +312,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
         {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{t(saveError)}</p>}
         {mode === 'create' && experienceType === 'reality' && <CreateTour tab={tab} onTab={openTab} />}
+        {mode === 'create' && <CreatePolicySheet />}
 
         <input type="hidden" name="experienceType" value={experienceType} />
         {mode === 'create' && <input type="hidden" name="creationId" value={creationId ?? ''} />}
