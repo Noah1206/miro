@@ -56,9 +56,10 @@ const field: React.CSSProperties = { width: '100%', background: 'none', border: 
 /** 이 편집기는 캐릭터 폼 안에 있다 — 한 줄 입력에서 Enter 가 캐릭터를 게시해 버리지 않게. */
 const noSubmit = (e: React.KeyboardEvent) => { if (e.key === 'Enter') e.preventDefault() }
 
-export function NewCommand({ onDone, adultAllowed }: { onDone: (cmd: CharacterCommand) => void; adultAllowed: boolean }) {
+export function NewCommand({ onDone, adultAllowed, initialName = '' }: { onDone: (cmd: CharacterCommand) => void; adultAllowed: boolean; initialName?: string }) {
   const t = useT()
-  const [name, setName] = useState('')
+  // 11/22 채팅방 `/일기` 처럼 친 이름을 이어받는다(다시 치지 않게).
+  const [name, setName] = useState(initialName.replace(/^\//, '').replace(/\s+/g, '').slice(0, COMMAND_LIMITS.name))
   const [hint, setHint] = useState('')
   const [prompt, setPrompt] = useState('')
   const [isPublic, setIsPublic] = useState(true)

@@ -42,6 +42,7 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
   const { openRecharge } = useWallet()
   const [open, setOpen] = useState(false)
   const [making, setMaking] = useState(false)
+  const [makingName, setMakingName] = useState('')
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const [library, setLibrary] = useState(false)
@@ -111,6 +112,10 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
         event.preventDefault(); items[next]?.focus()
       }}>
       {library ? <>
+        {/* 11/22 사용자(UX 깊이): 만들기를 맨 아래에 묻지 않는다 — 맨 위, 친 글자('/일기')를 이름으로 이어받는다. role=menuitem 이 아니라 방향키 순서는 그대로다. */}
+        <button type="button" className={styles.row} onClick={() => { setMakingName(query); setOpen(false); setMaking(true) }}>
+          {icons.create}<span className={styles.name}>{query.trim() ? t("'/{name}' 만들기", { name: query.trim().replace(/^\//, '') }) : t('명령어 만들기')}</span><span className={styles.description}>{t('새 명령어를 만들어 바로 적용')}</span>
+        </button>
         {own.map((command, i) => <button key={`own-${command.name}`} type="button" role="menuitem" className={styles.row} data-active={i === active || undefined} onClick={() => pick({ name: command.name })}>
           <span className={styles.slash} aria-hidden>/</span><span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint}</span>
         </button>)}
@@ -123,15 +128,12 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
           : rows.map((command, i) => <button key={command.id} type="button" role="menuitem" className={styles.row} data-active={typing && own.length + i === active || undefined} onClick={() => pick({ name: command.name, sourceId: command.id })}>
             {icons.library}<span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint || command.prompt}</span>
           </button>)}
-        {/* 11/22 사용자: 채팅방에서도 명령어를 직접 만든다 — 라이브러리에 저장되고(공개 선택) 바로 이 대화에 적용된다. */}
-        <button type="button" role="menuitem" className={styles.row} onClick={() => { setOpen(false); setMaking(true) }}>
-          {icons.create}<span className={styles.name}>{t('직접 만들기')}</span><span className={styles.description}>{t('새 명령어를 만들어 바로 적용')}</span>
-        </button>
         <TransitionLink href="/my/commands" role="menuitem" className={styles.row} onClick={() => setOpen(false)}>
           {icons.library}<span className={styles.name}>{t('라이브러리 전체 보기')}</span><span className={styles.description}>{t('명령어를 찾아보고 관리')}</span>
         </TransitionLink>
       </> : <>
         {row(icons.library, t('라이브러리'), t('명령어를 찾아 대화에 적용'), () => { setLibrary(true); setOpen(true) })}
+        {row(icons.create, t('명령어 만들기'), t('새 명령어를 만들어 바로 적용'), () => { setMakingName(''); setMaking(true) })}
         {row(icons.persona, t('페르소나'), t('대화에서 사용할 내 정보'), () => openRoomPanel('persona'))}
         {row(icons.model, t('AI 모델'), t('사용할 모델과 답변 길이 선택'), () => setPickerOpen(true))}
         {row(icons.memory, t('대화 기억'), t('이 대화의 기억 확인'), () => openRoomPanel('memory'))}
@@ -143,7 +145,7 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
       </>}
     </div>}
     {mounted && createPortal(<Sheet open={making} onClose={() => setMaking(false)} title={t('명령어 직접 만들기')}>
-      <div style={{ padding: '0 var(--space-4) var(--space-5)' }}><NewCommand adultAllowed={adultAllowed} onDone={cmd => { setMaking(false); onPick({ name: cmd.name, sourceId: cmd.sourceId }) }} /></div>
+      <div style={{ padding: '0 var(--space-4) var(--space-5)' }}><NewCommand key={makingName} initialName={makingName} adultAllowed={adultAllowed} onDone={cmd => { setMaking(false); onPick({ name: cmd.name, sourceId: cmd.sourceId }) }} /></div>
     </Sheet>, document.body)}
   </div>
 }
