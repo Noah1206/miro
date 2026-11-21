@@ -69,7 +69,7 @@ function useRoomScreen() {
   return { screen, go, back }
 }
 
-function RoomPage({ title, onBack, children, footer }: { title: string; onBack: () => void; children: ReactNode; footer?: ReactNode }) {
+function RoomPage({ title, onBack, children, footer, action }: { title: string; onBack: () => void; children: ReactNode; footer?: ReactNode; /** 머리 오른쪽(예: 저장). */ action?: ReactNode }) {
   const t = useT()
   // 머리가 숨을 때 움직이는(transform) 조상 밖으로 — 화면 전체를 덮게 body 에 그린다(같은 React 트리라 대화방 상태는 그대로).
   return createPortal(<div className={styles.page} role="dialog" aria-modal="true" aria-label={title}>
@@ -78,6 +78,7 @@ function RoomPage({ title, onBack, children, footer }: { title: string; onBack: 
         <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
       </button>
       <h2>{title}</h2>
+      <span className={styles.pageAction}>{action}</span>
     </header>
     <div className={styles.pageBody}>{children}</div>
     {footer && <div className={styles.pageFoot}>{footer}</div>}
@@ -168,7 +169,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} onClick={() => { go('main'); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    {screen === 'persona' && <RoomPage title={titles.persona} onBack={back}><ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/></RoomPage>}
+    {screen === 'persona' && <RoomPage title={titles.persona} onBack={back} action={<button type="submit" form="room-persona-form" className={styles.pageSave}>{t('저장')}</button>}><ConversationPersona inline formId="room-persona-form" sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/></RoomPage>}
     {screen === 'model' && <RoomPage title={titles.model} onBack={back}><ChatModelOptions choices={choices}/></RoomPage>}
     {screen === 'length' && <RoomPage title={t('출력량 설정')} onBack={back}><ReplyLengthPanel open onClose={back} choices={choices}/></RoomPage>}
     {screen === 'main' && <RoomPage title={t('채팅방 설정')} onBack={back} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>

@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { useT } from '@/lib/i18n/client'
-import { LabeledField, box, fieldFont, fieldPad } from '../../../create/form-parts'
 import { SelectField } from '../../../create/settings-controls'
 import { deletePreset, listPresets, savePreset, saveRoomNote, type NotePreset } from './actions'
 import styles from '../memory/memory.module.css'
+import form from '@/app/(main)/persona/form.module.css'
 
 const MAX = 2000, TITLE_MAX = 40, NEW = 'new'
 
@@ -23,7 +23,6 @@ export function NoteEditor({ sessionId, initial, initialPresets }: { sessionId: 
   const [busy, setBusy] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
-  const [focus, setFocus] = useState<'title' | 'text' | null>(null)
   const current = presets.find(p => p.id === picked)
   const changed = text.trim() !== applied || (!!title.trim() && (!current || current.title !== title.trim() || current.content.trim() !== text.trim()))
 
@@ -52,30 +51,27 @@ export function NoteEditor({ sessionId, initial, initialPresets }: { sessionId: 
 
   return (
     <div className={`create-page ${styles.noteForm}`}>
-      <LabeledField label={t('내 노트 보관함')} hint={t('저장해 둔 노트를 고르면 아래에 채워져요. 대화마다 하나만 적용돼요.')}>
+      {/* 11/21 사용자: 페르소나와 같은 모양 — 칸 위 굵은 이름표 + 분홍 안내, 채운 칸, 글자 수는 칸 밑 오른쪽. */}
+      <div className={form.group}>
+        <span className={form.label}>{t('내 노트 보관함')}<span className={form.hint}>{t('고르면 아래에 채워져요')}</span></span>
         <SelectField name="preset" value={picked} onChange={pick}
           options={[{ value: NEW, label: t('새 노트') }, ...presets.map(p => ({ value: p.id, label: p.title }))]} />
-      </LabeledField>
+      </div>
 
-      <LabeledField label={t('제목')} hint={t('제목을 적으면 보관함에도 저장돼요.')}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: fieldPad, ...box(focus === 'title') }}>
-          <input value={title} maxLength={TITLE_MAX} aria-label={t('제목')} placeholder={t('예: 경호원 설정')} autoComplete="off"
-            onFocus={() => setFocus('title')} onBlur={() => setFocus(null)} onChange={(e) => { setTitle(e.target.value); setStatus(null) }}
-            style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont }} />
-        </div>
-      </LabeledField>
+      <div className={form.group}>
+        <label htmlFor="note-title" className={form.label}>{t('제목')}<span className={form.hint}>{t('적으면 보관함에도 저장돼요')}</span></label>
+        <input id="note-title" className={form.input} value={title} maxLength={TITLE_MAX} placeholder={t('예: 경호원 설정')} autoComplete="off"
+          onChange={(e) => { setTitle(e.target.value); setStatus(null) }} />
+        <span className={form.count}>{title.length}/{TITLE_MAX}</span>
+      </div>
 
-      <LabeledField label={t('내용')} hint={t('매 답변 바로 앞에 실려서, 대화가 길어져도 잊지 않아요.')}>
-        <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(focus === 'text') }}>
-          <textarea value={text} maxLength={MAX} rows={4} aria-label={t('유저노트')}
-            placeholder={t('예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.')}
-            onFocus={() => setFocus('text')} onBlur={() => setFocus(null)} onChange={(e) => { setText(e.target.value); setStatus(null) }}
-            style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: text.length >= MAX ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{text.length.toLocaleString()}/{MAX.toLocaleString()}</span>
-          </div>
-        </div>
-      </LabeledField>
+      <div className={form.group}>
+        <label htmlFor="note-text" className={form.label}>{t('내용')}<span className={form.hint}>{t('매 답변에 실려 대화가 길어져도 잊지 않아요')}</span></label>
+        <textarea id="note-text" className={form.input} value={text} maxLength={MAX} rows={7} aria-label={t('유저노트')}
+          placeholder={t('예: 나는 서른 살 디자이너, 반말로 불러 줘.\n우리는 3년째 사귀는 사이야.')}
+          onChange={(e) => { setText(e.target.value); setStatus(null) }} />
+        <span className={form.count} style={{ color: text.length >= MAX ? 'var(--color-danger)' : undefined }}>{text.length.toLocaleString()}/{MAX.toLocaleString()}</span>
+      </div>
 
       <div className={styles.noteActions}>
         {picked !== NEW && <button type="button" className={styles.ghost} onClick={remove}>{confirm ? t('정말 지우기') : t('보관함에서 지우기')}</button>}

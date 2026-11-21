@@ -25,3 +25,19 @@
 .preset strong { font-size: 15px; font-weight: 600; }
 .preset strong span { font-weight: 400; color: var(--color-text-tertiary); }
 .preset small { font-size: 13px; line-height: 1.5; color: var(--color-text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 11/21 사용자(레퍼런스): 칸 위 굵은 이름표 + 분홍 안내 + 빨간 별표, 채운 칸(테두리 없음), 글자 수는 칸 밑 오른쪽, 성별은 버튼 세 개. 유저노트도 같은 모양. */
+.form { gap: 26px; }
+.group { display: grid; gap: 10px; }
+.label { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0; font-size: 17px; font-weight: 700; color: var(--color-text-primary); }
+.hint { font-size: 13px; font-weight: 400; color: #ff7aa2; }
+.label b { margin-left: -4px; color: var(--color-danger); font-weight: 400; }
+.input { box-sizing: border-box; width: 100%; min-height: 56px; padding: 0 18px; border: 0; border-radius: 12px; background: #333335; color: var(--color-text-primary); font: inherit; font-size: 16px; outline: none; transition: box-shadow 150ms; }
+textarea.input { padding: 16px 18px; min-height: 200px; line-height: 1.6; resize: vertical; }
+.input:focus { box-shadow: 0 0 0 1.5px var(--color-lavender-500); }
+.input::placeholder { color: #7c7c80; }
+.count { justify-self: end; font-size: 13px; color: var(--color-text-tertiary); }
+.genderRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.genderRow button { height: 52px; border: 0; border-radius: 12px; background: #333335; color: var(--color-text-primary); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 150ms, box-shadow 150ms; }
+.genderRow button[aria-pressed="true"] { background: color-mix(in srgb, var(--color-lavender-500) 28%, #333335); box-shadow: inset 0 0 0 1.5px var(--color-lavender-500); }
+.label + .input, .label + textarea.input { margin-top: 0; }

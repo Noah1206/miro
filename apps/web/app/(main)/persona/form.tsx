@@ -7,42 +7,48 @@ import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 import styles from './form.module.css'
 
-const GENDERS = [{ value: '', label: msg('밝히지 않음') }, { value: 'female', label: msg('여성') }, { value: 'male', label: msg('남성') }]
+// 11/21 사용자(레퍼런스): 여성 · 남성 · 비공개 순서의 버튼 세 개.
+const GENDERS = [{ value: 'female', label: msg('여성') }, { value: 'male', label: msg('남성') }, { value: '', label: msg('비공개') }]
 
 /** guide(11/4) — 세계관 카드에서 쓸 때: '나에 대해'가 필수가 되고 만든 사람의 작성 안내가 칸 안내로 보인다. */
-export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, presets = [], guide, submitStyle }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void; presets?: UserPersona[]; guide?: string; submitStyle?: React.CSSProperties }) {
+/** formId·hideSubmit(11/21): 머리 오른쪽 '저장' 버튼이 이 폼을 보낼 때 — 폼 아래 버튼은 숨긴다. */
+export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, presets = [], guide, submitStyle, formId, hideSubmit = false }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void; presets?: UserPersona[]; guide?: string; submitStyle?: React.CSSProperties; formId?: string; hideSubmit?: boolean }) {
   const [state, action] = useActionState(sessionId ? saveConversationPersonaAction : savePersonaAction, null)
   const [gender, setGender] = useState<string>(initial?.gender ?? '')
   const [name, setName] = useState(initial?.name ?? '')
   const [about, setAbout] = useState(initial?.description ?? '')
   const t = useT()
+  const nameId = useId(), aboutId = useId()
   useEffect(() => { if (state?.saved) onDone?.() }, [state, onDone])
   return (
-    <form action={action} className={styles.form}>
+    <form id={formId} action={action} className={styles.form}>
       <input type="hidden" name="next" value={next} />
       {sessionId && <input type="hidden" name="sessionId" value={sessionId} />}
       {/* 만든 사람이 준비한 페르소나(11/3) — 11/5: 드롭다운으로 고르고, 고른 것을 다시 누르면 해제(칸 비움). 고른 뒤 고쳐 쓸 수 있다. */}
       {presets.length > 0 && <PresetDropdown presets={presets}
         isOn={p => name === p.name && gender === (p.gender ?? '') && about === (p.description ?? '')}
         onPick={p => { if (p) { setName(p.name); setGender(p.gender ?? ''); setAbout(p.description ?? '') } else { setName(''); setGender(''); setAbout('') } }} />}
-      <label className={styles.field}>
-        <span className={styles.top}><span>{t('이름')}<b aria-hidden>*</b></span><span>{name.length}/{PERSONA_LIMITS.name}</span></span>
-        <input name="name" value={name} onChange={e => setName(e.target.value)} maxLength={PERSONA_LIMITS.name} required autoComplete="off" placeholder={t('예) 지우')} />
-      </label>
-      <div className={styles.genders} role="group" aria-label={t('성별')}>
-        <span className={styles.top}>{t('성별')}</span>
+      {/* 11/21 사용자(레퍼런스): 칸 위에 굵은 이름표 + 분홍 안내 + 빨간 별표, 아래에 채운 칸, 글자 수는 칸 밑 오른쪽. */}
+      <div className={styles.group}>
+        <label htmlFor={nameId} className={styles.label}>{t('이름')}<span className={styles.hint}>{t('캐릭터가 나를 부르는 이름이에요')}</span><b aria-hidden>*</b></label>
+        <input id={nameId} className={styles.input} name="name" value={name} onChange={e => setName(e.target.value)} maxLength={PERSONA_LIMITS.name} required autoComplete="off" placeholder={t('이름을 입력하세요')} />
+        <span className={styles.count}>{name.length}/{PERSONA_LIMITS.name}</span>
+      </div>
+      <div className={styles.group} role="group" aria-label={t('성별')}>
+        <span className={styles.label}>{t('성별')}</span>
         <input type="hidden" name="gender" value={gender} />
-        <div className={styles.seg}>
+        <div className={styles.genderRow}>
           {GENDERS.map(g => <button key={g.value} type="button" aria-pressed={gender === g.value} onClick={() => setGender(g.value)}>{t(g.label)}</button>)}
         </div>
       </div>
-      <label className={styles.field}>
-        <span className={styles.top}><span>{t(guide === undefined ? '나에 대해' : '이 세계에서의 나')}{guide !== undefined && <b aria-hidden>*</b>}</span><span>{about.length}/{PERSONA_LIMITS.description}</span></span>
-        <textarea name="description" value={about} onChange={e => setAbout(e.target.value)} maxLength={PERSONA_LIMITS.description} rows={4} required={guide !== undefined}
-          placeholder={guide || t('예) 스물여섯, 출판사 편집자. 낯을 가리지만 친해지면 장난이 많다.')} />
-      </label>
+      <div className={styles.group}>
+        <label htmlFor={aboutId} className={styles.label}>{t(guide === undefined ? '상세정보' : '이 세계에서의 나')}<span className={styles.hint}>{t('적어 두면 캐릭터가 나를 알고 대화해요')}</span>{guide !== undefined && <b aria-hidden>*</b>}</label>
+        <textarea id={aboutId} className={styles.input} name="description" value={about} onChange={e => setAbout(e.target.value)} maxLength={PERSONA_LIMITS.description} rows={7} required={guide !== undefined}
+          placeholder={guide || t('이렇게 적어 보세요\n\n· 외모: 키, 머리 모양, 인상\n· 성격·말투: 무뚝뚝하지만 다정함, 존댓말\n· 좋아하는 것 / 싫어하는 것\n· 직업·특징: 대학원생, 밤샘이 잦음\n· 캐릭터와의 사이: 오래된 이웃')} />
+        <span className={styles.count}>{about.length.toLocaleString()}/{PERSONA_LIMITS.description.toLocaleString()}</span>
+      </div>
       {state?.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
-      <div className={styles.submit}><SubmitButton full variant="primary" size="lg" style={submitStyle}>{submitLabel}</SubmitButton></div>
+      {!hideSubmit && <div className={styles.submit}><SubmitButton full variant="primary" size="lg" style={submitStyle}>{submitLabel}</SubmitButton></div>}
     </form>
   )
 }

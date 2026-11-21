@@ -10,9 +10,10 @@ import { PersonaForm } from '@/app/(main)/persona/form'
 import { useT } from '@/lib/i18n/client'
 
 /** All character rooms confirm their own persona before showing the composer. */
-export function ConversationPersona({ sessionId, initial, characterName, presets = [], context, entry, required = false, open: controlledOpen, onOpenChange, hideTrigger = false, inline = false }: {
+export function ConversationPersona({ sessionId, initial, characterName, presets = [], context, entry, required = false, open: controlledOpen, onOpenChange, hideTrigger = false, inline = false, formId }: {
   sessionId: string; initial: UserPersona | null; characterName: string; presets?: PresetPersona[]; context?: string | null; entry?: CharacterEntry | null; required?: boolean
   open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; inline?: boolean
+  /** 11/21 페르소나 페이지 머리의 '저장'이 보내는 폼 id — 주면 폼 아래 버튼은 숨긴다. */ formId?: string
 }) {
   const t = useT(), router = useRouter()
   const [localOpen, setLocalOpen] = useState(false)
@@ -21,7 +22,7 @@ export function ConversationPersona({ sessionId, initial, characterName, presets
   const [saved, setSaved] = useState(false)
   const inlineDone = useCallback(() => { setSaved(true); router.refresh() }, [router])
   const done = () => { setOpen(false); router.refresh() }
-  const form = <PersonaForm initial={initial} next={`/chat/${sessionId}`} sessionId={sessionId} onDone={inline ? inlineDone : done} presets={presets} submitLabel={required ? t('이 설정으로 시작하기') : t('저장')} />
+  const form = <PersonaForm initial={initial} next={`/chat/${sessionId}`} sessionId={sessionId} onDone={inline ? inlineDone : done} presets={presets} submitLabel={required ? t('이 설정으로 시작하기') : t('저장')} formId={formId} hideSubmit={!!formId} />
   if (inline) return <div onChange={() => setSaved(false)} onClick={() => setSaved(false)}>
     {form}
     {saved && <p role="status" className="t-caption" style={{ marginTop: 10 }}>{t('저장했어요.')}</p>}
