@@ -612,3 +612,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-speech { margin: 0; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; word-break: keep-all; }
 /* 11/21 사용자: 상세 인트로의 상태창도 채팅방과 같은 글씨(15px·1.45). */
 .intro-preview > .intro-preview .intro-status pre { font-size: 15px !important; line-height: 1.45 !important; padding: 2px 14px 14px !important; }
+/* 11/21 사용자: 굵게는 이름만 — 말은 보통 굵기 흰 글씨(상세 인트로). */
+.intro-speech { font-weight: 400; }
+.intro-speech strong { font-weight: 700; }
+.intro-preview > .intro-preview .intro-bubble:not(.intro-typing) { font-weight: 400; }

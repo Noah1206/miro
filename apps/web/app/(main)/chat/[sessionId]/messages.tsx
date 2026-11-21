@@ -381,7 +381,7 @@ function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, on
           <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'dialogue' ? styles.flowLine : undefined}
             hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
             {p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}
-            {who && p === firstLine && <>{who} | </>}
+            {who && p === firstLine && <><strong style={{ fontWeight: 700 }}>{who}</strong> | </>}
             {line(p.kind === 'dialogue' ? quoted(p) : p)}
           </p>
         ))

@@ -122,5 +122,5 @@ function NarrationWithSpeech({ text, names }: { text: string; names: RichNames }
   }
   return <>{parts.map((p, i) => 'prose' in p
     ? (p.prose.trim() ? <RichText key={i} editorial className="intro-narration" text={p.prose.trim()} names={names} /> : null)
-    : <p key={i} className="intro-speech">{p.who} | &quot;{p.said}&quot;</p>)}</>
+    : <p key={i} className="intro-speech"><strong>{p.who}</strong> | &quot;{p.said}&quot;</p>)}</>
 }

@@ -827,3 +827,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo']:not(:has(+ .messageLine[data-opening])) { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding-bottom: 14px; }
 /* 11/21 사용자(스크린샷 기준): 상태창 글씨를 키운다 — 12.5px → 15px, 줄 간격 1.45. */
 .statusText { font-size: 15px; line-height: 1.45; padding: 2px 14px 14px; }
+/* 11/21 사용자: 굵게는 이름만 — 말하는 글은 보통 굵기의 흰 글씨. */
+.flowText .flowLine { color: #fff; font-weight: 400; }
