@@ -8,8 +8,9 @@ import styles from './hero.module.css'
 import { AfterMount } from '@/components/after-mount'
 
 /**
- * 11/10 사용자: 배너 자리에 크랙식 추천 — 랜덤으로 고른 작품을 큰 그림 + 소개 카드 + 다음 작품 띠로.
- * 5초마다 다음으로, 화살표·띠를 누르면 바로 넘어간다. 작은 화면에선 큰 그림 위에 글만.
+ * 11/21 사용자(레퍼런스 캐러셀): 가운데 큰 카드 하나 + 양옆에 이전·다음 카드가 걸쳐 보인다. 가운데 카드는 그림 위에
+ * 아래쪽 그라데이션 → 칩(공식 크리에이터·만든 사람) · 제목 · 한 줄 소개 · 해시태그, 오른쪽 아래 '지금/전체'.
+ * 5초마다 다음으로, 양옆 화살표·옆 카드를 누르면 바로 넘어간다. 작은 화면은 가운데 카드만.
  */
 export function HomeHero({ items }: { items: HomeCard[] }) {
   const t = useT()
@@ -21,47 +22,45 @@ export function HomeHero({ items }: { items: HomeCard[] }) {
     return () => clearInterval(id)
   }, [n, i])
   if (!n) return null
-  const c = items[i % n]!
+  const at = (k: number) => items[((k % n) + n) % n]!
+  const c = at(i)
+  const prev = at(i - 1), next = at(i + 1)
   const href = `/character/${c.slug ?? c.id}`
   const blurb = characterStorySummary(c)
-  const next = Array.from({ length: Math.min(4, n - 1) }, (_, k) => (i + k + 1) % n)
+  const go = (d: number) => setI(v => ((v + d) % n + n) % n)
   return (
     <section className={styles.hero} aria-label={t('추천 작품')}>
+      {n > 1 && <button type="button" className={styles.side} aria-label={prev.name} onClick={() => go(-1)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={prev.images[0]} alt="" loading="lazy" />
+      </button>}
       <TransitionLink href={href} className={styles.main} aria-label={c.name}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={c.id} src={c.images[0]} alt="" className={styles.art} fetchPriority="high" />
-        <div className={styles.mobileCopy}>
-          <span className={styles.badge}>{t('스토리 추천')}</span>
-          <strong className={styles.title}>{c.name}</strong>
-          {blurb && <p className={styles.blurb}>{blurb}</p>}
-        </div>
-      </TransitionLink>
-      <div className={styles.card}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <span className={styles.cardClip}><img src={c.images[0]} alt="" aria-hidden className={styles.cardBg} /></span>
-        <div className={styles.cardBody}>
-          <span className={styles.badge}>{t('스토리 추천')}</span>
+        <div className={styles.copy}>
+          <div className={styles.chips}>
+            {/* 운영 작품은 is_official 이 꺼진 채 slug 만 official-* 인 것도 있다. */}
+            {(c.isOfficial || c.slug?.startsWith('official-')) && <span className={styles.chipOfficial}>{t('공식 크리에이터')}</span>}
+            {c.creator && <span className={styles.chipCreator}>{c.creator}</span>}
+          </div>
           <strong className={styles.title}>{c.name}</strong>
           {blurb && <p className={styles.blurb}>{blurb}</p>}
           <p className={styles.tags}><AfterMount>{characterTags(c).slice(0, 3).map(tag => <span key={tag}>#{tag}</span>)}</AfterMount></p>
-          <div className={styles.foot}>
-            <TransitionLink href={href} className={styles.more}>{t('자세히 보기')}</TransitionLink>
-            <span className={styles.count}>{i + 1} / {n}</span>
-          </div>
         </div>
-        {n > 1 && <button type="button" className={styles.arrow} aria-label={t('다음')} onClick={() => setI((i + 1) % n)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="m9 6 6 6-6 6" /></svg>
-        </button>}
-      </div>
-      <div className={styles.strips}>
-        {next.map(k => (
-          <button key={items[k]!.id} type="button" className={styles.strip} aria-label={items[k]!.name} onClick={() => setI(k)}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={items[k]!.images[0]} alt="" loading="lazy" />
-          </button>
-        ))}
-      </div>
-      {n > 1 && <div className={styles.dots}>{items.map((x, k) => <i key={x.id} className={k === i ? styles.on : ''} />)}</div>}
+        {n > 1 && <span className={styles.count}><b>{i + 1}</b>/{n}</span>}
+      </TransitionLink>
+      {n > 1 && <button type="button" className={styles.side} aria-label={next.name} onClick={() => go(1)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={next.images[0]} alt="" loading="lazy" />
+      </button>}
+      {n > 1 && <>
+        <button type="button" className={`${styles.arrow} ${styles.arrowPrev}`} aria-label={t('이전')} onClick={() => go(-1)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
+        </button>
+        <button type="button" className={`${styles.arrow} ${styles.arrowNext}`} aria-label={t('다음')} onClick={() => go(1)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+        </button>
+      </>}
     </section>
   )
 }
