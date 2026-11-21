@@ -472,9 +472,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                     placeholder={t('비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다.')} />
                 </LabeledField>
                 {/* 첫 장면의 장소 — 비우면 세계는 '어딘가' 에서 시작한다(9/27 운영 실측에서 장면 표시가 "어딘가 · 저녁" 이었다). */}
-                <LabeledField label={t('장소')} hint={t('첫 장면이 펼쳐지는 곳이에요. 채팅의 장면 표시와 소개 페이지에 보여요.')}>
-                  <CountedInput name="worldLocation" ariaLabel={t('장소')} placeholder={t('예) 서울, 경호업체 사무실')} max={60} {...g('worldLocation')} />
-                </LabeledField>
+                {/* 11/21 사용자: 장소 칸은 화면에서 지웠다 — 이미 적힌 값은 숨은 칸으로 그대로 보낸다. */}
+                <div hidden>
+                  <CountedInput name="worldLocation" ariaLabel={t('장소')} max={60} {...g('worldLocation')} />
+                </div>
               </div>
             </Card>
           </Section>
