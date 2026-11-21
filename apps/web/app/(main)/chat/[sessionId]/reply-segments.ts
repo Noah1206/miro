@@ -10,7 +10,7 @@ export type Paragraph = { text: string; kind: 'narration' | 'action' | 'thought'
 export type Segment = { kind: 'narration'; paragraphs: Paragraph[] } | { kind: 'bubble'; speaker: string; paragraphs: Paragraph[] }
 
 /** `차유진 |"대사"` — 이름(20자 이하) + | + 따옴표 대사. */
-const SPEECH_LINE = /^([^|\n"“]{1,20}?)\s*\|\s*["“](.*?)["”]?$/
+export const SPEECH_LINE = /^([^|\n"“]{1,20}?)\s*\|\s*["“](.*?)["”]?$/
 const KINDS = new Set(['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'])
 
 export function segmentReply(blocks: Array<Record<string, unknown>>, content: string, name: string, cast: readonly string[] = []): Segment[] {
@@ -51,8 +51,8 @@ export function segmentReply(blocks: Array<Record<string, unknown>>, content: st
       const m = SPEECH_LINE.exec(line.trim())
       if (!m) { if (line.trim()) prose(line); continue }
       const [, who, said] = m as unknown as [string, string, string]
-      if (who === '나') prose(`"${said}"`)
-      else out.push({ text: said, kind: 'dialogue', speaker: self.has(who) ? name : who })
+      // 11/21 사용자: 사람의 말은 모두 굵은 흰 글씨 — `나 |"…"` 도 서술(회색)이 아니라 '나 | "…"' 대사로.
+      out.push({ text: said, kind: 'dialogue', speaker: who === '나' ? '나' : self.has(who) ? name : who })
     }
     // 나뉜 블록의 사진 자리는 그 블록의 마지막 조각 뒤.
     if (out.length) out[out.length - 1]!.block = item.block

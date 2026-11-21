@@ -6,6 +6,7 @@ import { RichText, type RichNames } from '@/components/scene/rich-text'
 import { useT } from '@/lib/i18n/client'
 import { Rule, SampleDialogue } from './sections'
 import { UnveilCover } from '@/components/unveil-badge'
+import { SPEECH_LINE } from '@/app/(main)/chat/[sessionId]/reply-segments'
 
 export type IntroScene = {
   /** 폼으로 보내는 값(도입부 이름). */
@@ -63,12 +64,12 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
       {scene.briefing && <CharacterBriefing entry={scene.briefing} />}
       {scene.meta && <p className="intro-meta">{scene.meta}</p>}
       <div id={contentId} className="intro-preview">
-      {!scene.briefing && scene.context && (!longIntro || expanded) && <RichText editorial className="intro-narration" text={scene.context} names={names} />}
+      {!scene.briefing && scene.context && (!longIntro || expanded) && <NarrationWithSpeech text={scene.context} names={names} />}
       {lines.map((line, i) => (
         <div key={`${scene.value}-${i}`} className="intro-line">
           {line.role === 'character'
             ? <div className="intro-bubble"><RichText editorial text={line.text} names={names} /></div>
-            : <RichText editorial className="intro-narration" text={line.text} names={names} />}
+            : <NarrationWithSpeech text={line.text} names={names} />}
           {/* 11/8 사용자: 상황 설명 글 다음에 그 장면 사진 */}
           {/* eslint-disable-next-line @next/next/no-img-element -- 시드가 올린 공개 장면 사진 한 장 */}
           {line.image && (veil
@@ -104,4 +105,22 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
     )}
     </>
   )
+}
+
+/**
+ * 11/21 사용자: 서술 안에 섞인 `이름 |"대사"` 줄(사람의 말)은 채팅방처럼 굵은 흰 글씨 '이름 | "대사"' 로, 나머지 줄은 회색 서술로.
+ * 이어진 서술 줄은 한 덩어리(RichText)로 둔다.
+ */
+function NarrationWithSpeech({ text, names }: { text: string; names: RichNames }) {
+  const parts: Array<{ prose: string } | { who: string; said: string }> = []
+  for (const line of text.split('\n')) {
+    const m = SPEECH_LINE.exec(line.trim())
+    if (m) { parts.push({ who: m[1]!.trim(), said: m[2]! }); continue }
+    const last = parts.at(-1)
+    if (last && 'prose' in last) last.prose += '\n' + line
+    else parts.push({ prose: line })
+  }
+  return <>{parts.map((p, i) => 'prose' in p
+    ? (p.prose.trim() ? <RichText key={i} editorial className="intro-narration" text={p.prose.trim()} names={names} /> : null)
+    : <p key={i} className="intro-speech">{p.who} | &quot;{p.said}&quot;</p>)}</>
 }
