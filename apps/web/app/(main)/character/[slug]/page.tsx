@@ -22,7 +22,7 @@ import { subject, withParticle } from '@/lib/format'
 import { hotFirst } from '@/lib/character-card-copy'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
-import { ResumeOrNew, StartWithLogin, StartWithUnveil } from './start-button'
+import { ResumeOrNew, StartWithLogin, StartWithUnveil, SubmitNavigates } from './start-button'
 import { CreatorRow } from '@/components/creator-row'
 import { creatorKeyOf, creatorOf } from '@/lib/creators'
 import { UnveilCover } from '@/components/unveil-badge'
@@ -195,7 +195,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
                 : user && running
                 ? <form id="start-roleplay" action={enter}><ResumeOrNew resume={t('이어서 대화')} fresh={t('새로 대화')} /></form>
                 : user
-                ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
+                ? <form id="start-roleplay" action={enter}><SubmitNavigates /><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
                 : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
             </div>
           </div>
