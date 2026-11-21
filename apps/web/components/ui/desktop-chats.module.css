@@ -7,7 +7,8 @@
   .heading a { font-size: 11px; color: var(--color-text-tertiary); }
   .list { overflow-y: auto; min-height: 0; flex: 1; }
   .row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; transition: background .15s; }
-  .row:hover { background: var(--color-surface-1); }
+  /* 11/21 사용자: 사이드바 hover 가 잘 안 보였다 — 옅은 라벤더로 또렷하게. */
+  .row:hover { background: color-mix(in srgb, var(--color-lavender-500) 16%, var(--color-surface-2)); }
   .avatar { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; background: var(--color-surface-2); display: grid; place-items: center; }
   .copy { min-width: 0; flex: 1; }
   .copy strong { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -28,7 +29,7 @@
 @media (min-width: 1024px) {
   .brandRow { display: flex; align-items: center; justify-content: space-between; }
   .toggle, .expand { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; color: var(--color-text-secondary); background: transparent; cursor: pointer; }
-  .toggle:hover, .expand:hover { background: var(--color-surface-2); }
+  .toggle:hover, .expand:hover { background: color-mix(in srgb, var(--color-lavender-500) 16%, var(--color-surface-2)); color: var(--color-text-primary); }
   .sidebar[data-collapsed="true"] { width: 72px; padding-inline: 16px; }
 }
 
@@ -64,8 +65,8 @@
   .menu { display: flex; flex-direction: column; gap: 2px; margin-top: 20px; }
   .menuItem { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--color-text-primary); font: inherit; font-size: 15px; text-align: left; cursor: pointer; white-space: nowrap; transition: background .15s; }
   .menuItem svg { flex: none; }
-  .menuItem:hover { background: var(--color-surface-1); }
-  .menuItem[aria-current="page"] { background: var(--color-surface-2); font-weight: 650; }
+  .menuItem:hover { background: color-mix(in srgb, var(--color-lavender-500) 16%, var(--color-surface-2)); }
+  .menuItem[aria-current="page"] { background: color-mix(in srgb, var(--color-lavender-500) 26%, var(--color-surface-2)); font-weight: 650; }
   .menuLabel { transition: opacity 180ms ease; }
   .sidebar[data-collapsed="true"] .menuItem { padding: 0 9px; }
   .sidebar[data-collapsed="true"] .menuLabel { opacity: 0; pointer-events: none; }
