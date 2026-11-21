@@ -28,8 +28,7 @@ function samplingConfig(model: string, temperature?: number): { temperature?: nu
 /** Google Gemini (Generative Language API). 무료 등급이 있어 초기 기본 Provider. 키는 서버 env 에서만. */
 export class GeminiProvider implements AIProvider {
   readonly info: ProviderInfo
-  /** unfiltered: 11/22 언베일 전용 키(GEMINI_ADULT_API_KEY) — 성인 장면을 막지 않게 안전 필터를 끈다(BLOCK_NONE). 메인 키는 지금처럼. */
-  constructor(private readonly apiKey: string, private readonly model = 'gemini-3.5-flash-lite', private readonly unfiltered = false) {
+  constructor(private readonly apiKey: string, private readonly model = 'gemini-3.5-flash-lite') {
     this.info = { mode: 'live', name: `gemini/${model}`, notice: null }
   }
 
@@ -47,7 +46,7 @@ export class GeminiProvider implements AIProvider {
         systemInstruction: { parts: [{ text: req.system }] },
         contents: [{ role: 'user', parts: [{ text: flatPrompt(req) }] }],
         safetySettings: ['HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_HARASSMENT']
-          .map(category => ({ category, threshold: this.unfiltered ? 'BLOCK_NONE' : req.safety === 'relaxed' ? 'BLOCK_ONLY_HIGH' : 'BLOCK_MEDIUM_AND_ABOVE' })),
+          .map(category => ({ category, threshold: req.safety === 'relaxed' ? 'BLOCK_ONLY_HIGH' : 'BLOCK_MEDIUM_AND_ABOVE' })),
         generationConfig: {
           maxOutputTokens: req.maxTokens ?? 1024,
           ...samplingConfig(this.model, req.temperature),
