@@ -82,7 +82,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {<HomeHero items={(() => {
         // 11/13 사용자: 여성향을 빼서 남성향 6, 순서는 섞는다.
         const all = [...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
-          .filter(c => c.images.length > 0 && !c.coverUnveil).sort(() => Math.random() - 0.5)
+          .filter(c => c.images.length > 0 && !c.coverUnveil && (c.isPublic || c.isOfficial)).sort(() => Math.random() - 0.5)  /* 11/21 사용자: 내 비공개 작품은 추천 배너에서 뺀다 */
         return all.filter(c => c.audience === 'male').slice(0, 6)
       })()} />}
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}

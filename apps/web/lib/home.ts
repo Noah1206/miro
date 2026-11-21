@@ -22,6 +22,8 @@ export type HomeCard = OfficialCard & {
   createdAt?: string
   audience?: Audience
   isOfficial?: boolean
+  /** 11/21 홈 추천 배너는 모두에게 보이는 작품(공개·공식)만 — 내 비공개 작품을 거르려고. */
+  isPublic?: boolean
   adultOnly?: boolean
   recentPlays?: number
   /** 11/12 크리에이터 이름 — 회원 닉네임, 운영 작품은 그림체별 필명(lib/creator-name). 카드 해시태그 아래. */
@@ -67,7 +69,7 @@ const pageColumns = {
   images: sql<string[]>`coalesce(jsonb_path_query_array(${characters.images}, '$[0 to 7]'), '[]'::jsonb)`,
   contactEnabled: contactProfiles.enabled,
   coverUnveil: characters.coverUnveil,
-  audience: characters.audience, isOfficial: characters.isOfficial, adultOnly: characters.adultOnly,
+  audience: characters.audience, isOfficial: characters.isOfficial, isPublic: characters.isPublic, adultOnly: characters.adultOnly,
   // 11/12 카드 해시태그 아래의 크리에이터 이름용(lib/creator-name).
   ownerName: sql<string | null>`(select u.display_name from users u where u.id = ${characters.ownerId})`,
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
