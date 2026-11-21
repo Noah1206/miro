@@ -588,3 +588,10 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* 11/21 사용자: 인트로 미리보기의 점 세 개(유저 쪽) 말풍선은 오른쪽 위 모서리만 각지게. */
 .intro-typing { border-top-right-radius: 0; }
+
+/* 11/21 사용자: 페이지 이동 막대 — 화면 맨 위, 짙은 라벤더(lavender-600). loading = 80% 까지 천천히, done = 끝까지 채우고 사라짐. */
+.route-progress { position: fixed; top: 0; left: 0; z-index: 1000; height: 3px; width: 0; background: var(--color-lavender-600); box-shadow: 0 0 8px color-mix(in srgb, var(--color-lavender-600) 60%, transparent); pointer-events: none; }
+.route-progress[data-phase="loading"] { animation: route-progress-grow 6s cubic-bezier(.1,.7,.2,1) forwards; }
+.route-progress[data-phase="done"] { width: 100%; opacity: 0; transition: width 200ms ease-out, opacity 250ms ease 150ms; }
+@keyframes route-progress-grow { from { width: 0 } 15% { width: 45% } to { width: 82% } }
+@media (prefers-reduced-motion: reduce) { .route-progress[data-phase="loading"] { animation: none; width: 60%; } }
