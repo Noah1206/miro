@@ -599,3 +599,12 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .route-spinner { display: block; width: 34px; height: 34px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--color-lavender-500) 22%, transparent); border-top-color: var(--color-lavender-500); animation: route-spin .8s linear infinite; }
 @keyframes route-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .route-spinner { animation-duration: 2s; } }
+
+/* ── 11/21 사용자: 상세 페이지 '시작 설정'(인트로)도 채팅방 턴과 같은 모양 — 회색 카드 한 장, 서술은 보통 글씨 회색, 대사는 굵은 흰 글씨, 사진은 글 폭 정사각형(360px 까지), 상태창도 같은 카드. ── */
+.intro-preview > .intro-preview { padding: 14px 12px 16px; border-radius: 16px; background: #262728; gap: 8px; }
+.intro-preview > .intro-preview .intro-line { gap: 8px; }
+.intro-preview > .intro-preview .rich-text.intro-narration { color: #cfcfcf; font-style: normal; font-size: 15px; line-height: 1.75; }
+.intro-preview > .intro-preview .intro-bubble:not(.intro-typing) { max-width: 100%; padding: 0; border-radius: 0; background: none; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.75; }
+.intro-preview > .intro-preview .intro-bubble:not(.intro-typing) .rich-text p { line-height: 1.75; }
+.intro-preview > .intro-preview .intro-photo { width: 100%; max-width: 360px; aspect-ratio: 1 / 1; object-fit: cover; object-position: center 25%; border-radius: 8px; margin-block: 6px; }
+.intro-preview > .intro-preview .intro-status { border: 0 !important; border-radius: 10px !important; background: #1b1b1c !important; }

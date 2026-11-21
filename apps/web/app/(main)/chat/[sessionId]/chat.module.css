@@ -810,3 +810,18 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .flow .photoMakingTile { width: 100%; border-radius: 8px; }
 /* 11/21 사용자: 컴퓨터에선 글 폭이 넓어 정사각형 사진이 화면을 덮었다 — 휴대폰에서 보이는 크기(약 360px)에서 멈춘다. */
 .flow .photo, .flow .photoMakingTile { max-width: 360px; }
+
+/* ── 11/21 사용자: 채팅방의 모든 사진 = 글 폭을 채운 정사각형(휴대폰 기준, 컴퓨터는 360px 에서 멈춤) — 메신저 테마의 72% 가운데 사진도. ── */
+.photo, :global([data-chat-theme]) .photo { width: 100%; max-width: 360px; margin-inline: 0; }
+/* 같은 날: 한 턴 안 덩어리(서술·대사) 사이가 빈 줄처럼 벌어져 보였다 — 문단 사이와 같은 8px 로. */
+.turnCard .flow, .flow { gap: 8px; }
+
+/* ── 11/21 사용자: 인트로도 채팅 턴처럼 — 인트로 메시지(글·사진)가 따로따로 카드였던 것을 이어 붙여 카드 한 장으로(기본 테마). ── */
+:global([data-chat-theme='miro']) .messageLine[data-opening] + .messageLine[data-opening] { margin-top: -20px; }
+:global([data-chat-theme='miro']) .messageLine[data-opening] + .messageLine[data-opening] .turnCard { border-top-left-radius: 0; border-top-right-radius: 0; padding-top: 6px; }
+:global([data-chat-theme='miro']) .messageLine[data-opening]:has(+ .messageLine[data-opening]) .turnCard { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding-bottom: 6px; }
+:global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo'] { background: #262728; padding: 6px 12px; }
+:global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo'] .photo { margin: 0; }
+:global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo']:first-child,
+:global([data-chat-theme='miro']) .messageLine:not([data-opening]) + .messageLine[data-opening][data-kind='photo'] { border-top-left-radius: 16px; border-top-right-radius: 16px; padding-top: 14px; }
+:global([data-chat-theme='miro']) .messageLine[data-opening][data-kind='photo']:not(:has(+ .messageLine[data-opening])) { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding-bottom: 14px; }

@@ -195,7 +195,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       {!lastOpeningId && guide}
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
-          <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} data-fresh={m.role === 'user' && !initialKeys.current!.has(keyOf(m)) || undefined} layout={false} {...(quiet.has(m.id) || m.role === 'user' || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
+          <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} data-opening={(m.opening && m.role !== 'user') || undefined} data-kind={m.kind} data-fresh={m.role === 'user' && !initialKeys.current!.has(keyOf(m)) || undefined} layout={false} {...(quiet.has(m.id) || m.role === 'user' || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             {/* 11/19 사용자: 기본 테마는 답 한 턴 = 카드 하나 — 글·상태창·사진 아이콘(맨 아래)이 같은 카드 안. 메신저 테마는 전처럼 카드 없이. */}
             <div className={theme === 'miro' && (m.role === 'character' || m.role === 'narrator') && m.kind === 'text' ? styles.turnCard : styles.turnPlain}>
             <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b]) && !endingReady([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
