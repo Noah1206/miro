@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, Reorder, motion, useDragControls, useReducedMotion } from 'motion/react'
-import { LogoMark, Sheet, Rows, Switch } from '@/components/ui'
+import { LogoMark, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
 import { Line } from '../character/[slug]/sections'
@@ -124,7 +124,8 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
   /** 편집 화면에서 이미 저장된 사진 URL — 새로 고르지 않으면 그대로 유지된다. */
   existing?: string[]
 }) {
-  const [open, setOpen] = useState(false)
+  // 11/21 사용자(단계 줄이기): '+'·대표 사진을 누르면 시트('기기에서 가져오기' 하나뿐) 없이 바로 사진 고르기를 연다. 시트의 저작권 경고는 옆 안내 4줄에 이미 있다.
+  const pick = () => pickerRef.current?.click()
   const [previews, setPreviews] = useState<Picked[]>([])
   const [kept, setKept] = useState<string[]>(existing)
   const [imageOrder, setImageOrder] = useState<string[]>(existing)
@@ -198,7 +199,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 폰에서도 같은 모양 — 칸·'+'·글씨를 줄 폭(cqw)에 비례해 줄인다(넓으면 180px·56px·16px 에서 멈춤). */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, containerType: 'inline-size' }}>
       <div {...(main ? dragHandlers(0) : {})} style={{ width: side, flex: 'none', cursor: main ? 'grab' : undefined }}>
-        <motion.button type="button" onClick={() => { if (main) setOpen(true) }} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
+        <motion.button type="button" onClick={pick} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -265,7 +266,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           </AnimatePresence>
           {!full && (
             <li>
-              <button type="button" onClick={() => setOpen(true)} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
+              <button type="button" onClick={pick} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
                 style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'var(--color-surface-2)',
                   border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-white)' }}>
                 <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -282,7 +283,6 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         onChange={async (e) => {
           const picked = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
           e.target.value = ''
-          setOpen(false)
           // 보내기 전에 줄인다 — 서버 액션 본문 한도(4MB) 안에 5장이 들어가게(lib/shrink-image).
           const files = await Promise.all(picked.map(shrinkImage))
           if (files.length > 0) {
@@ -291,24 +291,6 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             setImageOrder(xs => [...xs, ...added.map(p => p.url)])
           }
         }} />
-      <Sheet open={open} onClose={() => setOpen(false)} title={`${label} ${items.length}/${maxCount}`}>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
-          {t('한 장당 5MB 이하 (jpg, jpeg, png, webp, heic, heif)')}
-        </p>
-
-        <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 10 }}>
-          <label htmlFor={inputId} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-            <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 16V4M8 8l4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
-            </svg>
-            <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{t('기기에서 가져오기')}</span>
-          </label>
-        </div>
-        <p className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 18, padding: '0 4px' }}>
-          {t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요!')}<br />
-          {t('아니면 경고 없이 삭제나 차단될 수 있어요.')}
-        </p>
-      </Sheet>
     </>
   )
 }
@@ -630,7 +612,6 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
   const [picked, setPickedState] = useState<string[]>(defaultValue)
   const setPicked = (next: string[]) => { setPickedState(next); onChange?.(next) }
   const [text, setText] = useState('')
-  const [openGroups, setOpenGroups] = useState<string[]>(() => groups?.[0] ? [groups[0].label] : [])
   const reduce = useReducedMotion()
   const t = useT()
   const full = picked.length >= max
@@ -664,23 +645,17 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
   return (
     <div role="group" aria-label={t(label)}>
       <input type="hidden" name={name} value={picked.join(',')} />
-      {/* 10/28: 묶음마다 접는 카드 — 처음엔 첫 묶음만 펼치고, 접힌 제목 옆엔 고른 개수. */}
-      {/* 위계: 바깥 판 하나 안에 묶음 줄(구분선) → 그 안에 태그. 묶음 제목은 작은 글씨, 펼친 줄만 밝게. */}
+      {/* 10/28: 묶음마다 접는 카드였다. 11/21 사용자(단계 줄이기): 모든 묶음을 늘 펼쳐 둔다 — 제목은 이름표일 뿐, 옆엔 고른 개수. */}
       {groups && <div style={{ borderRadius: 14, border: '1px solid var(--color-border)', overflow: 'hidden' }}>
         {groups.map(g => {
-          const open = openGroups.includes(g.label)
           const count = g.options.filter(o => picked.includes(o)).length
           return (
-            <div key={g.label} style={{ borderTop: g === groups[0] ? 0 : '1px solid var(--color-border)', background: open ? 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' : undefined }}>
-              <button type="button" aria-expanded={open} onClick={() => setOpenGroups(open ? openGroups.filter(l => l !== g.label) : [...openGroups, g.label])}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', minHeight: 44, padding: '0 14px', background: 'none', border: 0, cursor: 'pointer', color: open ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', textAlign: 'left' }}>
+            <div key={g.label} style={{ borderTop: g === groups[0] ? 0 : '1px solid var(--color-border)' }}>
+              <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0, padding: '12px 14px 8px', color: 'var(--color-text-primary)' }}>
                 <span style={{ fontSize: 14, fontWeight: 'var(--weight-medium)' }}>{t(g.label)}</span>
                 {count > 0 && <span className="t-caption" style={{ color: 'var(--color-lavender-200)' }}>· {count}</span>}
-                <span style={{ flex: 1 }} />
-                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ color: 'var(--color-text-secondary)', transition: 'transform 200ms', transform: open ? 'rotate(180deg)' : undefined }}><path d="m6 9 6 6 6-6" /></svg>
-              </button>
-              {open && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '2px 14px 14px' }}>{g.options.map(o => presetChip(o))}</div>}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 14px 14px' }}>{g.options.map(o => presetChip(o))}</div>
             </div>
           )
         })}
@@ -764,9 +739,9 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
 export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes = [] }: { name: string; defaultValue?: LoreItem[]; defaultLimit?: number; /** 저장된 추가 시작 설정 이름 — 항목을 그 장면 전용으로 묶을 때 고른다. */ scenes?: string[] }) {
   const t = useT()
   // 11/12 항목을 그 자리에서 고친다(전엔 지우고 다시 적어야 했다). 순서가 우선순위 — 11/21부터 손잡이(=)로 끌어서 바꾼다.
-  // 11/21 사용자: 등록한 항목은 접힌 카드(손잡이·이름·수정·삭제·펼치기), 펼치면 내용·키워드 칩. 저장돼 있던 항목은 접힌 채로, 새 항목은 펼친 채로 시작한다.
+  // 11/21 사용자: 등록한 항목은 카드(손잡이·이름·수정·삭제) 아래 내용·키워드 칩 — 같은 날 '단계 줄이기'로 접기는 뺐다.
   const [rows, setRows] = useState<LoreRowState[]>(() =>
-    defaultValue.map((d, id) => ({ id, name: d.name ?? '', keywords: d.keywords, content: d.content, scene: d.scene ?? '', open: false })))
+    defaultValue.map((d, id) => ({ id, name: d.name ?? '', keywords: d.keywords, content: d.content, scene: d.scene ?? '' })))
   const [nextId, setNextId] = useState(defaultValue.length)
   const [limit, setLimit] = useState(defaultLimit)
   // 11/12 불러오기 — 내 다른 작품의 설정집을 이 작품 끝에 덧붙인다(같은 내용은 건너뛴다).
@@ -776,7 +751,7 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
     setRows(rs => {
       const have = new Set(rs.map(r => r.content.trim()))
       const add = lore.filter(e => !have.has(e.content.trim())).slice(0, MAX_LORE - rs.length)
-      return [...rs, ...add.map((e, n) => ({ id: nextId + n, name: e.name ?? '', keywords: e.keywords, content: e.content, scene: '', open: false }))]
+      return [...rs, ...add.map((e, n) => ({ id: nextId + n, name: e.name ?? '', keywords: e.keywords, content: e.content, scene: '' }))]
     })
     setNextId(n => n + lore.length); setSources(null)
   }
@@ -818,7 +793,7 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
       </Reorder.Group>
       {/* 11/21 사용자: 등록 목록 아래 가는 줄 + 가운데 동그란 + '설정 추가'. */}
       {rows.length < MAX_LORE && <div style={{ borderTop: rows.length ? '1px solid var(--color-border)' : undefined, paddingTop: rows.length ? 6 : 0, display: 'flex', justifyContent: 'center' }}>
-        <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', keywords: [], content: '', scene: '', open: true }]); setNextId(n => n + 1) }}
+        <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', keywords: [], content: '', scene: '' }]); setNextId(n => n + 1) }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minHeight: 52, padding: '0 12px', background: 'none', border: 0, color: 'var(--color-text-primary)', cursor: 'pointer', font: 'inherit', fontSize: 15 }}>
           <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 32, height: 32, borderRadius: 16, background: 'var(--color-surface-3)', fontSize: 20, lineHeight: 1 }}>+</span>
           {t('설정 추가')} <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13 }}>{rows.length}/{MAX_LORE}</span>
@@ -828,7 +803,7 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
   )
 }
 
-type LoreRowState = { id: number; name: string; keywords: string[]; content: string; scene: string; open: boolean }
+type LoreRowState = { id: number; name: string; keywords: string[]; content: string; scene: string }
 
 /** 설정집 항목 카드 하나(11/21) — 머리: 손잡이(끌어서·위아래 화살표로 순서) · 이름 · 수정 · 삭제 · 펼치기. 몸: 내용 칸, 키워드 칩 + 입력·추가. */
 function LoreRow({ r, index, scenes, patch, move, remove }: {
@@ -866,19 +841,13 @@ function LoreRow({ r, index, scenes, patch, move, remove }: {
               <button type="button" onClick={() => setEditing(null)} style={textBtn}>{t('취소')}</button>
             </>
           : <>
-              <button type="button" onClick={() => patch({ open: !r.open })} aria-expanded={r.open}
-                style={{ flex: 1, minWidth: 0, minHeight: 44, padding: 0, background: 'none', border: 0, textAlign: 'left', cursor: 'pointer', font: 'inherit', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</button>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
               <button type="button" onClick={() => setEditing(r.name)} style={textBtn}>{t('수정')}</button>
               <button type="button" onClick={remove} style={textBtn}>{t('삭제')}</button>
-              <button type="button" onClick={() => patch({ open: !r.open })} aria-label={r.open ? t('접기') : t('펼치기')} aria-expanded={r.open}
-                style={{ display: 'grid', placeItems: 'center', width: 36, height: 44, background: 'none', border: 0, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
-                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ transition: 'transform 200ms', transform: r.open ? 'rotate(180deg)' : undefined }}><path d="m6 9 6 6 6-6" /></svg>
-              </button>
             </>}
       </div>
-      {/* 접혀도 DOM 에 남긴다(값은 위 hidden input 이 보낸다 — 여기선 보이기만 감춘다). */}
-      <div hidden={!r.open} style={{ borderTop: '1px solid var(--color-border)', padding: '16px 16px 18px' }}>
+      {/* 11/21 사용자(단계 줄이기): 접기 없이 늘 펼쳐 둔다. */}
+      <div style={{ borderTop: '1px solid var(--color-border)', padding: '16px 16px 18px' }}>
         <div className="stack" style={{ gap: 6 }}>
           {label(t('내용'), true)}
           <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('이 키워드가 나오면 캐릭터가 떠올릴 정보를 적어 주세요')}</p>

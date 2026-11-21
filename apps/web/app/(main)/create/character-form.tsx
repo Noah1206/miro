@@ -406,12 +406,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           {/* 전개 예시(11/10, 크랙 스토리 설정) — 10/28 사용자 요청으로 화면에서 뺐던 상황 예시를 고급 설정 안에 접어서 되살렸다. 이미 적힌 예시는 그대로 이어받는다. */}
-          <details className="create-advanced">
-            <summary>{t('고급 설정 · 전개 예시')}</summary>
-            <Section title={t('전개 예시 · 선택')} subtitle={t('유저가 이렇게 말하면 캐릭터는 이렇게 답한다는 예시예요. 최대 3쌍. AI가 말투와 분량의 기준으로 삼아요.')}>
-              <ExamplesEditor defaultValue={sampleDialogue(i.sampleDialogue)} characterName={name} />
-            </Section>
-          </details>
+          {/* 11/21 사용자(단계 줄이기): '고급 설정' 접기를 빼고 늘 펼쳐 둔다. */}
+          <Section title={t('전개 예시 · 선택')} subtitle={t('유저가 이렇게 말하면 캐릭터는 이렇게 답한다는 예시예요. 최대 3쌍. AI가 말투와 분량의 기준으로 삼아요.')}>
+            <ExamplesEditor defaultValue={sampleDialogue(i.sampleDialogue)} characterName={name} />
+          </Section>
 
         </Panel>
 
@@ -513,10 +511,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </div>
           </Section>
           {/* 시작 설정 추가(11/10, 크랙) — 첫 장면 말고 다른 시작 상황. 사용자는 소개 페이지에서 고른다. */}
-          <details className="create-advanced" open={introScenes(i.sampleDialogue).length > 1}>
-            <summary>{t('시작 설정 추가 · 선택')}</summary>
+          {/* 11/21 사용자(단계 줄이기): 접기를 빼고 늘 펼쳐 둔다. */}
+          <Section title={t('시작 설정 추가 · 선택')}>
             <ExtraScenesEditor characterName={name} defaultValue={introScenes(i.sampleDialogue).slice(1).map(scene => ({ scene, lines: introDialogue(i.sampleDialogue, scene), ...sceneMeta(i.sampleDialogue, scene) }))} />
-          </details>
+          </Section>
         </Panel>
 
         {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
