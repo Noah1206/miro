@@ -39,7 +39,8 @@ export function providerFromEnv(name: string | undefined, model?: string): AIPro
       // 11/16 Gemini 는 OpenRouter 안의 두 길(Google Vertex·Google AI Studio) 가운데 AI Studio 를 먼저 — 같은 요청(언베일 방, 실측 각 12~25회)에
       // Vertex 는 열에 한 번쯤 '참여할 수 없다'는 답을 돌려줬고(실제 방에선 네 번 연속) AI Studio 는 한 번도 없었다. AI Studio 가 막히면(429) Vertex 로 넘어간다.
       ? new OpenAICompatibleProvider('openrouter', e.OPENROUTER_API_KEY, model, 'https://openrouter.ai/api/v1', { provider: { data_collection: 'deny', require_parameters: true,
-        ...(model.startsWith('google/') ? { order: ['google-ai-studio', 'google-vertex'] } : { sort: 'throughput' }) } }) : null
+        // 11/22 Claude 는 Anthropic 호스트 먼저(막히면 다른 호스트로) — throughput 정렬이 Anthropic·Vertex·Bedrock 을 오가 호스트마다 따로인 프롬프트 캐시가 거의 안 맞았다(언베일 Sonnet 5분 안 턴 적중 15%, 직결 39%).
+        ...(model.startsWith('google/') ? { order: ['google-ai-studio', 'google-vertex'] } : model.startsWith('anthropic/') ? { order: ['anthropic'] } : { sort: 'throughput' }) } }) : null
     // 11/22 언베일 방 전용 직접 길(OpenRouter 수수료 약 5.5% 절감) — 성인 콘텐츠를 허용하는 공급자만. 키가 없으면 null 이라 OpenRouter 항목이 예비로 남는다.
     case 'deepseek': return e.DEEPSEEK_API_KEY && model ? new OpenAICompatibleProvider('deepseek', e.DEEPSEEK_API_KEY, model, 'https://api.deepseek.com/v1') : null
     case 'xai': return e.XAI_API_KEY && model ? new OpenAICompatibleProvider('xai', e.XAI_API_KEY, model, 'https://api.x.ai/v1') : null

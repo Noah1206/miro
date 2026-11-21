@@ -66,10 +66,13 @@ export function routeModels(registry: ModelRegistry, task: AITask, tokens: numbe
   return regular.slice(0, 3)
 }
 /** USD per million tokens. Unknown prices stay unknown, never silently free. */
-export function modelCost(m: ModelDefinition, input: number | null, output: number | null, cachedInput = 0): number | null {
+/** 11/22 캐시 쓰기는 정가의 1.25배(Anthropic 5분 캐시) — 전엔 일반 입력값으로 셌다. */
+const CACHE_WRITE_PREMIUM = 0.25
+export function modelCost(m: ModelDefinition, input: number | null, output: number | null, cachedInput = 0, cacheWrite = 0): number | null {
   if (m.provider === 'mock') return 0
   if (m.inputCost === undefined || m.outputCost === undefined || input === null || output === null) return null
   const rates = tokenRates(m, input)
   const cached = Math.min(input, Math.max(0, cachedInput))
-  return Math.ceil(((input - cached) * rates.inputCost + cached * rates.cachedInputCost + output * rates.outputCost) / 1_000_000 * 1e8) / 1e8
+  const written = Math.min(input - cached, Math.max(0, cacheWrite))
+  return Math.ceil(((input - cached) * rates.inputCost + written * rates.inputCost * CACHE_WRITE_PREMIUM + cached * rates.cachedInputCost + output * rates.outputCost) / 1_000_000 * 1e8) / 1e8
 }

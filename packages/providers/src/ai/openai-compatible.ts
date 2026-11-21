@@ -2,7 +2,7 @@ import type { AIProvider, GenerationRequest, GenerationResult } from './types'
 import { flatPrompt } from './types'
 import type { ProviderInfo } from '../types'
 
-type Usage = { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } }
+type Usage = { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number } }
 type CompletionChunk = { model?: string; usage?: Usage; error?: unknown;
   choices?: Array<{ index?: number; finish_reason?: string | null; delta?: { content?: string | null; refusal?: string | null } }> }
 /** SSE framing is independent of TCP chunks, UTF-8 boundaries and empty usage-only events. */
@@ -42,7 +42,7 @@ async function streamCompletion(response: Response, req: GenerationRequest, prov
     // Never accept a proxy disconnect as a finished answer, even if the partial JSON happens to parse.
     if (!ended || !finish) throw new Error('provider_stream_incomplete')
     return { text: text.trim(), provider, model, inputTokens: usage?.prompt_tokens ?? null, outputTokens: usage?.completion_tokens ?? null,
-      cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0, latencyMs: Date.now() - start, blocked, blockReason, truncated: finish === 'length' }
+      cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0, cacheWriteInputTokens: usage?.prompt_tokens_details?.cache_write_tokens ?? 0, latencyMs: Date.now() - start, blocked, blockReason, truncated: finish === 'length' }
   } finally { await reader.cancel().catch(() => {}); reader.releaseLock() }
 }
 
@@ -117,7 +117,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     const body = (await res.json()) as {
       model?: string
       choices?: Array<{ finish_reason?: string; message?: { content?: string | null; refusal?: string | null } }>
-      usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } }
+      usage?: Usage
     }
     const choice = body.choices?.[0]
     const refused = !!choice?.message?.refusal, filtered = choice?.finish_reason === 'content_filter'
@@ -130,6 +130,7 @@ export class OpenAICompatibleProvider implements AIProvider {
       inputTokens: body.usage?.prompt_tokens ?? null,
       outputTokens: body.usage?.completion_tokens ?? null,
       cachedInputTokens: body.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+      cacheWriteInputTokens: body.usage?.prompt_tokens_details?.cache_write_tokens ?? 0,
       latencyMs: Date.now() - t0,
       truncated: choice?.finish_reason === undefined ? undefined : choice.finish_reason === 'length',
     }

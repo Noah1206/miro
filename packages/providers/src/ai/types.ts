@@ -74,6 +74,8 @@ export type GenerationResult = {
   inputTokens: number | null
   /** Subset of input tokens served from provider cache; absent means no measured discount. */
   cachedInputTokens?: number
+  /** 11/22 이번 호출이 새로 캐시에 쓴 입력 토큰(Anthropic cache_creation, OpenRouter cache_write_tokens) — 정가보다 25% 비싸다. */
+  cacheWriteInputTokens?: number
   outputTokens: number | null
   latencyMs: number
   /** 출력 상한에 걸려 잘렸다. 잘린 JSON 은 스키마 오류로만 보이므로 원인을 따로 남긴다. */

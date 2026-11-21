@@ -82,7 +82,8 @@ export async function generateAgencyStructured<T>(llm: LLMProvider, opts: {
 }): Promise<T> {
   try {
     // 계획·검사·컴파일은 사용자 글을 자료로 읽고 출력은 보이지 않는다 — 공급자 필터는 높은 위험만 막는다.
-    const result = await llm.generateStructured({ ...opts, maxRetries: 1, responseSchema: opts.responseSchema ?? responseJsonSchema(opts.schema), safety: 'relaxed' })
+    // 11/22 지시문(일마다 고정)을 캐시한다 — 계획·컴파일·자기 삶이 Sonnet 원가의 약 2/3 인데 캐시 표시가 없어 매번 정가였다(Claude 는 표시가 있어야 캐시).
+    const result = await llm.generateStructured({ ...opts, cacheSystemPrefix: opts.system.length, maxRetries: 1, responseSchema: opts.responseSchema ?? responseJsonSchema(opts.schema), safety: 'relaxed' })
     // The boundary is validated even for injected providers used by replay/integration adapters.
     return opts.schema.parse(result)
   } catch (error) {

@@ -349,7 +349,7 @@ export class AIOrchestrator implements LLMProvider {
           userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null, origin: context.origin ?? null,
           provider: result?.provider ?? model.provider, model: result?.model ?? model.providerModelId,
           modelId: model.id, modelVersion: model.version, promptVersion: req.promptVersion ?? `${req.task}:v1`,
-          inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out, result?.cachedInputTokens), actualCost: null,
+          inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out, result?.cachedInputTokens, result?.cacheWriteInputTokens), actualCost: null,
           usageUnits: ok ? context.usageUnits ?? 0 : 0, latencyMs: Date.now() - started, ok, error: ok ? null : last, fallbackUsed: index > 0, shadow: context.shadow ?? false,
         }
         ticket?.settle(usage)
