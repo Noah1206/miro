@@ -854,3 +854,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 @media (min-width: 1024px) { .headerUnveil { display: none; } }
 /* 11/22 사용자: 답 기다리는 말풍선 위로 훑고 지나가던 빛은 지운다(점 물결만). */
 :global([data-chat-theme='miro']) .typingBubble { background: rgba(255,255,255,.06); animation: none; }
+/* 11/22 사용자: 컴퓨터 채팅방 폭을 베이비챗과 같게 — 칸 840·양옆 여백 36(글 폭 768), 입력창은 양옆 48 들여 744. */
+@media (min-width: 1024px) {
+  .transcript, :global([data-chat-theme]) .transcript { padding-left: 36px; padding-right: 36px; }
+  .composer, :global([data-chat-theme]) .composer { padding-left: 48px; padding-right: 48px; }
+}
+/* 11/22 사용자: 입력창 투명도를 더 — 뒤 글이 비치게 반투명 + 흐림. */
+:global([data-chat-theme='miro']) .composerForm { background: rgb(24 24 24 / .6); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }

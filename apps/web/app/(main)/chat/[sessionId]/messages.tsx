@@ -473,15 +473,25 @@ function UserBubble({ text }: { text: string }) {
     if (!el) return
     const fit = () => {
       el.style.width = ''
-      const range = document.createRange()
-      range.selectNodeContents(el)
-      const rects = Array.from(range.getClientRects())
-      if (rects.length < 2) return
-      const line = Math.max(...rects.map(r => r.right)) - Math.min(...rects.map(r => r.left))
       const cs = getComputedStyle(el)
-      el.style.width = `${Math.ceil(line + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 1}px`
+      const lines = el.getClientRects()[0]
+      const h = el.offsetHeight
+      // 글자 마디(텍스트 노드)만 잰다 — 감싼 span/em 상자는 줄 끝까지 늘어나 보일 수 있다.
+      const rows = new Set<number>()
+      let left = Infinity, right = -Infinity
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+      const range = document.createRange()
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        range.selectNodeContents(n)
+        for (const r of Array.from(range.getClientRects())) { if (r.width < 1) continue; left = Math.min(left, r.left); right = Math.max(right, r.right); rows.add(Math.round(r.top)) }
+      }
+      if (!lines || rows.size < 2 || right <= left) return
+      el.style.width = `${Math.ceil(right - left + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 2}px`
+      if (el.offsetHeight > h) el.style.width = ''  // 줄이 늘면(다시 꺾이면) 되돌린다
     }
     fit()
+    // 웹 글꼴이 늦게 오면 대체 글꼴로 잰 폭이 남는다 — 글꼴이 준비되면 다시 잰다.
+    void document.fonts?.ready.then(fit)
     window.addEventListener('resize', fit)
     return () => window.removeEventListener('resize', fit)
   }, [text])
