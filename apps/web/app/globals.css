@@ -102,6 +102,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
   input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select { font-size: max(16px, 1em) !important; }
 }
 button { cursor: pointer; }
+/* 11/21 사용자: 모든 버튼은 누르면 살짝 작아지고 원래 색에서 살짝 짙어진다(다른 색으로 바뀌지 않게 밝기만).
+   Pressable(Button 컴포넌트)은 인라인 scale·filter 로 이미 같은 일을 해서 이 규칙보다 인라인이 이긴다. */
+:is(button, [role="button"], .button-link) { transition: transform 120ms var(--ease-standard, ease), filter 120ms var(--ease-standard, ease); }
+:is(button, [role="button"], .button-link):not(:disabled):not([aria-disabled="true"]):active { transform: scale(.96); filter: brightness(.88); }
+@media (prefers-reduced-motion: reduce) { :is(button, [role="button"], .button-link):active { transform: none; } }
 img { display: block; max-width: 100%; }
 h1, h2, h3, p { margin: 0; }
 /* 11/12 사용자: 버튼·링크에 초점이 갈 때 생기는 흰 테두리(초점 링)를 모두 없앤다 — 팝업이 열리며 닫기 버튼에 초점이 갈 때 거슬렸다. */
@@ -200,11 +205,12 @@ h1, h2, h3, p { margin: 0; }
 /* 11/21 사용자: 누르면 다른 색(라벤더 600·700)으로 바뀌던 것을 — 버튼 원래 색 그대로 짙어지게(밝기만 낮춘다). 작아지는 건 Pressable 이 그대로. */
 @media (hover: hover) and (pointer: fine) {
   :is(.btn, .button-link):is([data-variant="primary"], [data-variant="relationship"]):not(:disabled):not([aria-busy="true"]):hover {
-    filter: brightness(.9) !important;
+    filter: brightness(.94) !important;
   }
 }
+/* 같은 날 '살짝 짙게'로 맞춤(.78 → .88, 다른 버튼과 같은 정도). */
 :is(.btn, .button-link):is([data-variant="primary"], [data-variant="relationship"]):not(:disabled):not([aria-busy="true"]):is(:active, [data-pressed="true"]) {
-  filter: brightness(.78) !important;
+  filter: brightness(.88) !important;
 }
 /* 캐릭터 상세 '대화 시작하기'(11/5): 라벤더 600 → 올리면 700, 누르면 800 으로 짙어지고 글자는 흰색 → 라벤더 100 → 200(공통 규칙은 옅어져서 이 버튼만 따로). */
 .btn.btn-start { transition: background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
