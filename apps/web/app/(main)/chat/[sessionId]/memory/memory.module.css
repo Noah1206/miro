@@ -49,3 +49,6 @@
 .tab { min-height: 48px; padding: 8px 12px; border-radius: 999px; color: var(--color-text-primary); font-weight: 400; }
 .tab[aria-selected='true'] { color: #16161a; font-weight: 700; }
 .pill { border-radius: 999px; background: #fff; }
+/* 11/21 사용자: < 는 채팅방 머리의 < 와 같은 크기(27px)·흰색. */
+.header > a svg { width: 27px; height: 27px; }
+.header > a { color: var(--color-text-primary) !important; }

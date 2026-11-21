@@ -75,7 +75,7 @@ function RoomPage({ title, onBack, children, footer, action }: { title: string; 
   return createPortal(<div className={styles.page} role="dialog" aria-modal="true" aria-label={title}>
     <header className={styles.pageHead}>
       <button type="button" className={`${styles.pageBack} back-press`} aria-label={t('뒤로')} onClick={onBack}>
-        <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+        <svg aria-hidden width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
       </button>
       <h2>{title}</h2>
       <span className={styles.pageAction}>{action}</span>
