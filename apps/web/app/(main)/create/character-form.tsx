@@ -150,7 +150,10 @@ export function CharacterForm(props: CharacterFormProps) {
       setRestored(raw ? restoreDraft(JSON.parse(raw) as Array<[string, string]>, experienceType) : {})
     } catch { setRestored({}) }
   }, [key, userId, creationId, experienceType])
-  if (mode === 'create' && restored === null) return <main id="main" className="page"><p role="status" className="t-caption">{t('작성 중인 내용을 불러오는 중...')}</p></main>
+  // 11/21 사용자: 글자 대신 가운데에 통통 튀는 점 세 개(인트로 '입력 중' 점과 같은 모양). 글자는 낭독기에만.
+  if (mode === 'create' && restored === null) return <main id="main" className="page" style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}>
+    <p role="status" style={{ margin: 0 }}><span className="sr-only">{t('작성 중인 내용을 불러오는 중...')}</span><span className="intro-typing" aria-hidden><span /><span /><span /></span></p>
+  </main>
   return <CharacterFormBody {...props} initial={mode === 'create' ? restored ?? {} : props.initial} storageKey={key} />
 }
 
