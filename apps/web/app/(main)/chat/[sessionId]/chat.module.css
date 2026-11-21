@@ -829,3 +829,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .statusText { font-size: 15px; line-height: 1.45; padding: 2px 14px 14px; }
 /* 11/21 사용자: 굵게는 이름만 — 말하는 글은 보통 굵기의 흰 글씨. */
 .flowText .flowLine { color: #fff; font-weight: 400; }
+/* 11/21 사용자: 채팅방 머리의 < 와 제목만 조금 크게(< 24→27px, 제목 16→18px). */
+.header > a:first-child svg, :global([data-chat-theme]) .header > a:first-child svg { width: 27px; height: 27px; }
+.title, :global([data-chat-theme='miro']) .title { font-size: 18px; }
