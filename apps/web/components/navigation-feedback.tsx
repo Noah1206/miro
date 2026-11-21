@@ -1,24 +1,7 @@
 'use client'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArchivePageSkeleton, CharacterPageSkeleton, CreatePageSkeleton, ExplorePageSkeleton, HomePageSkeleton, MiroPageSkeleton, MyPageSkeleton, RoomPageSkeleton } from './page-skeletons'
-
-const destinations: Record<string, ReactNode> = {
-  '/home': <HomePageSkeleton />,
-  '/miro': <MiroPageSkeleton />,
-  '/archive': <ArchivePageSkeleton />,
-  '/create': <CreatePageSkeleton />,
-  '/my': <MyPageSkeleton />,
-  '/explore': <ExplorePageSkeleton />,
-  '/search/results': <ExplorePageSkeleton />,
-}
-
-/** 고정 주소 + 대화방·문자방·캐릭터 소개(10/27) — 서버 렌더가 오래 걸리는데 그동안 이전 화면이 멈춰 있던 곳. */
-function skeletonFor(path: string): ReactNode | undefined {
-  if (destinations[path]) return destinations[path]
-  if (/^\/(chat|messages)\/[^/]+$/.test(path)) return <RoomPageSkeleton />
-  if (/^\/character\/[^/]+$/.test(path)) return <CharacterPageSkeleton />
-}
+import { LoadingDots } from './loading-dots'
 
 export function NavigationFeedback({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -34,7 +17,7 @@ export function NavigationFeedback({ children }: { children: ReactNode }) {
       setTarget(null)
       const href = (event as CustomEvent<string>).detail
       const destination = new URL(href, window.location.href).pathname
-      if (destination === pathname || !skeletonFor(destination)) return
+      if (destination === pathname) return
       timer.current = setTimeout(() => setTarget({ destination, from: pathname }), 80)
       fallback.current = setTimeout(() => setTarget(null), 15000)
     }
@@ -54,8 +37,9 @@ export function NavigationFeedback({ children }: { children: ReactNode }) {
   }, [pathname])
 
   const visible = target !== null && target.from === pathname
+  // 11/21 사용자: 뼈대 화면 대신 통통 튀는 점만 — 새 화면이 다 올 때까지.
   return <>
     <div style={visible ? { display: 'none' } : undefined} aria-hidden={visible} inert={visible}>{children}</div>
-    {visible && skeletonFor(target.destination)}
+    {visible && <LoadingDots />}
   </>
 }

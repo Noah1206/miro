@@ -54,7 +54,8 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
     <div className={styles.body} inert={collapsed} aria-hidden={collapsed}>
     {signedIn && <div className={styles.heading}><h2>{t('채팅')}</h2><TransitionLink href="/archive">{t('대화 관리')}</TransitionLink></div>}
     {signedIn ? <div className={styles.list}>
-      {!page && !error && <p role="status" className={styles.empty}>{t('불러오는 중…')}</p>}
+      {/* 11/21 사용자: '불러오는 중…' 글자 대신 통통 튀는 점. */}
+      {!page && !error && <p role="status" className={styles.empty}><span className="sr-only">{t('불러오는 중…')}</span><span className="intro-typing" aria-hidden style={{ padding: '4px 0' }}><span /><span /><span /></span></p>}
       {page?.items.length === 0 && <p className={styles.none}>{t('채팅 내역 없음')}</p>}
       {page?.items.map(s => <TransitionLink key={s.id} href={s.href ?? `/chat/${s.id}`} className={styles.row}>
         <div className={styles.avatar}>{s.characterImage ? <CharacterPhoto src={s.characterImage} alt="" size="avatar" sizes="38px" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : s.characterName.slice(0, 1)}</div>

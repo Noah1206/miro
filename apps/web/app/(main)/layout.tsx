@@ -1,6 +1,7 @@
 import { OAUTH_LABEL, resolveOAuth, type OAuthProviderId } from '@miro/providers'
 import { Nav } from '@/components/ui/nav'
 import { NavigationFeedback } from '@/components/navigation-feedback'
+import { HydrationCover } from '@/components/loading-dots'
 import { LoginSheetProvider } from '@/components/ui/login-sheet'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
@@ -33,6 +34,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         {user && <WelcomePopup units={WELCOME_GRANT.units} validDays={WELCOME_GRANT.validDays} />}
         {/* 로그인에 성공한 직후 한 번 알림을 켜자고 묻는다 — 그냥 들어왔을 때는 띄우지 않는다(11/13). */}
         {user && <PushSubscribe autoPrompt vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={t('캐릭터')} />}
+        {/* 11/21 사용자: 첫 접속에 반쯤 그려진 화면 대신 점만 — 화면이 살아나면 걷힌다. */}
+        <HydrationCover />
         <Nav signedIn={!!user} providers={providers} />
         <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>
       </div></WalletProvider></AccountProfileProvider>
