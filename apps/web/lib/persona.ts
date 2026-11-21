@@ -11,27 +11,28 @@ import { msg } from '@/lib/i18n'
  * 공용 페르소나는 새 대화의 기본값이다. 각 대화방에서 확인한 뒤에는 방별 설정을 쓴다.
  */
 export async function getPersona(userId: string): Promise<UserPersona | null> {
-  const [row] = await db.select({ name: userPersonas.name, gender: userPersonas.gender, description: userPersonas.description })
+  const [row] = await db.select({ name: userPersonas.name, gender: userPersonas.gender, description: userPersonas.description, age: userPersonas.age })
     .from(userPersonas).where(eq(userPersonas.userId, userId)).limit(1)
   return row ?? null
 }
 
 /** 폼 값 → 페르소나. 이름은 필수, 나머지는 비워도 된다. 길이 한도는 DB 제약과 같다. */
-export function parsePersona(raw: { name: unknown; gender: unknown; description: unknown }): { ok: true; persona: UserPersona } | { ok: false; error: string } {
+export function parsePersona(raw: { name: unknown; gender: unknown; description: unknown; age?: unknown }): { ok: true; persona: UserPersona } | { ok: false; error: string } {
   // 제어 문자(NUL 등)는 DB text 가 받지 않고 프롬프트에도 쓸모가 없다 — 공백으로 바꾼 뒤 공백을 하나로 모은다.
   const text = (v: unknown) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim() : '')
   // 소개는 줄바꿈을 살린다(11/16 2000자 — 긴 설정은 줄을 나눠 쓴다). 그 밖의 제어 문자만 지운다.
   const lines = (v: unknown) => (typeof v === 'string' ? v.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, ' ').replace(/[^\S\n]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim() : '')
-  const name = text(raw.name), description = lines(raw.description)
+  const name = text(raw.name), description = lines(raw.description), age = text(raw.age)
   if (!name) return { ok: false, error: msg('이름을 적어 주세요.') }
   if ([...name].length > PERSONA_LIMITS.name) return { ok: false, error: msg('이름은 12자까지 쓸 수 있어요.') }
   if ([...description].length > PERSONA_LIMITS.description) return { ok: false, error: msg('소개는 2000자까지 쓸 수 있어요.') }
+  if ([...age].length > PERSONA_LIMITS.age) return { ok: false, error: msg('나이는 10자까지 쓸 수 있어요.') }
   const gender = raw.gender === 'female' || raw.gender === 'male' ? raw.gender : null
-  return { ok: true, persona: { name, gender, description: description || null } }
+  return { ok: true, persona: { name, gender, description: description || null, age: age || null } }
 }
 
 /** 공용 기본값 저장. 방에서 확인한 페르소나는 바꾸지 않는다. 따로 돌던 AI 안전 검사는 10/2 에 뺐다. */
-export async function savePersona(userId: string, raw: { name: unknown; gender: unknown; description: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function savePersona(userId: string, raw: { name: unknown; gender: unknown; description: unknown; age?: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {
   const parsed = parsePersona(raw)
   if (!parsed.ok) return parsed
   const p = parsed.persona
@@ -71,14 +72,16 @@ export async function needsPersona(userId: string, sessionId: string): Promise<b
   return !!row && row.required && row.turns === 0 && !row.persona
 }
 
-export async function saveConversationPersona(userId: string, sessionId: string, raw: { name: unknown; gender: unknown; description: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function saveConversationPersona(userId: string, sessionId: string, raw: { name: unknown; gender: unknown; description: unknown; age?: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {
   const parsed = parsePersona(raw)
   if (!parsed.ok) return parsed
   return db.transaction(async tx => {
     const [room] = await tx.select().from(roleplaySessions).where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))).for('update')
     if (!room) return { ok: false as const, error: msg('대화를 찾을 수 없습니다.') }
     const persona = parsed.persona
-    if (room.adultSince && (mentionsMinor(persona.name) || mentionsMinor(persona.description))) return { ok: false as const, error: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
+    // 11/21 나이 칸 — 숫자가 19 미만이면 미성년자로 본다.
+    const youngAge = !!persona.age && /^\d+/.test(persona.age) && parseInt(persona.age, 10) < 19
+    if (room.adultSince && (youngAge || mentionsMinor(persona.name) || mentionsMinor(persona.description) || mentionsMinor(persona.age ?? null))) return { ok: false as const, error: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
     // Restore second-person wording only in untouched authored openings; preserve played dialogue.
     if (room.turnCount === 0) {
       const [c] = await tx.select().from(characters).where(eq(characters.id, room.characterId))

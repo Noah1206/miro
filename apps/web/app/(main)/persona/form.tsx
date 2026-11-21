@@ -17,8 +17,9 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
   const [gender, setGender] = useState<string>(initial?.gender ?? '')
   const [name, setName] = useState(initial?.name ?? '')
   const [about, setAbout] = useState(initial?.description ?? '')
+  const [age, setAge] = useState(initial?.age ?? '')
   const t = useT()
-  const nameId = useId(), aboutId = useId()
+  const nameId = useId(), aboutId = useId(), ageId = useId()
   useEffect(() => { if (state?.saved) onDone?.() }, [state, onDone])
   return (
     <form id={formId} action={action} className={styles.form}>
@@ -27,12 +28,17 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
       {/* 만든 사람이 준비한 페르소나(11/3) — 11/5: 드롭다운으로 고르고, 고른 것을 다시 누르면 해제(칸 비움). 고른 뒤 고쳐 쓸 수 있다. */}
       {presets.length > 0 && <PresetDropdown presets={presets}
         isOn={p => name === p.name && gender === (p.gender ?? '') && about === (p.description ?? '')}
-        onPick={p => { if (p) { setName(p.name); setGender(p.gender ?? ''); setAbout(p.description ?? '') } else { setName(''); setGender(''); setAbout('') } }} />}
+        onPick={p => { if (p) { setName(p.name); setGender(p.gender ?? ''); setAbout(p.description ?? ''); setAge(p.age ?? '') } else { setName(''); setGender(''); setAbout(''); setAge('') } }} />}
       {/* 11/21 사용자(레퍼런스): 칸 위에 굵은 이름표 + 분홍 안내 + 빨간 별표, 아래에 채운 칸, 글자 수는 칸 밑 오른쪽. */}
       <div className={styles.group}>
         <label htmlFor={nameId} className={styles.label}>{t('이름')}<span className={styles.hint}>{t('캐릭터가 나를 부르는 이름이에요')}</span><b aria-hidden>*</b></label>
         <input id={nameId} className={styles.input} name="name" value={name} onChange={e => setName(e.target.value)} maxLength={PERSONA_LIMITS.name} required autoComplete="off" placeholder={t('이름을 입력하세요')} />
         <span className={styles.count}>{name.length}/{PERSONA_LIMITS.name}</span>
+      </div>
+      {/* 11/21 사용자: 나이 칸(비워도 된다). */}
+      <div className={styles.group}>
+        <label htmlFor={ageId} className={styles.label}>{t('나이')}</label>
+        <input id={ageId} className={styles.input} name="age" value={age} onChange={e => setAge(e.target.value)} maxLength={PERSONA_LIMITS.age} autoComplete="off" inputMode="numeric" placeholder={t('나이를 입력하세요')} />
       </div>
       <div className={styles.group} role="group" aria-label={t('성별')}>
         <span className={styles.label}>{t('성별')}</span>

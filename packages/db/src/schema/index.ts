@@ -53,6 +53,8 @@ export const userPersonas = pgTable('user_personas', {
   name: text('name').notNull(),
   gender: text('gender', { enum: ['female', 'male'] }),
   description: text('description'),
+  // 11/21 나이(비워도 됨)
+  age: text('age'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
