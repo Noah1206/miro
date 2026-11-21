@@ -59,7 +59,8 @@ export function bindChatViewport(element: HTMLElement) {
   }
   const onScroll = (event: Event) => {
     const el = event.target
-    if (!(el instanceof HTMLElement) || el instanceof HTMLTextAreaElement || el.scrollHeight <= el.clientHeight) return
+    // 11/22: 팝업·시트(role=dialog) 안의 목록 스크롤은 대화 스크롤이 아니다 — 모델 목록을 위로 올리면 입력창째 숨어 목록이 사라졌다.
+    if (!(el instanceof HTMLElement) || el instanceof HTMLTextAreaElement || el.scrollHeight <= el.clientHeight || el.closest('[role="dialog"]')) return
     const prev = lastTop.get(el) ?? el.scrollTop
     lastTop.set(el, el.scrollTop)
     const delta = el.scrollTop - prev

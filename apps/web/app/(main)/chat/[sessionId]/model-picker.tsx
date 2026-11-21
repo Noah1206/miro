@@ -1,5 +1,7 @@
 'use client'
-import { createContext, useContext, useEffect, useState, useRef, useId, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { Sheet } from '@/components/ui/sheet'
 import { StepSlider } from '@/app/(main)/create/settings-controls'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import type { WalletSnapshot } from '@/lib/wallet/types'
@@ -7,7 +9,6 @@ import { useWallet } from '@/components/wallet/provider'
 import sheet from './model-picker.module.css'
 import { useT, useLanguage } from '@/lib/i18n/client'
 import { INTL_LOCALE } from '@/lib/i18n'
-import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ease, spring } from '@/lib/motion/tokens'
 import { Outfit } from 'next/font/google'
@@ -116,29 +117,20 @@ export function ModelPicker({ choices = [], place, disabled = false }: { freeRea
   const { pickerOpen: open, setPickerOpen } = useRoomControls()
   const selected = selectedChatChoice(choices, model)
   const presentation = selected ? modelPresentation(selected) : null
-  const root = useRef<HTMLDivElement>(null)
-  const panel = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
-  const panelId = useId()
-  useFocusTrap(panel, open)
-  useEffect(() => {
-    if (!open) return
-    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setPickerOpen(false) }
-    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setPickerOpen(false); trigger.current?.focus() } }
-    document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape)
-    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
-  }, [open, setPickerOpen])
-  return <div ref={root} className={sheet.root} data-place={place} data-coach="model">
-    <motion.button ref={trigger} whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" className={sheet.trigger} data-model-brand={presentation?.icon ?? 'other'} disabled={disabled} title={selected?.name} aria-label={`${t('AI 모델 선택')}${selected ? `: ${selected.name}` : ''}`} aria-haspopup="dialog" aria-controls={open ? panelId : undefined} aria-expanded={open} onClick={() => setPickerOpen(!open)}>
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const close = () => { setPickerOpen(false); trigger.current?.focus() }
+  // 11/22 사용자: 입력창에 붙은 드롭다운 대신 바닥 시트 팝업. 입력창은 위로 스크롤하면 숨는데(transform), 그 안에 두면 같이 사라지고
+  // fixed 도 입력창 기준이 된다 — 그래서 body 에 직접 그린다(포털).
+  return <div className={sheet.root} data-place={place} data-coach="model">
+    <motion.button ref={trigger} whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" className={sheet.trigger} data-model-brand={presentation?.icon ?? 'other'} disabled={disabled} title={selected?.name} aria-label={`${t('AI 모델 선택')}${selected ? `: ${selected.name}` : ''}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setPickerOpen(!open)}>
       {presentation && <ModelBrandIcon brand={presentation.icon} className={sheet.icon}/>}<span className={`${brand.className} ${sheet.brand}`}>{presentation?.label ?? t('준비 중')}</span>
       <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reduce ? 0 : .18, ease: ease.standard }} aria-hidden width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></motion.svg>
     </motion.button>
-    <AnimatePresence>{open && <motion.div ref={panel} id={panelId} role="dialog" aria-label={t('AI 모델 선택')} tabIndex={-1} className={sheet.panel}
-      initial={reduce ? false : { opacity: 0, y: place === 'up' ? 6 : -6, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: reduce ? 0 : place === 'up' ? 4 : -4 }} transition={{ duration: reduce ? 0 : .18, ease: ease.enter }}>
-      <div className={sheet.panelHead}>{t('AI 모델')}</div>
-      <ChatModelOptions choices={choices} onSelect={() => setPickerOpen(false)}/>
+    {mounted && createPortal(<Sheet open={open} onClose={close} title={t('AI 모델')}>
+      <ChatModelOptions choices={choices} onSelect={close}/>
       <div className={sheet.wallet}><span>{t('남은 토큰')} <strong>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong></span><button type="button" onClick={() => { setPickerOpen(false); openRecharge() }}>{t('충전')} ＋</button></div>
-    </motion.div>}</AnimatePresence>
+    </Sheet>, document.body)}
   </div>
 }
