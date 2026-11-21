@@ -19,7 +19,7 @@
 
 @media (min-width: 1024px) {
   /* 옆 카드는 걸쳐 보이게 — 가운데 1.65 : 옆 1. 옆 카드는 어둡게 눌러 가운데에 눈이 가게. */
-  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px; height: 400px; margin-bottom: var(--space-6); }
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1fr); gap: 0; /* 11/21 사용자: 카드 사이 공백 없이(20px → 0) */ height: 400px; margin-bottom: var(--space-6); }
   .main { aspect-ratio: auto; height: 100%; border-radius: 16px; }
   .art { object-position: center 25%; }
   .copy { padding: 96px 30px 26px; }
