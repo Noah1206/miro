@@ -2529,5 +2529,9 @@
  "(최대 {n}개)": "(up to {n})",
  "대화에 이 말이 나오면 내용을 불러와요": "The content is recalled when these words come up in the chat",
  "{kw} 지우기": "Remove {kw}",
- "키워드를 입력해 주세요": "Enter a keyword"
+ "키워드를 입력해 주세요": "Enter a keyword",
+ "PNG·JPG·WebP·HEIC 형식만 올릴 수 있어요": "Only PNG, JPG, WebP, or HEIC files",
+ "정사각형(1:1)이 가장 좋고, 장당 5MB까지예요": "Square (1:1) works best, up to 5MB each",
+ "규정에 맞지 않는 사진은 내려갈 수 있어요": "Images that break the rules may be removed",
+ "남의 그림·사진은 허락을 받은 뒤 올려 주세요": "Get permission before using someone else's art or photos"
 }

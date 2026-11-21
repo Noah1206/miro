@@ -239,10 +239,11 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위. 항목마다 한 줄, 폭이 모자라면 한 줄에 맞는 크기까지만. */}
       {/* 11/21 사용자: 글씨를 조금 키우고(최대 17px) 4줄을 '+' 위 남는 높이에 고르게 펼쳐 빈칸을 없앤다. */}
       <ul style={{ flex: 1, minHeight: 0, margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', color: 'var(--color-text-tertiary)', fontSize: `min(17px, calc((100cqw - ${side} - 28px) * 0.047))`, lineHeight: 1.35, whiteSpace: 'nowrap' }}>
-        <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
-        <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
-        <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
-        <li>{t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요')}</li>
+        {/* 11/21 사용자: 같은 뜻을 다른 말로(조금 더 짧게). */}
+        <li>{t('PNG·JPG·WebP·HEIC 형식만 올릴 수 있어요')}</li>
+        <li>{t('정사각형(1:1)이 가장 좋고, 장당 5MB까지예요')}</li>
+        <li>{t('규정에 맞지 않는 사진은 내려갈 수 있어요')}</li>
+        <li>{t('남의 그림·사진은 허락을 받은 뒤 올려 주세요')}</li>
       </ul>
       {/* 나머지 사진 줄 — 10/28 부터 처음에도 보인다: 사진은 모두 '+' 로 넣는다. 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
       {(
