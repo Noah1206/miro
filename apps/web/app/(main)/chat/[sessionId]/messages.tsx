@@ -313,7 +313,19 @@ function CharacterBubble({ m, name, typing = false, mood = 'neutral', onGrow, on
   const voice = useImmersive()
   // 11/19 사용자: 기본 테마는 한 턴을 한 덩어리 글로 — 말풍선·사진·이름 없이 서술 문단과 굵은 대사가 위에서 아래로 이어지고, 사진은 그 사이에 꽉 차게.
   const flow = theme === 'miro'
-  const segments = segmentReply(m.blocks, m.content, name, cast)
+  // 11/22 사용자: 사진끼리 붙어 보이면 안 된다 — 한 덩어리 안에 사진 블록이 여럿이면 덩어리 끝에 몰려 붙었다. 사진이 붙는 블록이 끝나는 자리에서 덩어리를 나눠, 사진이 제 문단 바로 뒤에 온다.
+  const photoBlocks = new Set(inline.map(x => x.block))
+  const segments = segmentReply(m.blocks, m.content, name, cast).flatMap(seg => {
+    const parts: (typeof seg)[] = []
+    let cur: typeof seg.paragraphs = []
+    seg.paragraphs.forEach((p, k) => {
+      cur.push(p)
+      const next = seg.paragraphs[k + 1]
+      if (next && p.block && photoBlocks.has(p.block) && next.block !== p.block) { parts.push({ ...seg, paragraphs: cur }); cur = [] }
+    })
+    parts.push({ ...seg, paragraphs: cur })
+    return parts
+  })
   // 11/6: 음성 모드(무료)에선 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다. 길게 누르기(신고)와 겹치지 않게 짧은 누름만.
   const replayable = voice.on && voice.free && !typing && /^[0-9a-f-]{36}$/i.test(m.id)
   const pressedAt = useRef(0)
