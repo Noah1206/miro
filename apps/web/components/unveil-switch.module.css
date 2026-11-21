@@ -43,7 +43,8 @@
 @media(max-width:420px) { .adultPill { gap:4px; padding:0; } }
 
 /* 11/12 사용자(베이비챗 휴대폰 헤더를 재서 맞춤): 19 표시가 토글 동그라미 자체 — 토글 44×24, 동그라미 22(흰 바탕·빨간 테두리·검은 19). 따로 있던 19 표시는 숨김. */
-@media (max-width: 1023px) {
+/* 11/22 사용자: 컴퓨터에서도 19 가 동그라미 안에 — 휴대폰 전용이던 모양을 모든 폭에. */
+@media all {
   .adultControl[data-intense] .adultPill { height: 24px; gap: 0; padding: 0; }
   .adultToggle { padding: 0; }
   .adultControl[data-intense] .unveilMark { display: none; }

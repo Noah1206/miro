@@ -849,3 +849,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .blockedToastWrap .blockedSticker svg { width: 16px; height: 16px; }
 .blockedToastWrap .blockedText strong { font-size: 14px; }
 .blockedToastWrap .blockedText span { font-size: 12px; }
+/* 11/22 사용자: 휴대폰 채팅방 머리의 19 토글 — 컴퓨터는 사이트 머리에 있어 숨긴다. */
+.headerUnveil { flex: none; display: flex; align-items: center; }
+@media (min-width: 1024px) { .headerUnveil { display: none; } }

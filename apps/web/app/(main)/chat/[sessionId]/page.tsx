@@ -32,6 +32,7 @@ import { ImmersiveProvider, VoiceStatus } from './immersive'
 import { ChatBgm } from './bgm'
 import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
 import { RoomMenu } from '@/components/room-menu'
+import { HomeUnveilToggle } from '@/app/(main)/home/unveil-toggle'
 import { feature, voicePaused } from '@miro/config'
 import { castNames } from '@miro/engine'
 import { coverTitle } from '@/lib/editorial/cover-title'
@@ -138,6 +139,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{/* 11/12 사용자: 헤더에 작품·캐릭터 사진 없이 이름만 */}<h1 className={styles.title}>{coverTitle({ slug: loaded.characterSlug, name: loaded.characterName })}</h1></div></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           {(rec?.bgm?.length ?? 0) > 0 && <ChatBgm sessionId={sessionId} />}
+          {/* 11/22 사용자: 휴대폰 채팅방 머리에도 19 토글(컴퓨터는 위 사이트 머리에 이미 있다). */}
+          <span className={styles.headerUnveil}><HomeUnveilToggle key={String(unveilOn)} enabled={unveilOn} signedIn /></span>
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} roomVoice={roomVoice} />
         </header>
         <VoiceStatus />
