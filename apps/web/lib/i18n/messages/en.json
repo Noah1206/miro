@@ -2519,5 +2519,15 @@
  "동의하고 캐릭터 제작": "Agree and create",
  "임시저장 불러오기": "Load a draft",
  "임시저장한 캐릭터가 없어요": "No saved drafts yet",
- "이름 없음": "Untitled"
+ "이름 없음": "Untitled",
+ "설정 추가": "Add entry",
+ "설정 {n}": "Entry {n}",
+ "{name} 순서 바꾸기 (위아래 화살표)": "Reorder {name} (up/down arrows)",
+ "수정": "Edit",
+ "펼치기": "Expand",
+ "이 키워드가 나오면 캐릭터가 떠올릴 정보를 적어 주세요": "Write what the character recalls when these keywords come up",
+ "(최대 {n}개)": "(up to {n})",
+ "대화에 이 말이 나오면 내용을 불러와요": "The content is recalled when these words come up in the chat",
+ "{kw} 지우기": "Remove {kw}",
+ "키워드를 입력해 주세요": "Enter a keyword"
 }

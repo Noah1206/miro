@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, Reorder, motion, useDragControls, useReducedMotion } from 'motion/react'
 import { LogoMark, Sheet, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
@@ -762,9 +762,10 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
  */
 export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes = [] }: { name: string; defaultValue?: LoreItem[]; defaultLimit?: number; /** 저장된 추가 시작 설정 이름 — 항목을 그 장면 전용으로 묶을 때 고른다. */ scenes?: string[] }) {
   const t = useT()
-  // 11/12 항목을 그 자리에서 고친다(전엔 지우고 다시 적어야 했다). 순서가 우선순위라 위로 올리는 버튼을 둔다.
-  const [rows, setRows] = useState<Array<{ id: number; name: string; keywords: string; content: string; scene: string }>>(() =>
-    defaultValue.map((d, id) => ({ id, name: d.name ?? '', keywords: d.keywords.join(', '), content: d.content, scene: d.scene ?? '' })))
+  // 11/12 항목을 그 자리에서 고친다(전엔 지우고 다시 적어야 했다). 순서가 우선순위 — 11/21부터 손잡이(=)로 끌어서 바꾼다.
+  // 11/21 사용자: 등록한 항목은 접힌 카드(손잡이·이름·수정·삭제·펼치기), 펼치면 내용·키워드 칩. 저장돼 있던 항목은 접힌 채로, 새 항목은 펼친 채로 시작한다.
+  const [rows, setRows] = useState<LoreRowState[]>(() =>
+    defaultValue.map((d, id) => ({ id, name: d.name ?? '', keywords: d.keywords, content: d.content, scene: d.scene ?? '', open: false })))
   const [nextId, setNextId] = useState(defaultValue.length)
   const [limit, setLimit] = useState(defaultLimit)
   // 11/12 불러오기 — 내 다른 작품의 설정집을 이 작품 끝에 덧붙인다(같은 내용은 건너뛴다).
@@ -774,17 +775,16 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
     setRows(rs => {
       const have = new Set(rs.map(r => r.content.trim()))
       const add = lore.filter(e => !have.has(e.content.trim())).slice(0, MAX_LORE - rs.length)
-      return [...rs, ...add.map((e, n) => ({ id: nextId + n, name: e.name ?? '', keywords: e.keywords.join(', '), content: e.content, scene: '' }))]
+      return [...rs, ...add.map((e, n) => ({ id: nextId + n, name: e.name ?? '', keywords: e.keywords, content: e.content, scene: '', open: false }))]
     })
     setNextId(n => n + lore.length); setSources(null)
   }
   const patch = (id: number, p: Partial<(typeof rows)[number]>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
-  const up = (i: number) => setRows(rs => (i === 0 ? rs : [...rs.slice(0, i - 1), rs[i]!, rs[i - 1]!, ...rs.slice(i + 1)]))
+  const move = (i: number, d: -1 | 1) => setRows(rs => { const j = i + d; if (j < 0 || j >= rs.length) return rs; const out = [...rs]; [out[i], out[j]] = [out[j]!, out[i]!]; return out })
   const value: LoreItem[] = rows.filter(r => r.content.trim()).map(r => ({
-    keywords: [...new Set(r.keywords.split(',').map(k => k.trim()).filter(Boolean))].slice(0, MAX_LORE_KEYWORDS), content: r.content.trim().slice(0, MAX_LORE_CONTENT),
+    keywords: [...new Set(r.keywords.map(k => k.trim()).filter(Boolean))].slice(0, MAX_LORE_KEYWORDS), content: r.content.trim().slice(0, MAX_LORE_CONTENT),
     ...(r.name.trim() ? { name: r.name.trim() } : {}), ...(r.scene ? { scene: r.scene } : {}),
   }))
-  const line = { width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit' } as const
   const fmt = (n: number) => n.toLocaleString('en-US')
   const always = value.filter(e => !e.keywords.length).reduce((n, e) => n + e.content.length, 0)
   return (
@@ -811,33 +811,109 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src.name}</span><span style={{ flex: 'none', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{src.lore.length}</span>
             </button>))}
       </div>
-      {rows.map((r, i) => (
-        <div key={r.id} className="stack" style={{ gap: 8, padding: '10px 12px', ...box(false) }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input value={r.name} maxLength={20} placeholder={t('항목 이름 (선택) — 예) 민준')} aria-label={t('항목 이름')} onChange={e => patch(r.id, { name: e.target.value })} style={{ ...line, fontWeight: 600 }} />
-            {i > 0 && <button type="button" onClick={() => up(i)} aria-label={t('위로 올리기')} className="hit" style={roundBtn}>↑</button>}
-            <button type="button" onClick={() => setRows(rs => rs.filter(x => x.id !== r.id))} aria-label={t('이 항목 지우기')} className="hit" style={roundBtn}>×</button>
-          </div>
-          <input value={r.keywords} maxLength={220} autoComplete="off" placeholder={t('키워드 (쉼표로 구분) — 예) 민준, 사촌형')} aria-label={t('키워드')} onChange={e => patch(r.id, { keywords: e.target.value })}
-            style={{ ...line, color: 'var(--color-accent-text)' }} />
-          <textarea value={r.content} rows={3} maxLength={MAX_LORE_CONTENT} aria-label={t('설정 내용')} onChange={e => patch(r.id, { content: e.target.value })}
-            placeholder={t('이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다.')}
-            style={{ ...line, resize: 'vertical', lineHeight: 1.5 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-              {r.keywords.trim() ? `${r.content.length}/${MAX_LORE_CONTENT}` : `${t('항상 실림 (키워드 없음)')} · ${r.content.length}/${MAX_LORE_CONTENT}`}
-            </span>
-            {scenes.length > 0 && <select value={r.scene} onChange={e => patch(r.id, { scene: e.target.value })} aria-label={t('적용할 시작 설정')}
-              style={{ ...box(false), marginLeft: 'auto', minHeight: 32, padding: '0 8px', borderRadius: 8, fontSize: 13, outline: 'none' }}>
-              <option value="">{t('모든 시작 설정')}</option>
-              {[...new Set([...scenes, ...(r.scene ? [r.scene] : [])])].map(sc => <option key={sc} value={sc}>{sc}</option>)}
-            </select>}
-          </div>
-        </div>
-      ))}
-      {rows.length < MAX_LORE && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', keywords: '', content: '', scene: '' }]); setNextId(n => n + 1) }}
-        style={{ minHeight: 44, borderRadius: 12, border: '1.5px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 14 }}>{t('+ 설정 추가')} ({rows.length}/{MAX_LORE})</button>}
+      <Reorder.Group as="div" axis="y" values={rows} onReorder={setRows} className="stack" style={{ gap: 10 }}>
+        {rows.map((r, i) => <LoreRow key={r.id} r={r} index={i} scenes={scenes} patch={p => patch(r.id, p)} move={d => move(i, d)}
+          remove={() => setRows(rs => rs.filter(x => x.id !== r.id))} />)}
+      </Reorder.Group>
+      {/* 11/21 사용자: 등록 목록 아래 가는 줄 + 가운데 동그란 + '설정 추가'. */}
+      {rows.length < MAX_LORE && <div style={{ borderTop: rows.length ? '1px solid var(--color-border)' : undefined, paddingTop: rows.length ? 6 : 0, display: 'flex', justifyContent: 'center' }}>
+        <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', keywords: [], content: '', scene: '', open: true }]); setNextId(n => n + 1) }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minHeight: 52, padding: '0 12px', background: 'none', border: 0, color: 'var(--color-text-primary)', cursor: 'pointer', font: 'inherit', fontSize: 15 }}>
+          <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 32, height: 32, borderRadius: 16, background: 'var(--color-surface-3)', fontSize: 20, lineHeight: 1 }}>+</span>
+          {t('설정 추가')} <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13 }}>{rows.length}/{MAX_LORE}</span>
+        </button>
+      </div>}
     </div>
+  )
+}
+
+type LoreRowState = { id: number; name: string; keywords: string[]; content: string; scene: string; open: boolean }
+
+/** 설정집 항목 카드 하나(11/21) — 머리: 손잡이(끌어서·위아래 화살표로 순서) · 이름 · 수정 · 삭제 · 펼치기. 몸: 내용 칸, 키워드 칩 + 입력·추가. */
+function LoreRow({ r, index, scenes, patch, move, remove }: {
+  r: LoreRowState; index: number; scenes: string[]; patch: (p: Partial<LoreRowState>) => void; move: (d: -1 | 1) => void; remove: () => void
+}) {
+  const t = useT()
+  const drag = useDragControls()
+  const [editing, setEditing] = useState<string | null>(null)
+  const [kw, setKw] = useState('')
+  const title = r.name.trim() || t('설정 {n}', { n: index + 1 })
+  const addKw = () => {
+    const k = kw.trim().replace(/^#/, '')
+    if (k && !r.keywords.includes(k) && r.keywords.length < MAX_LORE_KEYWORDS) patch({ keywords: [...r.keywords, k] })
+    setKw('')
+  }
+  const textBtn = { minHeight: 36, padding: '0 6px', background: 'none', border: 0, cursor: 'pointer', font: 'inherit', fontSize: 14, color: 'var(--color-text-secondary)' } as const
+  const label = (text: string, required?: boolean, extra?: string) => (
+    <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>{text}{extra && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--color-text-tertiary)' }}> {extra}</span>}{required && <span style={{ color: 'var(--color-danger)' }}> *</span>}</p>
+  )
+  return (
+    <Reorder.Item as="div" value={r} dragListener={false} dragControls={drag}
+      style={{ borderRadius: 12, background: 'var(--color-surface-2)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 56, padding: '0 8px 0 4px' }}>
+        <button type="button" onPointerDown={e => drag.start(e)} aria-label={t('{name} 순서 바꾸기 (위아래 화살표)', { name: title })}
+          onKeyDown={e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); move(e.key === 'ArrowUp' ? -1 : 1) } }}
+          style={{ display: 'grid', placeItems: 'center', width: 40, height: 44, background: 'none', border: 0, color: 'var(--color-text-secondary)', cursor: 'grab', touchAction: 'none' }}>
+          <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9h14M5 15h14" /></svg>
+        </button>
+        {editing !== null
+          ? <>
+              <input autoFocus value={editing} maxLength={20} aria-label={t('항목 이름')} placeholder={t('항목 이름 (선택) — 예) 민준')} onChange={e => setEditing(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); patch({ name: editing }); setEditing(null) } if (e.key === 'Escape') setEditing(null) }}
+                style={{ ...box(true), flex: 1, minWidth: 0, minHeight: 38, padding: '0 10px', borderRadius: 8, fontSize: 15, outline: 'none' }} />
+              <button type="button" onClick={() => { patch({ name: editing }); setEditing(null) }} style={{ ...textBtn, color: 'var(--color-danger)' }}>{t('확인')}</button>
+              <button type="button" onClick={() => setEditing(null)} style={textBtn}>{t('취소')}</button>
+            </>
+          : <>
+              <button type="button" onClick={() => patch({ open: !r.open })} aria-expanded={r.open}
+                style={{ flex: 1, minWidth: 0, minHeight: 44, padding: 0, background: 'none', border: 0, textAlign: 'left', cursor: 'pointer', font: 'inherit', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</button>
+              <button type="button" onClick={() => setEditing(r.name)} style={textBtn}>{t('수정')}</button>
+              <button type="button" onClick={remove} style={textBtn}>{t('삭제')}</button>
+              <button type="button" onClick={() => patch({ open: !r.open })} aria-label={r.open ? t('접기') : t('펼치기')} aria-expanded={r.open}
+                style={{ display: 'grid', placeItems: 'center', width: 36, height: 44, background: 'none', border: 0, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transition: 'transform 200ms', transform: r.open ? 'rotate(180deg)' : undefined }}><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+            </>}
+      </div>
+      {/* 접혀도 DOM 에 남긴다(값은 위 hidden input 이 보낸다 — 여기선 보이기만 감춘다). */}
+      <div hidden={!r.open} style={{ borderTop: '1px solid var(--color-border)', padding: '16px 16px 18px' }}>
+        <div className="stack" style={{ gap: 6 }}>
+          {label(t('내용'), true)}
+          <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('이 키워드가 나오면 캐릭터가 떠올릴 정보를 적어 주세요')}</p>
+          <textarea value={r.content} rows={4} maxLength={MAX_LORE_CONTENT} aria-label={t('설정 내용')} onChange={e => patch({ content: e.target.value })}
+            placeholder={t('이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다.')}
+            style={{ ...box(false), width: '100%', padding: '12px 14px', borderRadius: 10, resize: 'vertical', lineHeight: 1.5, fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
+          <span className="t-micro" style={{ alignSelf: 'flex-end', textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{r.content.length}/{MAX_LORE_CONTENT}</span>
+        </div>
+        <div className="stack" style={{ gap: 6, marginTop: 14 }}>
+          {label(t('키워드'), false, t('(최대 {n}개)', { n: MAX_LORE_KEYWORDS }))}
+          <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{r.keywords.length ? t('대화에 이 말이 나오면 내용을 불러와요') : t('항상 실림 (키워드 없음)')}</p>
+          {r.keywords.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {r.keywords.map(k => (
+              <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 6px 5px 10px', borderRadius: 8, background: 'var(--color-bg)', color: '#ff7eb6', fontSize: 13, fontWeight: 600 }}>
+                # {k}
+                <button type="button" onClick={() => patch({ keywords: r.keywords.filter(x => x !== k) })} aria-label={t('{kw} 지우기', { kw: k })}
+                  style={{ display: 'grid', placeItems: 'center', width: 20, height: 20, padding: 0, background: 'none', border: 0, color: '#ff7eb6', cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
+              </span>
+            ))}
+          </div>}
+          {r.keywords.length < MAX_LORE_KEYWORDS && <div style={{ display: 'flex', gap: 8 }}>
+            <input value={kw} maxLength={20} autoComplete="off" aria-label={t('키워드')} placeholder={t('키워드를 입력해 주세요')} onChange={e => setKw(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addKw() } }}
+              style={{ ...box(false), flex: 1, minWidth: 0, minHeight: 44, padding: '0 12px', borderRadius: 10, fontSize: 14, outline: 'none' }} />
+            <button type="button" onClick={addKw} disabled={!kw.trim()}
+              style={{ flex: 'none', minHeight: 44, padding: '0 16px', borderRadius: 10, border: 0, background: kw.trim() ? 'var(--color-accent)' : 'var(--color-surface-3)', color: kw.trim() ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', cursor: kw.trim() ? 'pointer' : 'default', font: 'inherit', fontSize: 14, fontWeight: 600 }}>{t('추가')}</button>
+          </div>}
+          {r.keywords.length < MAX_LORE_KEYWORDS && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{kw.length}/20</span>}
+        </div>
+        {scenes.length > 0 && <select value={r.scene} onChange={e => patch({ scene: e.target.value })} aria-label={t('적용할 시작 설정')}
+          style={{ ...box(false), marginTop: 14, width: '100%', minHeight: 40, padding: '0 10px', borderRadius: 10, fontSize: 14, outline: 'none' }}>
+          <option value="">{t('모든 시작 설정')}</option>
+          {[...new Set([...scenes, ...(r.scene ? [r.scene] : [])])].map(sc => <option key={sc} value={sc}>{sc}</option>)}
+        </select>}
+      </div>
+    </Reorder.Item>
   )
 }
 
