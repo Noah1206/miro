@@ -70,6 +70,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     if (sending.current) return
     sending.current = true
     setPending(true)
+    voice.markSend(form.get('voice') === '1')
     // 보낸 글은 바로 비운다 — 답을 기다리는 동안 다음 말을 쓸 수 있게(10/17 사용자). 실패하면 다시 보낼 수 있게 되돌리되,
     // 그 사이 새로 쓴 글은 덮어쓰지 않는다.
     const sent = { input: String(form.get('input') ?? ''), requestId: String(form.get('requestId') ?? '') }

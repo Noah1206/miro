@@ -485,7 +485,7 @@ function UserBubble({ text }: { text: string }) {
     const el = ref.current
     if (!el) return
     const fit = () => {
-      el.style.width = ''
+      el.style.width = ''; el.style.textWrap = ''
       const cs = getComputedStyle(el)
       const lines = el.getClientRects()[0]
       const h = el.offsetHeight
@@ -501,8 +501,11 @@ function UserBubble({ text }: { text: string }) {
       if (!lines || rows.size < 2 || right <= left) return
       // 11/22: 방금 보낸 말풍선은 올라오는 애니메이션(scale .98) 중이라 화면 크기로 재면 작게 나와 줄이 다시 꺾이고 원래 폭으로 되돌아갔다 — 배율을 나눠 실제 크기로.
       const scale = el.getBoundingClientRect().width / el.offsetWidth || 1
+      // 11/22: 말풍선의 text-wrap:pretty 는 폭을 좁히면 줄을 다시 고르게 나눠 3줄로 늘리곤 했다 → 아래에서 되돌려져 오른쪽 공백이 그대로 남았다.
+      // 폭을 맞출 땐 보통 줄바꿈(wrap)으로 — 같은 폭에서 줄 수가 가장 적게 나와 줄이 늘지 않는다.
+      el.style.textWrap = 'wrap'
       el.style.width = `${Math.ceil((right - left) / scale + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 2}px`
-      if (el.offsetHeight > h) el.style.width = ''  // 줄이 늘면(다시 꺾이면) 되돌린다
+      if (el.offsetHeight > h) { el.style.width = ''; el.style.textWrap = '' }  // 그래도 줄이 늘면(다시 꺾이면) 되돌린다
     }
     fit()
     // 웹 글꼴이 늦게 오면 대체 글꼴로 잰 폭이 남는다 — 글꼴이 준비되면 다시 잰다.

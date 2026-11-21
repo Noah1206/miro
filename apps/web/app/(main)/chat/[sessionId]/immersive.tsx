@@ -26,8 +26,10 @@ type Immersive = { media: CharacterMedia; available:boolean; soon:boolean; on: b
   /** 11/6: 무료 운영(음성 분량 차감 꺼짐) — 새 답 이어 읽기·말풍선 눌러 다시 듣기. */
   free:boolean;replay:(m:Msg,texts:string[])=>void
   /** 11/11 음성 모드로 이어 읽는 중 — 폼에 voice=1(답을 쓰는 동안 합성 서버를 깨운다). */
-  live:boolean }
-const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, held:()=>false, holding:false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false })
+  live:boolean
+  /** 11/22 보낼 때 음성이 켜져 있었나 — 꺼진 채 보낸 턴의 답은 도중에 음성을 켜도 읽지 않는다(그 답은 신음 태그 없이 만들어졌다). */
+  markSend:(voiced:boolean)=>void }
+const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, held:()=>false, holding:false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},markSend:()=>{},live:false })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
@@ -145,6 +147,9 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       value=>{if(controller.current===active)setStatus(value)},reuseOnly);return true }
     catch {if(!active.signal.aborted)setStatus('error');return false}
   }
+  // 11/22 사용자: 답이 만들어지는 도중에 음성을 켜면 그 답은 글로만, 다음 답부터 음성 — 보낼 때 음성 상태로 가른다(서버도 그 값으로 음성용 답을 만든다).
+  const voiceAtSend=useRef(false)
+  const markSend=(voiced:boolean)=>{voiceAtSend.current=voiced}
   // 켜는 순간 이미 와 있던 답은 읽지 않는다 — 켠 뒤에 새로 오는 답부터.
   const spoken=useRef(new Set<string>())
   useEffect(()=>{if(on){for(const m of appended)spoken.current.add(m.id);setSkipped(new Set(appended.map(m=>m.id)))}
@@ -153,12 +158,14 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const arrived=appended.filter(m=>!known.has(m.id)&&m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
   useEffect(()=>{
     if(!on||!enabled||free!==true)return
-    for(const m of arrived)if(!spoken.current.has(m.id)){spoken.current.add(m.id);enqueue(m.id,null)}
+    const quietIds:string[]=[]
+    for(const m of arrived)if(!spoken.current.has(m.id)){spoken.current.add(m.id);if(voiceAtSend.current)enqueue(m.id,null);else quietIds.push(m.id)}
+    if(quietIds.length)setSkipped(prev=>new Set([...prev,...quietIds]))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[on,enabled,free,arrived.map(m=>m.id).join()])
   const liveVoice=on&&enabled&&free===true
   const arrivedIds=new Set(arrived.map(m=>m.id))
-  const held=(id:string)=>liveVoice&&arrivedIds.has(id)&&!skipped.has(id)&&!released.has(id)
+  const held=(id:string)=>liveVoice&&voiceAtSend.current&&arrivedIds.has(id)&&!skipped.has(id)&&!released.has(id)
   /** 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다(줄 끝에 붙는다). texts = 그 말풍선에 든 대사 문단. */
   const replay=(m:Msg,texts:string[])=>{
     if(!on||!enabled||free!==true||!/^[0-9a-f-]{36}$/i.test(m.id))return
@@ -171,7 +178,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true }}>
+    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,markSend,live:on&&enabled&&free===true }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}

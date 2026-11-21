@@ -322,7 +322,7 @@ export type { SimulationEvent }
  * 11/18 AI 가 고른 사진 코드(p1… 또는 'p3:4' = 4번째 블록 뒤) → 순번·자리. 목록 밖·언베일 아닌 방의 언베일 전용 사진·중복은 버리고 최대 5장.
  * 11/22 사용자(베이비챗 방식): 최소 장수 없음, 최대 3장. 같은 날: 서버가 모자란 장수를 정해진 자리(2·5·8번째 블록 뒤)에 끼워 채우던 것은 장면과 안 맞아 삭제 — AI 가 고른 사진만.
  */
-const MAX_PHOTOS = 3
+const MAX_PHOTOS = 5   // 11/22 사용자: 최소 3장 지시로 되돌림 — 최대 5장
 /** after: AI 가 고른 사진은 AI 가 센(검증 전) 블록 번호, 채운 사진(fill)은 저장 블록 기준 자리. 스트리밍(stream-blocks)도 이걸 쓴다. */
 export function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null; fill?: boolean }> {
   const list = s.character.worldRole.situationImages ?? []
