@@ -863,3 +863,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .composerForm { background: rgb(24 24 24 / .6); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 /* 11/22 사용자: 사진 폭을 채팅방 폭에 거의 맞게 — 360px 상한을 풀어 글 폭을 채운다(정사각형 유지). */
 .flow .photo, .flow .photoMakingTile, .photo, :global([data-chat-theme]) .photo { max-width: none; }
+/* 11/22 사용자: 글 폭에 맞춘 뒤 정사각형으로 잘려 보였다 — 사진은 원래 비율 그대로 전부 보이게(자르지 않음). */
+.photo, :global([data-chat-theme]) .photo { aspect-ratio: auto; height: auto; object-fit: contain; }
