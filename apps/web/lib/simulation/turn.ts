@@ -12,6 +12,7 @@ import { characterAgencyMode, feature, tokensForCost, voicePaused, POLICY, MIN_T
 import { VOICE_TOKENS_MAX, voiceTokens } from '../voice-text'
 import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
 import { looksLikeBackstageLeak, looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
+import { leadName } from '@/lib/editorial/heroine-name'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -285,7 +286,12 @@ async function executeTurn(opts: {
     if (costTokens > (reservation || free ? maximumTokens : 0)) { await refund(); return { ok: false, reason: 'generation' } }
     // 11/14 사용자: 한 턴 최소 차감은 모델별(floorTokens) — 검증 없는 언베일 방도 같은 모델이면 일반 방과 같은 최소(예약 안에서만).
     const actualTokens = reservation ? Math.min(Math.min(Math.max(costTokens, model.floorTokens), maximumTokens) + (voiceOn ? voiceTokens(transition.blocks as Array<Record<string, unknown>>) : 0), reservation.cost) : free ? 0 : costTokens
-    const responseText = renderBlocks(transition.blocks)
+    // 11/21 사용자: 1:1 공식 작품은 인물 이름 칸이 작품 제목이라 저장 글이 '작품 제목: 대사' 였다 — 작품 안 인물 이름(leadName)이 따로 있으면
+    // 주인공 대사 앞의 제목을 뗀다(화면 말풍선은 블록으로 그려 원래 인물 이름, 이 글은 목록 미리보기·알림·기록용).
+    const titleName = loaded.snapshot.character.identity.name
+    const lead = leadName({ name: titleName, secret: loaded.snapshot.character.personality.secret, personality: loaded.snapshot.character.personality.personality, cast: loaded.snapshot.character.worldRole.cast })
+    const rendered = renderBlocks(transition.blocks)
+    const responseText = lead !== titleName ? rendered.split('\n').map(line => line.startsWith(`${titleName}: `) ? line.slice(titleName.length + 2) : line).join('\n') : rendered
     // 11/19 사용자: 상태창 형식이 있는 작품은 매 턴 상태창이 꼭 보인다 — AI 가 status 를 빠뜨리면 이 방의 직전 상태창을 그대로 잇는다.
     const status = transition.status?.trim() || (loaded.snapshot.character.worldRole.lastStatus ?? null)
     // 상황별 사진 — 11/18 바베챗식: 답을 쓰는 AI 가 지금 장면의 사진 코드를 직접 고른다(images, 한 답에 최대 2장, 같은 사진 재사용 가능).
