@@ -363,6 +363,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   /* 10/28: 탭 밑줄은 미리보기 왼쪽 선과 십자로 겹쳐 지웠다. */
   .create-tabs { width: calc(100% - 440px); padding-right: 40px !important; }
   .create-tabs > div { flex: 0 1 auto !important; justify-content: flex-start !important; gap: 8px !important; }
+  /* 11/21 사용자: 데스크톱은 탭이 한눈에 다 보이게 — 폭 1/4 고정(폰용) 대신 글자 폭 + 좁은 여백. */
+  .create-tabs > div > button { flex: 0 0 auto !important; padding-inline: 14px !important; }
   .create-page > form > #panel-preview, .create-page > form > #panel-intro-dialogue { margin-top: -51px; top: 56px; z-index: 21; max-height: calc(100dvh - 72px); }
   .create-intro-editor { height: calc(100dvh - 200px); }
   .create-photo-row { flex-direction: row; gap: 24px; }
