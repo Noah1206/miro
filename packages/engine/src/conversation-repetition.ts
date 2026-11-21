@@ -107,14 +107,20 @@ export function trimPenalizedSentences<T extends Block>(blocks: readonly T[], re
   // 바로 앞 턴에 나왔거나 최근 3턴 중 2턴에 나온 낱말 — 연달아 나오는 것과 한 턴 걸러 되풀이되는 것을 함께 막는다(11/4 실측: 장갑이 한 턴 걸러 6/14턴).
   const tired = new Set(MOTIF.filter(w => prev.at(-1)?.includes(w) || prev.filter(t => t.includes(w)).length >= 2))
   const bad = (s: string) => STOCK.test(s) || [...tired].some(w => s.includes(w))
+  const isScene = (b: T) => b.type === 'narrative' || b.type === 'action'
+  let total = 0, removed = 0
   const out = blocks.flatMap(b => {
-    if (b.type !== 'narrative' && b.type !== 'action') return [b]
+    if (!isScene(b)) return [b]
     const parts = b.text.split(/(?<=[.!?。！？…])\s+/)
     const kept = parts.filter(s => !bad(s))
+    total += parts.length; removed += parts.length - kept.length
     if (kept.length === parts.length) return [b]
     return kept.length ? [{ ...b, text: kept.join(' ') }] : []
   })
   const hasTalk = (bs: readonly T[]) => bs.some(b => (b.type ?? 'dialogue') === 'dialogue')
+  // 11/21 사용자('상황이 나오다가 사라지고, 대화 3개만 확 나온다'): 침대 장면처럼 어깨·입술·머리카락이 매 턴 나오는 장면에선 서술 문장이 거의 다 지워져
+  // 대사만 남았다(스트리밍 중엔 보였다가 사라짐). 지울 문장이 서술의 1/3 을 넘거나 서술·행동이 하나도 안 남으면 이번 턴은 손대지 않는다 — 가끔 되풀이된 문장만 뺀다.
+  if (removed > total / 3 || (blocks.some(isScene) && !out.some(isScene))) return [...blocks]
   return out.length && (hasTalk(out) || !hasTalk(blocks)) ? out : [...blocks]
 }
 
