@@ -2,6 +2,7 @@
 import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
 import { useEffect, useRef, useState, useTransition, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon, TransitionLink, useToast } from '@/components/ui'
 import { ATTENDANCE_GRANT, MIN_TURN_BALANCE } from '@miro/config'
@@ -51,6 +52,15 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   // 추천 답변(11/3) — 후보 3개와 실패 문구.
   const [suggest, setSuggest] = useState<SuggestState>(() => firstReplies?.length ? firstReplies.map(asSuggestion) : null)
   const [suggestError, setSuggestError] = useState('')
+  // 11/22 사용자: 추천 답변은 만들어진 자리(대화 맨 끝)에 그대로 — 위로 스크롤하면 대화와 함께 올라가 안 보인다. 대화 목록 끝 자리(#suggest-slot)로 옮겨 그린다.
+  const [suggestSlot, setSuggestSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => { setSuggestSlot(document.getElementById('suggest-slot')) }, [])
+  useEffect(() => {
+    const box = suggestSlot?.parentElement
+    if (!suggest || !box) return
+    const id = requestAnimationFrame(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }))
+    return () => cancelAnimationFrame(id)
+  }, [suggest, suggestSlot])
   const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
   const hadRefresh = useRef(false)
@@ -341,10 +351,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </motion.p>
         )}
       </AnimatePresence>
-      {suggest && <SuggestList state={suggest} onClose={() => setSuggest(null)} onPick={(text, send) => {
+      {suggest && (list => suggestSlot ? createPortal(list, suggestSlot) : list)(<SuggestList state={suggest} onClose={() => setSuggest(null)} onPick={(text, send) => {
         setDraft(text); setRequestId(crypto.randomUUID()); setSuggest(null)
         if (send) setTimeout(() => ref.current?.requestSubmit(), 0); else ta.current?.focus()
-      }} />}
+      }} />)}
       {suggestError && <p role="alert" className="t-caption" style={{ marginBottom: 8, color: 'var(--color-danger)' }}>{t(suggestError)}</p>}
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) { if (lowBalance) lowBalanceToast(); else void action(new FormData(event.currentTarget)) } }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
