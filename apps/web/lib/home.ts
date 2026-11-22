@@ -207,6 +207,8 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * - 오리지널·유저 신작: 최신순. 세이프티는 언베일을 켠 사람에게만, 성인 전용이 아닌 캐릭터.
  */
 const MIRO_OFFICIAL = ['official-m-miro', 'official-m-veil', 'official-m-fairies', 'official-m-librarian', 'official-m-painter', 'official-m-exchange', 'official-m-artisan', 'official-m-tailor', 'official-m-bell', 'official-m-novelist', 'official-m-clock', 'official-m-cartographer']
+const PINNED_TOP = ['official-m-boarding-wife']
+const pinRank = (c: { slug: string }) => { const i = PINNED_TOP.indexOf(c.slug); return i < 0 ? PINNED_TOP.length : i }
 export type HomeSections = { rising: HomeCard[]; popularMale: HomeCard[]; popularFemale: HomeCard[]; originals: HomeCard[]; forYou: HomeCard[]; fresh: HomeCard[]; safety: HomeCard[]; tags: string[]; others: HomeCard[]; /** 11/20 사용자: 홈 '전체 캐릭터'는 위 줄에 나온 것까지 전부(탐색과 같은 수) — others 는 줄에 안 뽑힌 나머지라 수가 달랐다. */ all: HomeCard[]; filters: DiscoveryGroup[] }
 export async function homeSections(userId: string | null, audience?: Audience): Promise<HomeSections> {
   const [{ items: raw }, chattedRows, unveil] = await Promise.all([
@@ -231,7 +233,8 @@ export async function homeSections(userId: string | null, audience?: Audience): 
   // 11/9 사용자: '미로 오리지널' 줄엔 미로 공식 캐릭터(앱 의인화)만, 다른 줄엔 안 나오게 맨 먼저 뽑는다. 순서 고정.
   const originals = take(c => MIRO_OFFICIAL.includes(c.slug), (a, b) => MIRO_OFFICIAL.indexOf(a.slug) - MIRO_OFFICIAL.indexOf(b.slug))
   const cutoff = new Date(Date.now() - 21 * 864e5).toISOString()
-  const rising = take(c => (c.createdAt ?? '') >= cutoff, (a, b) => (b.recentPlays ?? 0) - (a.recentPlays ?? 0) || newest(a, b))   // 신작은 누적보다 최신이 먼저
+  // 11/23 사용자: '니 엄마 잘먹겠습니다'를 홈 맨 위(첫 줄 첫 칸)로 — PINNED_TOP 은 날짜와 상관없이 지금 뜨는 신작 맨 앞.
+  const rising = take(c => PINNED_TOP.includes(c.slug) || (c.createdAt ?? '') >= cutoff, (a, b) => pinRank(a) - pinRank(b) || (b.recentPlays ?? 0) - (a.recentPlays ?? 0) || newest(a, b))   // 신작은 누적보다 최신이 먼저
   const popularMale = audience === 'female' ? [] : take(c => c.audience === 'male', byPlays)
   const popularFemale = audience === 'male' ? [] : take(c => c.audience === 'female', byPlays)
   // 나에게 맞춘: 대화해 본 캐릭터들과 장르가 겹치는, 아직 대화하지 않은 캐릭터. 대화가 없으면 아무 캐릭터.
