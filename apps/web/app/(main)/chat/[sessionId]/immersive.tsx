@@ -94,8 +94,9 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
         try{
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
           // 11/17 서술의 젖은 소리는 음성 엔진이 못 낸다 — 이 답을 읽는 동안 효과음을 밑에 깐다(lib/voice-sfx).
-          if(job.parts===null){const clips=sfxClips(m.blocks);let bed:(()=>void)|null=null
-            try{await one({messageId:m.id,turn:true},0,()=>{release(m.id);if(clips.length)bed=player.current!.bed(clips.map(c=>voicedClip(c,lastVoice.current)),clips.some(c=>/suck|gag/.test(c))?0.6:0.35)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
+          if(job.parts===null){const all=sfxClips(m.blocks),oral=all.includes('/sfx/suck.mp3'),clips=oral?all.filter(c=>c!=='/sfx/suck.mp3'):all;let bed:(()=>void)|null=null
+            // 11/23 오랄 턴은 서버가 그 목소리로 입힌 빠는 소리를 문장 사이에 직접 끼운다(oral) — 밑에 깔지 않는다. 그 목소리 판이 없으면 서버가 안 끼우므로 예전처럼 깐다.
+            try{await one({messageId:m.id,turn:true,...(oral?{oral:true}:{})},0,()=>{release(m.id);const bedClips=oral&&!voicedClip('/sfx/suck.mp3',lastVoice.current).includes('suck-')?[...clips,'/sfx/suck.mp3']:clips;if(bedClips.length)bed=player.current!.bed(bedClips,bedClips.some(c=>/suck|gag/.test(c))?0.6:0.35)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
           const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
           for(const part of (job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])){
             try{await one({messageId:m.id,part,amount:'standard',confirmed:true},segs[part]!.delivery.pauseAfterMs??0)}

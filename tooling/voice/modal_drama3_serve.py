@@ -129,6 +129,28 @@ def turn_batches(lines):
         else: out.append((key, [l]))
     return out
 
+def oral_pieces(lines):
+    """11/23 오랄 턴은 문장(대사) 하나씩 따로 만든다 — 그 사이에 빠는 소리를 끼우려고. parts 가 있으면 그것, 없으면 문장 끝에서."""
+    import re
+    out = []
+    for l in lines:
+        if l.get('inner'): out.append(l); continue
+        parts = l.get('parts') or []
+        if parts and ' '.join(p['text'] for p in parts) == l['text']: out += [{**l, 'text': p['text'], 'delivery': p.get('delivery') or l.get('delivery') or {}, 'parts': []} for p in parts]
+        else: out += [{**l, 'text': t.strip(), 'parts': []} for t in (re.findall(r'[^.!?…]+[.!?…]*["\')\]]*\s*', l['text']) or [l['text']]) if t.strip()]
+    return out
+
+
+def oral_slice(clip, rate, rng, lo, hi):
+    """빠는 소리에서 lo~hi 초를 무작위 위치로 잘라 앞뒤를 0.12초씩 부드럽게."""
+    import numpy as np
+    n = min(len(clip), int(rate * rng.uniform(lo, hi)))
+    start = int(rng.integers(0, max(1, len(clip) - n)))
+    piece = clip[start:start + n].copy(); f = min(len(piece) // 4, int(rate * 0.12))
+    if f: piece[:f] *= np.linspace(0, 1, f); piece[-f:] *= np.linspace(1, 0, f)
+    return piece
+
+
 def gap_after(line):
     """앞 묶음 뒤의 쉼(초) — 그 대사의 pauseAfterMs(급할수록 AI 가 짧게 준다), 없으면 0.3초."""
     ms = (line.get('delivery') or {}).get('pauseAfterMs')
@@ -639,7 +661,7 @@ class Speaker:
             return {'wav': buf.getvalue(), 'seconds': round(len(a) / self.codec.sample_rate, 2), 'first_s': round(first or 0, 2)}
         return {'plain': take(self.speak_stream(text, voice)), 'tempo': take(self.tempo(self.speak_stream(text, voice)))}
 
-    def speak_turn(self, lines, session=None, turn=None):
+    def speak_turn(self, lines, session=None, turn=None, oral=False):
         """11/11 한 턴 통째로(사용자: 묶음이 아니라 1턴당 바로, 작품은 인물별 대사 전체를 만들어 잘라 쓰기).
         lines = 대화 순서의 대사 묶음 [{text, voice, delivery}] — 같은 사람이 이어 한 말은 이미 한 줄(앱 spokenSegments).
         목소리가 하나면 한 번에 합성하며 그대로 흘려보낸다. 여럿이면 목소리마다 그 턴의 대사를 전부 한 번에 합성하고,
@@ -650,6 +672,35 @@ class Speaker:
         for i, l in enumerate(lines): groups.setdefault(l.get('voice') or DEFAULT_VOICE, []).append(i)
         pcm = lambda w: (np.clip(w, -1, 1) * 32767).astype('<i2').tobytes()
         rate = self.codec.sample_rate
+        # 11/23 오랄(사용자): 그 목소리로 입힌 빠는 소리(/_drama3/oral/<목소리>.wav)를 문장 사이사이에 끼워 — 빨다가 한마디, 다시 빨다가 한마디.
+        clips = {v: self.oral_clip(v) for v in groups} if oral else {}
+        rng = np.random.default_rng(zlib.crc32((turn or 'turn').encode()))
+        suck = lambda v, lo, hi: [pcm(oral_slice(clips[v], rate, rng, lo, hi))] if clips.get(v) is not None else []
+        if len(groups) == 1 and clips.get(next(iter(groups))) is not None:
+            # 11/23 사용자: 문장마다 따로 만들면 목소리가 달라진다 → 평소처럼 묶음 통째로 한 번에 만들고(목소리 결 유지), 다 만든 소리를
+            # 문장 글자 수 비율 근처의 가장 조용한 곳에서 잘라 그 사이에 빠는 소리를 끼운다. 빠는 소리 끝과 다음 말 앞을 0.35초 겹쳐 빨다가 말하듯 잇는다.
+            voice = next(iter(groups))
+            tail = None   # 아직 내보내지 않은 빠는 소리 — 다음 말의 앞과 겹친다
+            def join(sound, speech):
+                ov = min(int(rate * 0.35), len(sound) // 2, len(speech))
+                if ov <= 0: return np.concatenate([sound, speech])
+                mixed = sound[-ov:] * np.linspace(1, 0.15, ov) + speech[:ov]
+                return np.concatenate([sound[:-ov], mixed, speech[ov:]])
+            for k, ((inner, speed, gain), batch) in enumerate(turn_batches(lines)):
+                made = b''.join(louder(self.tempo(self.speak_stream(turn_text(batch), voice, session, turn, keep=k == 0 and not inner), speed), gain))
+                if inner:
+                    if tail is not None: yield pcm(tail); tail = None
+                    yield from inner_voice([made], rate); continue
+                wave = np.frombuffer(made, '<i2').astype('float32') / 32768
+                sents = [p['text'] for p in oral_pieces(batch)]
+                cuts = [0, *split_points(wave, [len(t) for t in sents], rate), len(wave)]
+                for j in range(len(cuts) - 1):
+                    speech = wave[cuts[j]:cuts[j + 1]]
+                    sound = oral_slice(clips[voice], rate, rng, 1.6, 3.2) if tail is None else tail
+                    yield pcm(join(sound, speech)); tail = None
+            yield pcm(oral_slice(clips[voice], rate, rng, 2.5, 4.0) if tail is None else tail)
+            self.prepare_later(session, [voice])
+            return
         if len(groups) == 1:
             voice = next(iter(groups))
             # 11/17 긴 턴·속마음: 묶음마다 차례로 만든다. 기억에는 첫 묶음만 넣는다(같은 턴의 뒤 묶음은 지난 턴 기억을 그대로 이어 받는다 — 읽어 둔 상태를 다시 쓴다).
@@ -688,6 +739,7 @@ class Speaker:
             voice = line.get('voice') or DEFAULT_VOICE
             speed, gain = feel(line.get('delivery'), line['text'])
             said = (lambda made: inner_voice(louder(self.tempo(made, speed), gain), rate)) if line.get('inner') else (lambda made: louder(self.tempo(made, speed), gain))   # 11/17 속마음 줄은 울림을 얹는다 · 11/19 줄마다 빠르기·크기
+            if not line.get('inner'): yield from suck(voice, 1.6, 3.0)
             if len(groups[voice]) == 1: yield from said(self.speak_stream(turn_text([line]), voice, session, turn))
             else:
                 if i not in pieces: make(voice, groups[voice])
@@ -696,6 +748,20 @@ class Speaker:
                 pause = min(1.5, max(0.0, float((line.get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
                 yield pcm(np.zeros(int(rate * pause), dtype='float32'))
         self.prepare_later(session, list(groups))
+
+    def oral_clip(self, voice):
+        """11/23 그 목소리로 입힌 빠는 소리(16비트 모노 wav) — 없으면 None(그 목소리는 끼우지 않는다)."""
+        import os, wave, numpy as np
+        cache = self.__dict__.setdefault('_oral', {})
+        if voice not in cache:
+            path, clip = f'/voices/_drama3/oral/{voice}.wav', None
+            if voice and os.path.isfile(path):
+                with wave.open(path) as w: sr, raw = w.getframerate(), w.readframes(w.getnframes())
+                clip = np.frombuffer(raw, '<i2').astype('float32') / 32768
+                rate = self.codec.sample_rate
+                if sr != rate: clip = np.interp(np.linspace(0, len(clip) - 1, int(len(clip) * rate / sr)), np.arange(len(clip)), clip).astype('float32')
+            cache[voice] = clip
+        return cache[voice]
 
     def prepare_later(self, session, voices_used):
         """다음 턴용 상태를 뒤에서 준비시킨다(같은 컨테이너에 다음 일로 줄 선다). 실패해도 다음 턴이 요청 때 읽을 뿐이다."""
@@ -879,7 +945,7 @@ class Speaker:
             except Exception: return Response(b'voice not found', status_code=400)
             # 11/11 밤 방 단위 기억: 앱이 방(session)과 메시지(turn) 식별자를 주면 같은 방의 지난 턴을 이어 받는다. 없으면 예전처럼 턴마다 새로.
             ident = lambda v: v if isinstance(v, str) and 0 < len(v) <= 64 and all(c.isalnum() or c in '-_' for c in v) else None
-            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn'))), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
+            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn')), body.get('oral') is True), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 

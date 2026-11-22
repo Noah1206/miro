@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
-  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; beat?: unknown; stream?: unknown; turn?: unknown } | null
+  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; beat?: unknown; stream?: unknown; turn?: unknown; oral?: unknown } | null
   // 11/19 음성 모드가 켜진 방이 보이는 동안 1분마다 — '아직 듣고 있다'는 신호(서버를 깨우지 않는다, 대기 판단만).
   if (body?.beat === true) {
     voice.lastBeat = Date.now()
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
     const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
     if (lines.some(l => !l.voice)) { release(); return Response.json({ error: 'voice_unavailable' }, { status: 503 }) }
     try {
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId, ...(body?.oral === true ? { oral: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
       // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
       await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: lines.map(l => l.voice ?? '') }).catch(() => {})
       return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })

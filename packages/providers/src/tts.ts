@@ -16,7 +16,9 @@ export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promis
   /** 11/11 한 턴 통째 — 대화 순서의 대사 묶음. 목소리마다 한 번에 합성해 잘라 순서대로(서버 /speak_turn). */
   speakTurn?(req: { lines: Array<{ text: string; voice: string | null; delivery?: VoiceDelivery; inner?: boolean; parts?: Array<{ text: string; delivery: VoiceDelivery }> }>; language: string
     /** 11/11 방 단위 목소리 기억 — 같은 방(session)의 지난 턴 소리를 이어 받아 목소리·감정이 턴 사이에 이어진다. turn = 이 메시지(다시 들을 때 자기 자신을 기억에서 뺀다). */
-    session?: string; turn?: string }, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }> }
+    session?: string; turn?: string
+    /** 11/23 오랄 턴 — 서버가 그 목소리로 입힌 빠는 소리를 문장 사이에 끼운다. */
+    oral?: boolean }, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }> }
 
 export function resolveTts(): TtsProvider | null {
   const url = process.env.MIRO_TTS_URL?.replace(/\/$/, '')
