@@ -35,9 +35,11 @@ export const useImmersive = () => useContext(Ctx)
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
 const SILENT = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
-export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, voiceSpeakers=[], enabled=false, soon=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string
+export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, voiceSpeakers=[], enabled=false, soon=false, adult=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string
   /** 히로인별 목소리가 있는 이름(11/4) — 서버(lib/speech/access)와 같은 목록이어야 part 번호가 맞는다. */
-  voiceSpeakers?:string[];enabled?:boolean
+  voiceSpeakers?:string[];enabled?:boolean;
+  /** 11/23 사용자: 일상 대화에 빠는 소리가 났다 — 효과음(살·빠는·헛구역질)은 언베일 켠 방에서만. */
+  adult?:boolean
   /** 11/12 음성 서버가 멈춰 있는 동안(MIRO_VOICE_PAUSED=1) — 켤 수 없고 방 메뉴에 '곧 열림' 으로만 보인다. */
   soon?:boolean }) {
   const key = `miro:immersive:${sessionId}`
@@ -94,7 +96,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
         try{
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
           // 11/17 서술의 젖은 소리는 음성 엔진이 못 낸다 — 이 답을 읽는 동안 효과음을 밑에 깐다(lib/voice-sfx).
-          if(job.parts===null){const all=sfxClips(m.blocks),oral=all.includes('/sfx/suck.mp3'),clips=oral?all.filter(c=>c!=='/sfx/suck.mp3'):all;let bed:(()=>void)|null=null
+          if(job.parts===null){const all=adult?sfxClips(m.blocks):[],oral=all.includes('/sfx/suck.mp3'),clips=oral?all.filter(c=>c!=='/sfx/suck.mp3'):all;let bed:(()=>void)|null=null
             // 11/23 오랄 턴은 서버가 그 목소리로 입힌 빠는 소리를 문장 사이에 직접 끼운다(oral) — 밑에 깔지 않는다. 그 목소리 판이 없으면 서버가 안 끼우므로 예전처럼 깐다.
             try{await one({messageId:m.id,turn:true,...(oral?{oral:true}:{})},0,()=>{release(m.id);const bedClips=oral&&!voicedClip('/sfx/suck.mp3',lastVoice.current).includes('suck-')?[...clips,'/sfx/suck.mp3']:clips;if(bedClips.length)bed=player.current!.bed(bedClips,bedClips.some(c=>/suck|gag/.test(c))?0.6:0.35)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
           const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
