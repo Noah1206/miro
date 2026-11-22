@@ -181,16 +181,36 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, initialK
       </li>)}</ul>
     </section>}
     {isResults && <section className={styles.results} aria-label={t('검색 결과')} aria-busy={busy}>
-      <div className={styles.resultHeading}><span role="status" className={styles.resultCount}>{busy || !page ? t('결과 확인 중') : t('결과 {count}개', { count: page.items.length })}</span><select aria-label={t('정렬')} value={latest ? 'latest' : rank ? 'ranking' : ''} onChange={event => { const next = new URLSearchParams(key); next.set('sort', event.target.value); update(next) }}>
-        {!rank && !latest && <option value="" disabled>{t('정렬')}</option>}
-        <option value="ranking">{t('채팅순')}</option>
-        <option value="latest">{t('최신순')}</option>
-      </select></div>
+      <div className={styles.resultHeading}><span role="status" className={styles.resultCount}>{busy || !page ? t('결과 확인 중') : t('결과 {count}개', { count: page.items.length })}</span><SortMenu value={latest ? 'latest' : rank ? 'ranking' : ''} onChange={value => { const next = new URLSearchParams(key); next.set('sort', value); update(next) }} /></div>
       {/* 11/7 사용자: 탐색 카드도 홈 줄 카드와 같은 내용(제목·두 줄 소개·해시태그 칩)으로. */}
       <div className={cards.grid}>{page?.items.map(c => <CharacterCard key={c.id} c={{ ...c, caption: c.role }} />)}</div>
       {busy && <p className={styles.status} role="status">{t('불러오는 중')}</p>}
       {failed && <div className={styles.status} role="alert"><p>{t('목록을 불러오지 못했어요.')}</p><Button variant="ghost" onClick={() => setRetry(n => n + 1)}>{t('다시 시도')}</Button></div>}
       {!busy && !failed && page?.items.length === 0 && <p className={styles.status}>{t('고른 조건에 맞는 이야기가 아직 없어요')}</p>}
     </section>}
+  </div>
+}
+
+/** 11/23 채팅순/최신순 — 아이폰은 select 글자를 16px 로 키워(globals.css) 직접 만든 작은 메뉴로. */
+function SortMenu({ value, onChange }: { value: string; onChange: (value: 'ranking' | 'latest') => void }) {
+  const t = useT()
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    addEventListener('pointerdown', away); addEventListener('keydown', esc)
+    return () => { removeEventListener('pointerdown', away); removeEventListener('keydown', esc) }
+  }, [open])
+  const options = [['ranking', '채팅순'], ['latest', '최신순']] as const
+  const label = options.find(([v]) => v === value)?.[1] ?? '정렬'
+  return <div ref={box} className={styles.sortMenu}>
+    <button type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={`${t('정렬')}: ${t(label)}`} onClick={() => setOpen(v => !v)}>
+      {t(label)}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+    </button>
+    {open && <ul role="listbox" aria-label={t('정렬')}>
+      {options.map(([v, l]) => <li key={v} role="option" aria-selected={v === value}><button type="button" onClick={() => { setOpen(false); if (v !== value) onChange(v) }}>{t(l)}</button></li>)}
+    </ul>}
   </div>
 }
