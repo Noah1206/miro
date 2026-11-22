@@ -607,7 +607,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-preview > .intro-preview .rich-text.intro-narration { color: #cfcfcf; font-style: normal; font-size: 15px; line-height: 1.75; }
 .intro-preview > .intro-preview .intro-bubble:not(.intro-typing) { max-width: 100%; padding: 0; border-radius: 0; background: none; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.75; }
 .intro-preview > .intro-preview .intro-bubble:not(.intro-typing) .rich-text p { line-height: 1.75; }
-.intro-preview > .intro-preview .intro-photo { width: 100%; max-width: 360px; aspect-ratio: 1 / 1; object-fit: cover; object-position: center 25%; border-radius: 8px; margin-block: 6px; }
+.intro-preview > .intro-preview .intro-photo { width: 100%; max-width: none; /* 11/23 사용자: 인트로 사진은 글 폭 전체로(전엔 360px) */ aspect-ratio: 1 / 1; object-fit: cover; object-position: center 25%; border-radius: 8px; margin-block: 6px; }
 .intro-preview > .intro-preview .intro-status { border: 0 !important; border-radius: 10px !important; background: #1b1b1c !important; }
 /* 11/21 사용자: 상세 인트로의 사람 말 줄 — 채팅방 대사와 같이 굵은 흰 글씨. */
 .intro-speech { margin: 0; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; word-break: keep-all; }
