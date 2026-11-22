@@ -11,11 +11,13 @@ import { isUnveilPhoto } from '@/lib/unveil-photo'
 /** 11/7 사용자: 대표 사진이 넘어가지 않고 첫 장(표지)에 머무는 작품 — 카드와 상세 대표 사진 모두. */
 const STILL_COVERS = new Set(['official-m-cheonma-reborn', 'official-m-mother-daughter'])
 export const stillCover = (slug?: string | null) => !!slug && STILL_COVERS.has(slug)
+/** 11/23 사용자: 이 작품은 언베일을 켠 성인에겐 카드에서도 언베일 대표 사진까지 다 돌린다(안 켠 사람은 서버가 언베일 사진을 빼고 보낸다). */
+const UNVEIL_ROTATE = new Set(['official-m-boarding-wife'])
 
-export function useRotatingPhoto(images: string[], _veiled?: boolean, still = false): { photos: string[]; active: number; photo: string | null; onPhotoReady: (i: number) => void } {
+export function useRotatingPhoto(images: string[], veiled?: boolean, still = false, slug?: string | null): { photos: string[]; active: number; photo: string | null; onPhotoReady: (i: number) => void } {
   // 움직이는 대표 사진(01.webp, 헌터 길드 등)이나 표지 고정 작품이면 첫 장만 — 다른 사진으로 넘기지 않는다.
   const first = images[0]
-  const photos = first && (still || /\.webp(\?|$)/.test(first)) ? [first] : images.filter(src => !isUnveilPhoto(src))
+  const photos = first && (still || /\.webp(\?|$)/.test(first)) ? [first] : images.filter(src => !isUnveilPhoto(src) || (veiled === false && !!slug && UNVEIL_ROTATE.has(slug)))
   const [i, setI] = useState(0)
   const reduce = useReducedMotion()
   const n = photos.length

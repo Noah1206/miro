@@ -54,7 +54,7 @@ export function CharacterCard({ c, still, ratio = '1 / 1' }: { c: CardCharacter;
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
   const language = useLanguage()
-  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, still || stillCover(c.slug))
+  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, still || stillCover(c.slug), c.slug)
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
