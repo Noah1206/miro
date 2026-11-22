@@ -2568,5 +2568,6 @@
   "'/{name}' 만들기": "Create '/{name}'",
   "명령어 만들기": "Create a command",
   "AI에게 줄 프롬프트": "Prompt for the AI",
-  "한 줄 설명": "One-line description"
+  "한 줄 설명": "One-line description",
+  "채팅순": "By chats"
 }

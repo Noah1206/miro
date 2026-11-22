@@ -41,8 +41,11 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, initialK
   // 11/22 사용자: 탐색 탭은 처음부터 Rank — 주소에 정렬이 없으면 Rank, All 을 누르면 sort=all 로 남긴다.
   const rankDefault = resultsPath === '/explore'
   const sortParam = params.get('sort')
-  const rank = sortParam ? sortParam === 'ranking' : rankDefault
-  if (rank) canonical.set('sort', 'ranking')
+  // 11/23 사용자: 결과 위 '초기화' 자리에 채팅순(=Rank, 대화량)/최신순 드롭다운 — 최신순은 sort=latest 로 남겨 섞지 않는다.
+  const latest = sortParam === 'latest'
+  const rank = !latest && (sortParam ? sortParam === 'ranking' : rankDefault)
+  if (latest) canonical.set('sort', 'latest')
+  else if (rank) canonical.set('sort', 'ranking')
   else if (rankDefault) canonical.set('sort', 'all')
   const key = canonical.toString()
   const optionCounts = useMemo(() => filterCatalog && !genres.length && !relations.length ? discoveryOptionCounts(filterCatalog, groups, tags, query) : undefined, [filterCatalog, groups, key])
@@ -87,7 +90,6 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, initialK
   const [retry, setRetry] = useState(0)
   const request = useRef<AbortController | null>(null)
   const page = result?.key === key ? result.page : null
-  const active = !!query || genres.length + relations.length + tags.length > 0
   function update(next: URLSearchParams) {
     window.history.replaceState(null, '', `${resultsPath}${next.size ? `?${next}` : ''}`)
   }
@@ -148,7 +150,7 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, initialK
     {isResults && <section className={styles.filters} aria-labelledby="search-filters">
       <h2 id="search-filters" className="sr-only">{t('검색 필터')}</h2>
       <div className={styles.sortTabs} role="tablist" aria-label={t('정렬')}>
-        <button type="button" role="tab" aria-selected={!rank} onClick={() => { const next = new URLSearchParams(key); if (rankDefault) next.set('sort', 'all'); else next.delete('sort'); update(next) }}>All</button>
+        <button type="button" role="tab" aria-selected={!rank && !latest} onClick={() => { const next = new URLSearchParams(key); if (rankDefault) next.set('sort', 'all'); else next.delete('sort'); update(next) }}>All</button>
         <span aria-hidden>/</span>
         <button type="button" role="tab" aria-selected={rank} onClick={() => { const next = new URLSearchParams(key); next.set('sort', 'ranking'); update(next) }}>Rank</button>
       </div>
@@ -179,7 +181,11 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, initialK
       </li>)}</ul>
     </section>}
     {isResults && <section className={styles.results} aria-label={t('검색 결과')} aria-busy={busy}>
-      <div className={styles.resultHeading}><span role="status" className={styles.resultCount}>{busy || !page ? t('결과 확인 중') : t('결과 {count}개', { count: page.items.length })}</span><button disabled={busy || !active} onClick={() => { if (!active) return; setDraft(''); update(new URLSearchParams()) }}>{t('초기화')}</button></div>
+      <div className={styles.resultHeading}><span role="status" className={styles.resultCount}>{busy || !page ? t('결과 확인 중') : t('결과 {count}개', { count: page.items.length })}</span><select aria-label={t('정렬')} value={latest ? 'latest' : rank ? 'ranking' : ''} onChange={event => { const next = new URLSearchParams(key); next.set('sort', event.target.value); update(next) }}>
+        {!rank && !latest && <option value="" disabled>{t('정렬')}</option>}
+        <option value="ranking">{t('채팅순')}</option>
+        <option value="latest">{t('최신순')}</option>
+      </select></div>
       {/* 11/7 사용자: 탐색 카드도 홈 줄 카드와 같은 내용(제목·두 줄 소개·해시태그 칩)으로. */}
       <div className={cards.grid}>{page?.items.map(c => <CharacterCard key={c.id} c={{ ...c, caption: c.role }} />)}</div>
       {busy && <p className={styles.status} role="status">{t('불러오는 중')}</p>}

@@ -24,6 +24,8 @@
 .resultCount { color: #aaa; font-size: 12px; font-weight: 450; }
 .resultHeading button { border: 0; background: transparent; color: var(--color-text-secondary); font-size: 12px; min-height: 40px; padding: 0 4px; }
 .resultHeading button:disabled { opacity: .4; cursor: default; }
+.resultHeading select { border: 0; background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 12px; min-height: 40px; padding: 0 4px; cursor: pointer; }
+.resultHeading select option { background: #1a1a1d; color: #fff; }
 .status { padding: 52px 0; text-align: center; color: var(--color-text-secondary); font-size: 14px; }
 .more { display: flex; justify-content: center; margin-top: 24px; }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
