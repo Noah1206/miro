@@ -7,7 +7,6 @@ import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { Row } from './row'
 import { AllCharacters } from './all-characters'
-import { HomeHero } from './hero'
 import { SiteFooter } from '@/components/site-footer'
 import styles from './home.module.css'
 import { getLanguage, getT } from '@/lib/i18n/server'
@@ -79,12 +78,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       {/* 11/10 사용자: 로그인한 사람에겐 배너 대신 크랙식 추천(들어올 때마다 랜덤 6작품, 표지가 언베일인 작품은 뺀다). 로그인 전엔 가입 선물 배너 그대로. */}
       {/* 11/12 사용자: 로그인 전에도 크랙식 추천(데스크톱 소개 카드의 흐린 배경 포함) — 가입 선물 안내는 로그인 팝업의 선물 카드가 맡는다. */}
-      {<HomeHero items={(() => {
-        // 11/13 사용자: 여성향을 빼서 남성향 6, 순서는 섞는다.
-        const all = [...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
-          .filter(c => c.images.length > 0 && !c.coverUnveil && (c.isPublic || c.isOfficial)).sort(() => Math.random() - 0.5)  /* 11/21 사용자: 내 비공개 작품은 추천 배너에서 뺀다 */
-        return all.filter(c => c.audience === 'male').slice(0, 6)
-      })()} />}
+      {/* 11/23 사용자: 홈 맨 위 추천 배너(HomeHero, 좌우로 넘기는 작품 카드)를 뺀다. 되살리려면 git 에서 이 자리의 <HomeHero …/> 를 복구. */}
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       {(() => { const content = <>
       <div className={styles.searchRow}>
