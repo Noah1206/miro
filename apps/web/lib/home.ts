@@ -127,13 +127,17 @@ function discoveryMatch(tags: string[] = []): SQL | undefined {
   return and(...groups.map(group => sql`(${containsAny(catalogText, [...new Set(group.flatMap(tag => discoveryTagNeedle(tag).split('/').map(searchNeedle)))])})`))
 }
 
+const RANK_PINNED = ['official-m-oracle-mail', 'official-m-idol-girlfriend', 'official-m-friend-unsubscribe', 'official-m-ski-resort', 'official-m-boarding-wife']
+
 async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false, all = false): Promise<CardPage> {
   const unveil = await homeUnveilEnabled(userId)
   const sort = filter.sort ?? 'latest'
   const cursor = decodeCursor(cursorValue, sort)
   // 랭킹은 중복 없는 대화 인원, 후기는 공개된 원글 수(답글·숨김 제외)로 집계한다.
+  // 11/23 사용자: 채팅순 맨 위에 고정할 작품(순서대로) — 점수에 큰 수를 더해 커서 넘김도 같은 기준으로 맞춘다.
+  const rankBoost = sql.join(RANK_PINNED.map((slug, i) => sql`when ${slug} then ${(RANK_PINNED.length - i) * 1_000_000}`), sql` `)
   const score = sort === 'ranking'
-    ? sql<number>`(select count(distinct s.user_id)::int from roleplay_sessions s where s.character_id = ${characters.id} and s.deleted_at is null)`
+    ? sql<number>`((select count(distinct s.user_id)::int from roleplay_sessions s where s.character_id = ${characters.id} and s.deleted_at is null) + (case ${characters.slug} ${rankBoost} else 0 end))::int`
     : sort === 'reviews'
       ? sql<number>`(select count(*)::int from character_comments cc where cc.character_id = ${characters.id} and cc.parent_id is null and cc.hidden_at is null)`
       : sql<number>`0`
