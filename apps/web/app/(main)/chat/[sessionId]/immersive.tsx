@@ -49,7 +49,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const audio = useRef<HTMLAudioElement | null>(null)
   const [status, setStatus] = useState<VoicePlaybackStatus>('idle')
   const toast=useToast(),busyNoticed=useRef(false),t=useT()
-  const {appended}=useTurns()
+  const {appended,live:liveTurn,playbackKeys}=useTurns()
   const controller=useRef<AbortController|null>(null)
   useEffect(()=>{if(!enabled){controller.current?.abort();audio.current?.pause();setStatus('idle')}},[enabled])
   // 11/4: 인트로 대사는 블록 없이 글만 있다 — 그것도 고를 수 있게(서버 spokenSegments 도 글만 있으면 그 글을 읽는다).
@@ -57,7 +57,10 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
     .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName,voiceSpeakers).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
   // 11/6 이어 읽기: 읽을 답을 줄 세워 끝까지 읽는다 — 읽는 중에 새 답이 와도 끊지 않고 뒤에 붙는다.
-  type Job={key:string;id:string;parts:number[]|null}
+  type Job={key:string;id:string;parts:number[]|null;early?:boolean}
+  // 11/23 첫 대사 미리 읽기(early) — 소리가 시작된 턴(playbackId). 그 턴은 오고 있는 글을 바로 보여 주고, 저장본도 가리지 않는다.
+  const [earlyStarted,setEarlyStarted]=useState<string|null>(null)
+  const earlyAsked=useRef(new Set<string>())
   const queue=useRef<Job[]>([])
   const current=useRef<string|null>(null)
   const player=useRef<VoiceStreamPlayer|null>(null)
@@ -84,6 +87,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       if(current.current===null)return
       report('preparing')
       const res=await post(body)
+      if(res.status===204)return   // 11/23 읽을 게 남지 않았다(첫 줄을 미리 읽었고 그게 전부)
       lastVoice.current=res.headers.get('x-voice')   // 11/23 히로인 목소리 — 빠는 소리를 그 목소리 판으로
       // 11/18 음성 서버가 바쁘면(503 voice_busy) 기다리지 않는다 — 글은 바로 보이고, 안내는 방마다 한 번.
       if(res.status===503&&(await res.clone().json().catch(()=>null))?.error==='voice_busy'&&!busyNoticed.current){busyNoticed.current=true;toast(t('지금 목소리를 듣는 사람이 많아요. 이번 답은 글로 먼저 보여 드려요'))}
@@ -95,6 +99,12 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       while(queue.current.length&&!active.signal.aborted){
         const job=queue.current.shift()!;current.current=job.key
         try{
+          if(job.early){
+            report('preparing')
+            const res=await post({early:true})
+            if(res.ok&&res.headers.get('content-type')?.startsWith('audio/')){lastVoice.current=res.headers.get('x-voice');const fed=await player.current!.feed(res,active.signal,()=>{report('playing');setEarlyStarted(job.id)});ended=fed.ended}
+            continue
+          }
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
           // 11/17 서술의 젖은 소리는 음성 엔진이 못 낸다 — 이 답을 읽는 동안 효과음을 밑에 깐다(lib/voice-sfx).
           if(job.parts===null){const all=adult?sfxClips(m.blocks):[],oral=all.includes('/sfx/suck.mp3'),clips=oral?all.filter(c=>c!=='/sfx/suck.mp3'):all;let bed:(()=>void)|null=null
@@ -171,8 +181,21 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[on,enabled,free,arrived.map(m=>m.id).join()])
   const liveVoice=on&&enabled&&free===true
+  // 11/23 사용자 "답마다 음성이 늦게 나와": 답이 다 만들어지길(20~70초) 기다리지 않고, 오고 있는 답에 첫 대사가 완성되면(뒤에 블록이 하나 더 왔으면) 그 줄부터 읽는다.
+  const livePid=liveTurn?.playbackId
+  useEffect(()=>{
+    if(!liveVoice||!voiceAtSend.current||!livePid||earlyAsked.current.has(livePid))return
+    const done=(liveTurn?.blocks??[]).slice(0,-1)
+    const first=done.find(b=>b.type==='dialogue'||b.type==='thought')
+    if(!first)return
+    earlyAsked.current.add(livePid)
+    if(first.type!=='dialogue')return   // 속마음이 먼저면 순서가 바뀌니 미리 읽지 않는다
+    queue.current.push({key:`early:${livePid}`,id:livePid,parts:null,early:true});void drain()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[liveVoice,livePid,liveTurn?.blocks.length])
+  const earlyFor=(id:string)=>!!earlyStarted&&!!playbackKeys.get(id)?.startsWith(`${earlyStarted}:`)
   const arrivedIds=new Set(arrived.map(m=>m.id))
-  const held=(id:string)=>liveVoice&&voiceAtSend.current&&arrivedIds.has(id)&&!skipped.has(id)&&!released.has(id)
+  const held=(id:string)=>liveVoice&&voiceAtSend.current&&arrivedIds.has(id)&&!skipped.has(id)&&!released.has(id)&&!earlyFor(id)
   /** 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다(줄 끝에 붙는다). texts = 그 말풍선에 든 대사 문단. */
   const replay=(m:Msg,texts:string[])=>{
     if(!on||!enabled||free!==true||!/^[0-9a-f-]{36}$/i.test(m.id))return
@@ -185,7 +208,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,markSend,live:on&&enabled&&free===true }}>
+    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,markSend,live:liveVoice&&!(earlyStarted&&livePid===earlyStarted) }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}
