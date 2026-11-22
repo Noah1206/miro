@@ -93,7 +93,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
           // 11/17 서술의 젖은 소리는 음성 엔진이 못 낸다 — 이 답을 읽는 동안 효과음을 밑에 깐다(lib/voice-sfx).
           if(job.parts===null){const clips=sfxClips(m.blocks);let bed:(()=>void)|null=null
-            try{await one({messageId:m.id,turn:true},0,()=>{release(m.id);if(clips.length)bed=player.current!.bed(clips)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
+            try{await one({messageId:m.id,turn:true},0,()=>{release(m.id);if(clips.length)bed=player.current!.bed(clips,clips.some(c=>/suck|gag/.test(c))?0.6:0.35)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
           const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
           for(const part of (job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])){
             try{await one({messageId:m.id,part,amount:'standard',confirmed:true},segs[part]!.delivery.pauseAfterMs??0)}
