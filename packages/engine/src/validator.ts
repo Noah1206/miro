@@ -1,4 +1,4 @@
-import { castNames } from './context'
+import { castNames, relevantSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
@@ -50,6 +50,12 @@ export function validateProposal(
   const issues: ValidationIssue[] = []
   const blocks = validateBlocks(proposal, snapshot, issues)
   const photos = sceneImages(snapshot, proposal.images)
+  // 11/23 사용자 "왜 사진이 한 번도 안 나오는 경우가 있어": AI 가 images 를 빠뜨리거나 쓸 수 없는 코드만 내면 0장이었다 —
+  // 고를 수 있는 사진이 있으면 지금 대화와 가장 가까운 것으로 최소 장수(3, 블록이 적으면 블록 수)를 채운다.
+  if (!photos.length && blocks.length) {
+    const need = Math.min(3, blocks.length)
+    relevantSituationImages(snapshot, need).forEach((e, k) => photos.push({ index: e.i, after: Math.max(1, Math.round(blocks.length * (k + 1) / (need + 1))), fill: true }))
+  }
 
   return {
     blocks,
