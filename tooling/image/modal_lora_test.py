@@ -38,6 +38,13 @@ WET_POS = ('(oiled skin:1.5), (oil:1.3), (lotion:1.3), (shiny skin:1.9), (glossy
            'clean lineart, crisp lines, cel shading, '
            '(detailed background:1.4), (highly detailed scenery:1.2), (intricate details:1.2), detailed interior, (detailed skin:1.3), skin texture, (beautiful detailed eyes:1.2), ')   # 11/22 사용자: 피부 하나하나·장소 하나하나 퀄리티   # 11/22 사용자: D1 보다 더 세게 — 물기·광택·표정 모두
 WET_NEG = '(tan:1.5), (dark skin:1.5), tanlines, blurry, soft focus, bloom, glow, airbrushed, plastic skin, rubber skin, 3d, depth of field, matte skin, dry skin, simple background, blank background, blurry background, low detail'
+# 11/22 「신탁이 잘못 배달됐습니다」 레퍼런스(770장) 질감: 도자기 흰 피부+복숭아색 부드러운 음영, 경계가 또렷한 큰 흰 반사광, 분홍 관절, 가는 잔머리, 여러 겹 눈, 가는 선, 역광·빛 입자.
+# 줄 앞 [oracle] = 기본 GLOSS(soft glow·depth of field 가 뿌옇게 만든다) 대신 이것. 언베일이면 MOIST 는 그대로 자동.
+ORACLE_POS = ('(glossy skin:1.3), (shiny skin:1.3), (sharp specular highlights:1.2), (skin highlights:1.3), sharp wet highlights, rim light, '
+              'pink knees, pink elbows, pink fingertips, blush, (shiny hair:1.2), hair highlights, stray hairs, '
+              '(beautiful detailed eyes:1.2), sparkling eyes, clean lineart, sharp focus, cinematic lighting, vivid colors, backlighting, light particles, '
+              '(detailed background:1.3), intricate details, detailed skin, ')   # 11/22 1차(가중치 많음)는 그림이 하얗게 씻겨 나가 줄였다
+ORACLE_NEG = 'blurry, soft focus, bloom, airbrushed, plastic skin, rubber skin, matte skin, dry skin, tan, dark skin, tanlines, flat color, thick outlines, simple background, blurry background, low detail, 3d'
 gloss = lambda p: '' if '1girl' not in p or 'matte skin' in p or 'sharp wet highlights' in p else GLOSS_LIGHT if 'soft sheen' in p else GLOSS.replace(' oiled skin highlights,', '') if 'pale porcelain skin' in p else GLOSS   # 하얀 피부가 구릿빛으로 가면 프롬프트에 (pale porcelain skin:1.2). 남자 단독 그림엔 안 붙인다(11/8, 마른 아들이 근육질로 나옴)
 # 11/9 시선 태그(사용자: "카메라 보면 안 된다니까 — 태그로 나눠서 안 볼 땐 확실하게"): 프롬프트 맨 앞 [away] = 카메라 절대 안 봄, [viewer] = 카메라 봄.
 # [away] 면 프롬프트 속 정면 응시 단어를 지우고, 시선 돌림을 앞에 세게 붙이고, 부정에 정면 응시를 최고 가중치로 넣는다. 태그 없으면 예전 그대로.
@@ -66,6 +73,7 @@ def gaze(p: str):
         elif tag == 'viewer': pre += '(looking at viewer:1.3), '; neg.append('(looking away:1.3)')
         elif tag == 'wet': pre += WET_POS; neg.append(WET_NEG)
         elif tag == 'ahe': pre += AHE_POS; neg.append(AHE_NEG)
+        elif tag == 'oracle': pre += ORACLE_POS; neg.append(ORACLE_NEG)
         elif tag == 'gloss': pre += GLOSS_TAG; neg.append('matte skin, dry skin, flat skin'); p = p.replace('soft sheen, ', '').replace(', soft sheen', '')
         else: raise ValueError(f'unknown tag [{tag}]')
     if 'ahegao' in pre: pre = pre.replace('(half-closed eyes:1.3), ', '')
@@ -85,6 +93,7 @@ PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 
  max_containers=4)   # 11/18 동시 GPU 상한 — 몰려도 비용·Modal 월 한도가 터지지 않게(앱은 MIRO_PHOTO_MAX_JOBS 로 넘치면 '잠시 후 다시')
 class Gen:
     ckpt: str = modal.parameter(default='siran_v1-step00002000.safetensors')
+    square: bool = modal.parameter(default=False)   # 11/23 정사각형(1024×1024) — 앱 대표 이미지는 1:1(사용자)
     wide: bool = modal.parameter(default=False)   # 11/9 가로 그림(1216×832) — 아르덴 장면 사진(사용자: 가로가 더 긴 디자인)
     base: str = modal.parameter(default='')   # 11/6 기본 모델 바꾸기 — 'HF저장소::파일.safetensors'(예: Laxhar/noobai-XL-1.1::NoobAI-XL-v1.1.safetensors), 비면 Animagine
 
@@ -167,7 +176,7 @@ class Gen:
             img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=base, strength=init_strength, num_inference_steps=40,
                            guidance_scale=5.0, generator=g).images[0]
         else:
-            img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=1216 if self.wide else 832, height=832 if self.wide else 1216, num_inference_steps=36, guidance_scale=5.0, generator=g).images[0]
+            img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=1024 if self.square else 1216 if self.wide else 832, height=1024 if self.square else 832 if self.wide else 1216, num_inference_steps=36, guidance_scale=5.0, generator=g).images[0]
         if redo_top or redo_mask:   # 11/4 2단계: 위쪽(얼굴·머리)만 가리고 윤곽선 없이 다시 칠한다 — 표정·머리색·소품을 인물대로
             from diffusers import StableDiffusionXLInpaintPipeline
             from PIL import ImageFilter
@@ -264,7 +273,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
          hr_scales: str = '', hr_strength: float = 0.4, inits: str = '', faces: str = '', face_scale: float = 0.5, ref_scale: float = 0.0,
          init_strengths: str = '0.65', ctrls: str = '', ctrl_scale: float = 0.6, ctrl_end: float = 0.6,
          ctrl_tops: str = '', redo_tops: str = '', redo_prompts: str = '', redo_strength: float = 0.85, redo_from: float = 0.0,
-         line_seeds: str = '', redo_x0: float = 0.0, redo_x1: float = 1.0, base: str = '', masks: str = '', wide: bool = False):
+         line_seeds: str = '', redo_x0: float = 0.0, redo_x1: float = 1.0, base: str = '', masks: str = '', wide: bool = False, square: bool = False):
     """--prompts 파일(한 줄에 프롬프트 하나)이 있으면 그 프롬프트만, --variant 하나로, --seeds 마다 뽑는다(캐릭터 사진용).
     비교용: --scales 0.6,0.8,1.0 (강도 여러 개), --hires off|on|both (업스케일 재생성)."""
     import os
@@ -286,7 +295,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
     jobs = [(i + 1, p, v, int(s), w, h, r, st) for i, p in enumerate(lines) for v in variants
             for s in (line_seeds.split(',')[i:i + 1] if line_seeds else seeds.split(',')) for w in ws for h in hs
             for r in (hrs if h else [0.0]) for st in (sts if ini[i] else [0.0])]
-    results = Gen(ckpt=ckpt, base=base, wide=wide).gen.starmap([(p, v, w, s, neg, unveil, h, r, hr_strength, fac[i - 1], ref_scale if fac[i - 1] else 0.0, face_scale if fac[i - 1] else 0.0,
+    results = Gen(ckpt=ckpt, base=base, wide=wide, square=square).gen.starmap([(p, v, w, s, neg, unveil, h, r, hr_strength, fac[i - 1], ref_scale if fac[i - 1] else 0.0, face_scale if fac[i - 1] else 0.0,
                                            ini[i - 1], st, ctl[i - 1], ctrl_scale, ctrl_end, tops[i - 1], rtops[i - 1], rps[i - 1], redo_strength, redo_from, redo_x0, redo_x1, msk[i - 1]) for i, p, v, s, w, h, r, st in jobs])
     for (i, _, v, s, w, h, r, st), data in zip(jobs, results):
         tag = (f'hr{r}' if h and r else ('hr' if h else 'base')) + (f'-i{st}' if st else '')
