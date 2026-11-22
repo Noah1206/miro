@@ -129,6 +129,10 @@ async function executeTurn(opts: {
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
     const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
     // 11/18 사진이 30장을 넘는 작품 — 최근 대화와 뜻이 가까운 순서를 미리 계산해 둔다(모델 준비와 겹쳐 돌고, 실패하면 엔진이 글자 겹침으로).
+    // 11/23 사용자: 옷은 벗은 → 입은 사진으로 되돌아가면 안 된다 — 이 방에서 마지막으로 보인 상황 사진의 순번(엔진 keepOutfitOrder).
+    const lastPhotoIndex = db.select({ content: messages.content }).from(messages)
+      .where(and(eq(messages.sessionId, loaded.sessionId), eq(messages.kind, 'photo'), sql`${messages.hiddenAt} is null`)).orderBy(sql`${messages.createdAt} desc`).limit(1)
+      .then(([m]) => { const path = m?.content.split('?')[0]; const i = path ? (charSettings?.situationImages ?? []).findIndex(e => e.image?.split('?')[0] === path) : -1; return i >= 0 ? i : null }).catch(() => null)
     const situationRanking = rankSituationImages(charSettings?.situationImages ?? [], [...loaded.snapshot.recentMessages.slice(-4).map(m => m.content), input].join('\n')).catch(() => null)
     // 11/16 생각 강도는 3단계(빠름·보통·깊게) — 예전 '깊게·최대'(xhigh·max)는 Sonnet 에서 답 없이 잘렸다. 생각이 먹지 않는 모델(DeepSeek 등)은 무시한다.
     const wanted = opts.thinking ?? charSettings?.rec?.thinking
@@ -205,6 +209,7 @@ async function executeTurn(opts: {
       // 계산은 위에서 미리 시작했다 — 여기선 길어야 1.5초만 더 기다리고, 넘으면 이번 턴은 글자 겹침으로(답을 늦추지 않게).
       const ranking = await Promise.race([situationRanking, new Promise<null>(r => setTimeout(() => r(null), 1500))])
       if (ranking) prepared.snapshot.situationRanking = ranking
+      prepared.snapshot.lastPhotoIndex = await lastPhotoIndex
       marks.model = at()
       // 11/20 스트리밍 사진 — 엔진은 순번만 안다, 주소는 여기서 붙인다.
       const photoUrl = (i: number) => charSettings?.situationImages?.[i]?.image
