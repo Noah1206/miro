@@ -16,6 +16,8 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
 }) {
   const t = useT()
   const [selected, setSelected] = useState(0)
+  // 11/23 사용자: < > 는 사진을 눌렀을 때만 보인다(다시 누르면 숨김).
+  const [nav, setNav] = useState(false)
   const photo = photos[selected] ?? null
   // 11/5: 넘길 때마다 큰 사진을 그제야 받아 어두운 배경이 비쳤다 — 나머지 사진도 같은 크기·srcset 으로 미리 받아 캐시에 둔다.
   useEffect(() => {
@@ -33,12 +35,13 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
     return () => clearInterval(id)
   }, [reduce, photos.length, selected])
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }} onClick={event => { if (photos.length > 1 && !(event.target as HTMLElement).closest('button, a')) setNav(v => !v) }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
       {veil && isUnveilPhoto(photo) && <UnveilCover veiled label={t('언베일')} unlock={veil} />}
       {/* 11/5: 썸네일 줄 대신 < > 로 넘긴다(끝에서 처음으로 돌아감). */}
       {photos.length > 1 && (
         <div role="group" aria-label={t('{name} 사진 선택', { name })}>
+          {nav && <>
           {([-1, 1] as const).map(step => (
             <button key={step} type="button" onClick={() => setSelected(i => (i + step + photos.length) % photos.length)}
               aria-label={t(step < 0 ? '이전 사진' : '다음 사진')} style={{
@@ -52,6 +55,7 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
               </svg>
             </button>
           ))}
+          </>}
           <span aria-live="polite" style={{
             position: 'absolute', right: 'var(--gutter)', bottom: 'var(--space-7)', zIndex: 3, padding: '3px 10px', borderRadius: 999,
             background: 'rgba(0,0,0,0.38)', color: 'var(--color-white)', fontSize: 'var(--font-caption)',

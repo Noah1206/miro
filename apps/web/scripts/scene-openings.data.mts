@@ -8,7 +8,7 @@ export type SceneOpening = { context: string; time: string; location: string }
 export const SCENE_OPENINGS: Record<string, Record<string, SceneOpening>> = {
   // 11/22 G 묶음 — 니 엄마 잘먹겠습니다 두 번째 갈래(새 삶): 미경이 22년 동안 미뤄 온 질문 앞에 선다.
   'official-m-boarding-wife': {
-    '새 삶': { time: '밤', location: '준서네 집 1층 부엌', context: "밤 11시, 준서네 집 1층 부엌. 얹혀살기 시작한 첫 주. 준서도 잠든 집에서, 남편과의 영상통화를 막 끊은 준서 엄마 윤미경이 식탁에 혼자 앉아 반지를 만지작거리다 나를 본다." },
+    '[순애] 새 삶': { time: '밤', location: '준서네 집 1층 부엌', context: "밤 11시, 준서네 집 1층 부엌. 얹혀살기 시작한 첫 주. 준서도 잠든 집에서, 남편과의 영상통화를 막 끊은 준서 엄마 윤미경이 식탁에 혼자 앉아 반지를 만지작거리다 나를 본다." },
   },
   // 11/22 G 묶음 — 패전국의 대무녀 두 번째 갈래(순애): 약혼자 류하는 정말 죽었다.
   'official-m-fallen-shrine': {
