@@ -29,10 +29,12 @@ export function ownImagePath(original: string): string | null {
 export function characterImageSources(original: string, size: ImageSize) {
   const path = ownImagePath(original)
   if (!path) return { src: original }
-  const file = path.split('?')[0]!
+  const [file, query] = path.split('?') as [string, string | undefined]
+  // 11/23 사진을 바꾸면 ?v= 가 바뀐다 — 줄인 주소에도 붙여야 브라우저·Cloudflare·Next 변환 캐시가 예전 사진을 주지 않는다.
+  const v = new URLSearchParams(query ?? '').get('v')
   // 움직이는 썸네일(11/4, animated WebP) — 크기 변환을 거치면 첫 장만 남는다. 원본 그대로.
   if (file.endsWith('.webp')) return { src: path }
-  const candidates = IMAGE_WIDTHS[size].map((width) => ({ width, url: `${file}?w=${width}` }))
+  const candidates = IMAGE_WIDTHS[size].map((width) => ({ width, url: `${file}?w=${width}${v ? `&v=${encodeURIComponent(v)}` : ''}` }))
   return {
     src: candidates[0]!.url,
     srcSet: candidates.map(({ width, url: candidate }) => `${candidate} ${width}w`).join(', '),

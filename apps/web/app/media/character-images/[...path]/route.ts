@@ -10,10 +10,10 @@ const HEADERS = { 'cache-control': 'public, max-age=31536000, immutable', 'x-con
  */
 export async function GET(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const name = (await params).path.join('/'), type = mediaType(name)
-  const width = new URL(req.url).searchParams.get('w')
+  const query = new URL(req.url).searchParams, width = query.get('w'), v = query.get('v')
   if (type && width && WIDTHS.has(width) && type !== 'image/webp' && type !== 'image/gif') {
     try {
-      const source = `/media/${PUBLIC_BUCKET}/${name.split('/').map(encodeURIComponent).join('/')}`
+      const source = `/media/${PUBLIC_BUCKET}/${name.split('/').map(encodeURIComponent).join('/')}${v && /^\d{1,20}$/.test(v) ? `?v=${v}` : ''}`   // 11/23 사진 버전 — 변환 캐시가 예전 사진을 주지 않게
       const resized = await fetch(`http://127.0.0.1:${process.env.PORT ?? 3100}/_next/image?url=${encodeURIComponent(source)}&w=${width}&q=80`,
         { headers: { accept: 'image/webp' }, signal: AbortSignal.timeout(20_000) })
       const resizedType = resized.headers.get('content-type')
