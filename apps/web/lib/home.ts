@@ -206,7 +206,7 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * - 인기 TOP 10·세이프티·맞춤: 최근 7일 대화 인원순(같으면 누적, 같으면 최신) — 대화가 쌓이기 전엔 최신순과 같다.
  * - 오리지널·유저 신작: 최신순. 세이프티는 언베일을 켠 사람에게만, 성인 전용이 아닌 캐릭터.
  */
-const MIRO_OFFICIAL = ['official-m-miro', 'official-m-veil', 'official-m-fairies', 'official-m-librarian', 'official-m-painter', 'official-m-exchange', 'official-m-artisan', 'official-m-tailor', 'official-m-bell', 'official-m-novelist', 'official-m-clock', 'official-m-cartographer']
+const MIRO_OFFICIAL = ['official-m-miro', 'official-m-veil', 'official-m-fairies', 'official-m-librarian', 'official-m-painter', 'official-m-exchange', 'official-m-artisan', 'official-m-tailor']
 const PINNED_TOP = ['official-m-boarding-wife']
 const pinRank = (c: { slug: string }) => { const i = PINNED_TOP.indexOf(c.slug); return i < 0 ? PINNED_TOP.length : i }
 export type HomeSections = { rising: HomeCard[]; popularMale: HomeCard[]; popularFemale: HomeCard[]; originals: HomeCard[]; forYou: HomeCard[]; fresh: HomeCard[]; safety: HomeCard[]; tags: string[]; others: HomeCard[]; /** 11/20 사용자: 홈 '전체 캐릭터'는 위 줄에 나온 것까지 전부(탐색과 같은 수) — others 는 줄에 안 뽑힌 나머지라 수가 달랐다. */ all: HomeCard[]; filters: DiscoveryGroup[] }
