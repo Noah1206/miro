@@ -1,7 +1,7 @@
 'use client'
 import { CharacterBriefing } from '@/components/character-briefing'
 import type { CharacterEntry } from '@/lib/character-entry'
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { RichText, type RichNames } from '@/components/scene/rich-text'
 import { useT } from '@/lib/i18n/client'
 import { Rule, SampleDialogue } from './sections'
@@ -52,13 +52,7 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
       {scenes.length > 1 && (
         // 11/5 사용자: 시작 상황 탭 → 드롭다운.
         <div style={{ position: 'relative', marginBottom: 12 }}>
-          <select name="scene" form="start-roleplay" aria-label={t('시작 상황')} value={scenes[index]?.value}
-            onChange={(e) => { setIndex(Math.max(0, scenes.findIndex(s => s.value === e.target.value))); setExpanded(true) }}
-            style={{ width: '100%', minHeight: 48, padding: '0 40px 0 14px', appearance: 'none', WebkitAppearance: 'none', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 16, fontWeight: 'var(--weight-semibold)', fontFamily: 'inherit', cursor: 'pointer' }}>
-            {scenes.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"
-            style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--color-text-secondary)' }}><path d="m6 9 6 6 6-6" /></svg>
+          <ScenePicker scenes={scenes} index={index} label={t('시작 상황')} onPick={k => { setIndex(k); setExpanded(true) }} />
         </div>
       )}
       {scene.briefing && <CharacterBriefing entry={scene.briefing} />}
@@ -123,4 +117,35 @@ function NarrationWithSpeech({ text, names }: { text: string; names: RichNames }
   return <>{parts.map((p, i) => 'prose' in p
     ? (p.prose.trim() ? <RichText key={i} editorial className="intro-narration" text={p.prose.trim()} names={names} /> : null)
     : <p key={i} className="intro-speech"><strong>{p.who}</strong> | &quot;{p.said}&quot;</p>)}</>
+}
+
+/** 11/23 사용자: 시작 상황은 기본 select 대신 직접 만든 드롭다운 — 누르면 바로 밑에 목록이 하나 펼쳐진다. 값은 숨은 입력으로 '대화 시작하기' 폼에 간다. */
+function ScenePicker({ scenes, index, label, onPick }: { scenes: IntroScene[]; index: number; label: string; onPick: (index: number) => void }) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  const listId = useId()
+  useEffect(() => {
+    if (!open) return
+    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    addEventListener('pointerdown', away); addEventListener('keydown', esc)
+    return () => { removeEventListener('pointerdown', away); removeEventListener('keydown', esc) }
+  }, [open])
+  const field = { width: '100%', minHeight: 48, padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, textAlign: 'left' as const,
+    borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 15, cursor: 'pointer' }
+  return <div ref={box} style={{ position: 'relative' }}>
+    <input type="hidden" name="scene" form="start-roleplay" value={scenes[index]?.value ?? ''} />
+    <button type="button" aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} onClick={() => setOpen(v => !v)} style={field}>
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{scenes[index]?.label}</span>
+      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"
+        style={{ flex: 'none', color: 'var(--color-text-secondary)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}><path d="m6 9 6 6 6-6" /></svg>
+    </button>
+    {open && <ul id={listId} role="listbox" aria-label={label} style={{ position: 'absolute', left: 0, right: 0, top: 'calc(100% + 6px)', zIndex: 20, margin: 0, padding: 6, listStyle: 'none',
+      borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-surface-2)', boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
+      {scenes.map((s, k) => <li key={s.value} role="option" aria-selected={k === index}>
+        <button type="button" onClick={() => { setOpen(false); if (k !== index) onPick(k) }} style={{ width: '100%', minHeight: 44, padding: '0 12px', textAlign: 'left', border: 0, borderRadius: 'var(--radius-md)',
+          background: k === index ? 'var(--color-surface-3, rgba(255,255,255,.06))' : 'transparent', color: k === index ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', font: 'inherit', fontSize: 15, fontWeight: k === index ? 600 : 400, cursor: 'pointer' }}>{s.label}</button>
+      </li>)}
+    </ul>}
+  </div>
 }
