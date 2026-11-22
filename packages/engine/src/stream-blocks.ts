@@ -77,6 +77,8 @@ export function blockStream(snapshot: SimulationSnapshot, stream: TurnStream, op
     if (!picks || !stream.onPhotos) return
     const out: StreamPhoto[] = []
     for (const p of picks) {
+      // 11/23 사용자: 첫 장면 글이 나올 때 사진도 한 장 — 첫 사진은 첫 블록 뒤(검증기 firstPhotoEarly 와 같게).
+      if (p === picks[0] && parsed.length >= 1) { out.push({ index: p.index, after: 1 }); continue }
       if (p.fill || p.after === null) { out.push({ index: p.index, after: p.after }); continue }
       if (parsed.length < p.after) continue   // 아직 그 블록까지 안 왔다
       const kept = allowedBlocks(parsed.slice(0, p.after), snapshot).length

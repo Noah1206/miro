@@ -8,6 +8,7 @@ import { spokenSegments } from '@/lib/voice-text'
 import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { VoiceStreamPlayer } from '@/lib/voice-stream'
 import { sfxClips, voicedClip } from '@/lib/voice-sfx'
+import { usedVoice } from '@/lib/voice-used'
 import { useTurns } from './turns'
 import type { Msg } from './messages'
 import { SpeechPanel } from './speech-panel'
@@ -125,7 +126,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
 
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // 11/6: 음성 모드가 켜지면(토글·다시 들어옴) 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간을 기다리지 않게.
-  useEffect(()=>{if(on)void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true,sessionId}),keepalive:true}).catch(()=>{})},[on,sessionId])
+  // 11/23 사용자 "음성 모드 열 때 너무 오래 걸려": 켜기 전, 방에 들어오는 순간에도 깨운다 — 음성을 써 본 사람만(usedVoice, 회원당 5분에 한 번은 서버가 막는다).
+  useEffect(()=>{if(on||(enabled&&!soon&&usedVoice()))void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true,sessionId}),keepalive:true}).catch(()=>{})},[on,sessionId,enabled,soon])
   // 11/19 음성 모드가 켜져 있고 화면이 보이는 동안 1분마다 '아직 듣는 중' — 신호가 끊기면 서버가 몇 분 안에 꺼진다(api/tts route).
   useEffect(()=>{
     if(!on)return

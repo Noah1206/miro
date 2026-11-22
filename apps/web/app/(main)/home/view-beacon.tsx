@@ -1,5 +1,6 @@
 'use client'
 import { useEffect } from 'react'
+import { usedVoice } from '@/lib/voice-used'
 
 /**
  * 홈 방문 기록(11/8 퍼널) — 탭을 열어 둔 동안 로그인 상태마다 한 번. 화면엔 아무것도 그리지 않는다.
@@ -22,15 +23,6 @@ export function HomeViewBeacon({ signedIn }: { signedIn: boolean }) {
  * 11/19 사용자: 음성 모드를 한 번이라도 켠 사람만 깨운다 — 음성을 안 쓰는 사람이 홈을 지날 때마다 GPU 가 켜지던 비용을 없앤다.
  * 켠 적 있는지는 이 브라우저의 표시로 본다(방별 음성 켬 miro:immersive:<방>, 첫 켬 안내 miro:voice-intro:<회원>).
  */
-const usedVoice = () => {
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i) ?? ''
-      if ((k.startsWith('miro:immersive:') || k.startsWith('miro:voice-intro:')) && localStorage.getItem(k) === '1') return true
-    }
-  } catch { /* 저장소를 막은 브라우저 — 깨우지 않는다(방에서 켜면 그때 깨운다) */ }
-  return false
-}
 
 export function HomeVoiceWake() {
   useEffect(() => { if (usedVoice()) void fetch('/api/tts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wake: true }), keepalive: true }).catch(() => {}) }, [])
