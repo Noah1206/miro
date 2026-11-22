@@ -10,6 +10,10 @@ const GAG = /컥|켁|캑|커헉|억억|우억|헛구역질|구역질|목 깊숙|
 /** 살 부딪는 소리 — '퍽'(꽤)·'짝'(짝꿍)과 헷갈리지 않게 겹친 꼴만. */
 const SLAP = /철퍽|퍽퍽|퍽,\s*퍽|짝짝|짝,\s*짝|팡팡|팡,\s*팡|찰싹/
 
+/** 11/23 사용자 "넘 좋아": 빠는 소리 녹음에 공식 여자 목소리 음색을 입힌 판(Seed-VC) — 히로인 목소리(provider id 앞 8자)가 있으면 그 사람이 빠는 소리로. */
+const ORAL_VOICES = new Set(['69bacb4f', 'f3178eb8', 'a5201527', '7957fb58', 'ba488381', 'ecd57c06'])
+export const voicedClip = (clip: string, voice?: string | null) => clip === '/sfx/suck.mp3' && voice && ORAL_VOICES.has(voice.slice(0, 8)) ? `/sfx/suck-${voice.slice(0, 8)}.mp3` : clip
+
 export function sfxClips(blocks: Array<Record<string, unknown>>): string[] {
   const told = blocks.filter(b => b.type === 'narrative' || b.type === 'action').map(b => typeof b.text === 'string' ? b.text : '').join('\n')
   // 11/19 사용자: 찌걱거리는 젖은 소리(wet-1·wet-2)는 내지 않는다 — 그때는 목소리 신음만.

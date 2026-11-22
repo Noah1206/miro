@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui'
 import { spokenSegments } from '@/lib/voice-text'
 import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { VoiceStreamPlayer } from '@/lib/voice-stream'
-import { sfxClips } from '@/lib/voice-sfx'
+import { sfxClips, voicedClip } from '@/lib/voice-sfx'
 import { useTurns } from './turns'
 import type { Msg } from './messages'
 import { SpeechPanel } from './speech-panel'
@@ -58,6 +58,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const queue=useRef<Job[]>([])
   const current=useRef<string|null>(null)
   const player=useRef<VoiceStreamPlayer|null>(null)
+  const lastVoice=useRef<string|null>(null)
   const latest=useRef<Msg[]>([]);latest.current=[...initialMessages,...appended.filter(m=>!known.has(m.id))]
   // 11/16 글·음성 맞추기 — released: 소리가 시작됐거나(또는 실패·중단·30초 초과) 글을 보여도 되는 답, skipped: 음성 모드를 켜기 전에 와 있던 답.
   const [released,setReleased]=useState<ReadonlySet<string>>(new Set())
@@ -80,6 +81,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       if(current.current===null)return
       report('preparing')
       const res=await post(body)
+      lastVoice.current=res.headers.get('x-voice')   // 11/23 히로인 목소리 — 빠는 소리를 그 목소리 판으로
       // 11/18 음성 서버가 바쁘면(503 voice_busy) 기다리지 않는다 — 글은 바로 보이고, 안내는 방마다 한 번.
       if(res.status===503&&(await res.clone().json().catch(()=>null))?.error==='voice_busy'&&!busyNoticed.current){busyNoticed.current=true;toast(t('지금 목소리를 듣는 사람이 많아요. 이번 답은 글로 먼저 보여 드려요'))}
       if(!res.ok||!res.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
@@ -93,7 +95,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
           // 11/17 서술의 젖은 소리는 음성 엔진이 못 낸다 — 이 답을 읽는 동안 효과음을 밑에 깐다(lib/voice-sfx).
           if(job.parts===null){const clips=sfxClips(m.blocks);let bed:(()=>void)|null=null
-            try{await one({messageId:m.id,turn:true},0,()=>{release(m.id);if(clips.length)bed=player.current!.bed(clips,clips.some(c=>/suck|gag/.test(c))?0.6:0.35)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
+            try{await one({messageId:m.id,turn:true},0,()=>{release(m.id);if(clips.length)bed=player.current!.bed(clips.map(c=>voicedClip(c,lastVoice.current)),clips.some(c=>/suck|gag/.test(c))?0.6:0.35)})}finally{release(m.id);const end=bed;if(end)void ended.then(end)};continue}
           const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
           for(const part of (job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])){
             try{await one({messageId:m.id,part,amount:'standard',confirmed:true},segs[part]!.delivery.pauseAfterMs??0)}
