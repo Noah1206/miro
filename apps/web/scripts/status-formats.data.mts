@@ -28,6 +28,10 @@ export const STATUS_FORMATS: Record<string, string> = {
   'official-m-apocalypse-bully': lines('📅[멸망 D+일수]', TIME, PLACE, WEATHER, '🎒[식량·물·무기]', ...solo('오수아', '🍞[오수아 허기 0~100]')),
   'official-m-arden': lines('📅[대륙력 날짜]', TIME, '🚩[대륙·지역·장소]', WEATHER, '⭐[내 클래스]|Lv[레벨]|❤️‍🩹[HP]|💰[골드]', '🎒[소지품]', present),
   'official-m-artisan': miroStaff('하진', '[공방 안 위치]', '🧸[지금 빚는 인형]'),
+  // 11/22 G 묶음: 동양 판타지 — 청련력·시진, 즉위식까지 남은 날, 백연의 호감 + 신심(마음이 기울수록 흔들림).
+  'official-m-fallen-shrine': lines('📅[청련력 날짜]', '⌚[시진]', '🚩[신전 안 장소]', WEATHER, '👕[내 복장]', '👑[흑요 즉위식 D-일수]', ...solo('백연', '🙏신심 [0~100]')),
+  // 11/22 G 묶음: 니 엄마 잘먹겠습니다(친구 엄마) — 남편 귀국(추석)까지 남은 날, 미경 한 줄, 남편 의심도·준서 눈치.
+  'official-m-boarding-wife': lines(...MODERN, '🏠[남편 귀국(추석) D-일수]', ...solo('윤미경', '📱남편 의심도 [0~100] · 👀준서 눈치 [0~100]')),
   'official-m-baby-contract': lines(DAY, TIME, '🚩[집 안 장소]', WEATHER, ME, '🚪[아들 귀가까지 남은 시간]', ...solo('[며느리 이름]')),
   'official-m-baek-jiyoon': lines(...MODERN, '🏢[회사에서의 관계]', ...solo('백지윤')),
   'official-m-bell': miroStaff('린', '[종탑 안 위치]', '🔔[오늘 울린 종 횟수]'),

@@ -28,9 +28,17 @@ NEGATIVE_BASE = ('lowres, bad anatomy, bad hands, extra digits, worst quality, l
 # 11/22 사용자 품질 기준(모든 콘텐츠): 반질반질한 빛 채광 + 깨끗함 + 약간 촉촉 — 깨끗함(선명한 초점·깨끗한 선·피부 디테일)을 더했다.
 GLOSS = (', (shiny skin:1.3), (glossy skin:1.2), glowing skin, dewy skin, glistening body, oiled skin highlights, shiny face, soft glow, '
          'plump glossy pink lips, cinematic lighting, soft rim light, depth of field, realistic lighting, '
-         'clean skin, clean lineart, sharp focus, detailed skin texture')
+         'clean skin, clean lineart, sharp focus, detailed skin texture, (detailed background:1.3), intricate details, (beautiful detailed eyes:1.2)')   # 11/22 장소·피부 퀄리티(앱 사진에도)
 GLOSS_LIGHT = ', soft skin sheen, soft glow, cinematic lighting, soft rim light, depth of field'   # 11/9 표지 전용(사용자: 표지만 광택 약하게) — 프롬프트에 'soft sheen' 을 넣으면 이것('cover art' 는 가짜 글씨가 생김)
-gloss = lambda p: '' if '1girl' not in p or 'matte skin' in p else GLOSS_LIGHT if 'soft sheen' in p else GLOSS.replace(' oiled skin highlights,', '') if 'pale porcelain skin' in p else GLOSS   # 하얀 피부가 구릿빛으로 가면 프롬프트에 (pale porcelain skin:1.2). 남자 단독 그림엔 안 붙인다(11/8, 마른 아들이 근육질로 나옴)
+# 11/22 사용자 레퍼런스(청솔하숙 '물기'): 뿌연 광채가 아니라 또렷한 흰 하이라이트+흘러내리는 물줄기·땀방울+깨끗한 선. 줄 앞 [wet] 이면 GLOSS·MOIST 대신 이것.
+WET_POS = ('(oiled skin:1.5), (oil:1.3), (lotion:1.3), (shiny skin:1.9), (glossy skin:1.7), (wet skin:1.6), (sweat:1.8), (very sweaty:1.5), (covered in sweat:1.5), (wet:1.6), (soaking wet:1.5), (wet body:1.5), (dripping:1.5), (sweat trail:1.4), '
+           '(water streaks:1.4), (water drip:1.4), (sweat drops:1.4), (glistening:1.5), (wet hair:1.3), hair strands sticking to skin, steam, '
+           '(skin highlights:1.8), (glossy lips:1.4), (shiny hair:1.3), sharp wet highlights, '
+           '(heavy blush:1.5), (flushed face:1.4), (aroused:1.4), (half-closed eyes:1.3), (parted lips:1.3), (heavy breathing:1.4), (sweaty face:1.4), '
+           'clean lineart, crisp lines, cel shading, '
+           '(detailed background:1.4), (highly detailed scenery:1.2), (intricate details:1.2), detailed interior, (detailed skin:1.3), skin texture, (beautiful detailed eyes:1.2), ')   # 11/22 사용자: 피부 하나하나·장소 하나하나 퀄리티   # 11/22 사용자: D1 보다 더 세게 — 물기·광택·표정 모두
+WET_NEG = '(tan:1.5), (dark skin:1.5), tanlines, blurry, soft focus, bloom, glow, airbrushed, plastic skin, rubber skin, 3d, depth of field, matte skin, dry skin, simple background, blank background, blurry background, low detail'
+gloss = lambda p: '' if '1girl' not in p or 'matte skin' in p or 'sharp wet highlights' in p else GLOSS_LIGHT if 'soft sheen' in p else GLOSS.replace(' oiled skin highlights,', '') if 'pale porcelain skin' in p else GLOSS   # 하얀 피부가 구릿빛으로 가면 프롬프트에 (pale porcelain skin:1.2). 남자 단독 그림엔 안 붙인다(11/8, 마른 아들이 근육질로 나옴)
 # 11/9 시선 태그(사용자: "카메라 보면 안 된다니까 — 태그로 나눠서 안 볼 땐 확실하게"): 프롬프트 맨 앞 [away] = 카메라 절대 안 봄, [viewer] = 카메라 봄.
 # [away] 면 프롬프트 속 정면 응시 단어를 지우고, 시선 돌림을 앞에 세게 붙이고, 부정에 정면 응시를 최고 가중치로 넣는다. 태그 없으면 예전 그대로.
 AWAY_POS = '(looking away:1.5), (averted gaze:1.4), (looking to the side:1.2), '
@@ -43,6 +51,12 @@ GLOSS_TAG = '(glossy skin:1.4), (shiny skin:1.3), (skin highlights:1.2), (glossy
 MOIST = (', (wet skin:1.5), (soaking wet body:1.4), (shiny skin:1.6), (glossy skin:1.5), (heavy sweat:1.4), sweat drops, '
          'water droplets on skin, steaming body, flushed cheeks')
 moist = lambda p, unveil: MOIST if (unveil or 'nsfw' in p) and not re.search(r'wet skin|soaking wet|dripping wet', p) else ''
+# 11/22 사용자: 절정 사진은 그림체 상관없이 물이 아주 세게(분수처럼 뿜는 물줄기+튀는 물방울). 프롬프트에 orgasm/climax/ahegao/squirt 가 있으면 자동.
+CLIMAX_POS = ', (female ejaculation:1.6), (squirting:1.7), (pussy juice spray:1.5), (liquid arc:1.4), (splashing:1.5), (spraying:1.4), (pussy juice:1.5), (pussy juice puddle:1.3), (wet sheets:1.3), (trembling:1.3), (orgasm:1.4)'
+climax = lambda p: CLIMAX_POS if re.search(r'orgasm|climax|ahegao|squirt', p) else ''
+# 11/22 사용자: 줄 앞 [ahe] = 가버리는 표정(눈 위로 뒤집힘+하트 눈동자+혀). 절정 물줄기도 같이 붙는다(ahegao 단어).
+AHE_POS = '(ahegao:1.5), (rolling eyes:1.6), (heart-shaped pupils:1.6), (eyes rolled back:1.3), (tongue out:1.4), (drooling:1.3), (saliva trail:1.2), (open mouth:1.3), (heavy blush:1.5), '
+AHE_NEG = 'closed eyes, half-closed eyes, calm, expressionless, sad, crying'
 def gaze(p: str):
     """줄 앞 태그([away]/[viewer]/[gloss], 여러 개 가능)를 풀어 (프롬프트, 추가 부정) 을 돌려준다. 이름은 예전 그대로."""
     pre, neg = '', []
@@ -50,8 +64,11 @@ def gaze(p: str):
         tag, _, rest = p.partition(']'); tag, p = tag[1:], rest.lstrip()
         if tag == 'away': pre += AWAY_POS; neg.append(AWAY_NEG); p = _VIEWER_WORDS.sub('', p)
         elif tag == 'viewer': pre += '(looking at viewer:1.3), '; neg.append('(looking away:1.3)')
+        elif tag == 'wet': pre += WET_POS; neg.append(WET_NEG)
+        elif tag == 'ahe': pre += AHE_POS; neg.append(AHE_NEG)
         elif tag == 'gloss': pre += GLOSS_TAG; neg.append('matte skin, dry skin, flat skin'); p = p.replace('soft sheen, ', '').replace(', soft sheen', '')
         else: raise ValueError(f'unknown tag [{tag}]')
+    if 'ahegao' in pre: pre = pre.replace('(half-closed eyes:1.3), ', '')
     return pre + p, ', '.join(neg)
 NEGATIVE = NEGATIVE_BASE + ', nsfw, nude, nipples'   # 기본(일반) — --unveil 이면 노출 차단 단어만 뺀다
 PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 외형, 노출 없음
@@ -125,7 +142,7 @@ class Gen:
         g = torch.Generator('cuda').manual_seed(seed)
         # 어려 보임 차단은 부정 프롬프트 맨 앞(잘리더라도 남게).
         prompt, gneg = gaze(prompt)   # [away]/[viewer] 시선 태그
-        p, n = TRIGGER[variant] + prompt + gloss(prompt) + moist(prompt, unveil), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, gneg, neg] if x)
+        p, n = TRIGGER[variant] + prompt + gloss(prompt) + moist(prompt, unveil) + (climax(prompt) if unveil or 'nsfw' in prompt else ''), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, gneg, neg] if x)
         ref_img = Image.open(io.BytesIO(ref)).convert('RGB') if ref else Image.new('RGB', (224, 224))
         self.pipe.set_ip_adapter_scale([ref_scale, face_scale] if ref else [0.0, 0.0])
         ref_img = [ref_img, ref_img]
@@ -150,7 +167,7 @@ class Gen:
             img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=base, strength=init_strength, num_inference_steps=40,
                            guidance_scale=5.0, generator=g).images[0]
         else:
-            img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=1216 if self.wide else 832, height=832 if self.wide else 1216, num_inference_steps=28, guidance_scale=5.0, generator=g).images[0]
+            img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=1216 if self.wide else 832, height=832 if self.wide else 1216, num_inference_steps=36, guidance_scale=5.0, generator=g).images[0]
         if redo_top or redo_mask:   # 11/4 2단계: 위쪽(얼굴·머리)만 가리고 윤곽선 없이 다시 칠한다 — 표정·머리색·소품을 인물대로
             from diffusers import StableDiffusionXLInpaintPipeline
             from PIL import ImageFilter
@@ -170,7 +187,7 @@ class Gen:
             up = img.resize((img.width * 3 // 2, img.height * 3 // 2), Image.LANCZOS)
             if hr_scale and variant != 'base':   # 11/2: 1단계는 약하게(몸 형태), 2단계는 강하게(얼굴 그림체를 몸 전체에)
                 self.pipe.set_adapters(['siran'], adapter_weights=[hr_scale])
-            img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=up, strength=hr_strength, num_inference_steps=30,
+            img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=up, strength=hr_strength, num_inference_steps=36,
                            guidance_scale=5.0, generator=g).images[0]
         buf = io.BytesIO()
         # 11/11 앱 서버는 WEBP(약 1/10) — 웹 함수 이미지엔 Pillow 가 없어 여기(GPU 쪽)에서 바꾼다. 로컬 실행(.png 저장)은 PNG 그대로.
