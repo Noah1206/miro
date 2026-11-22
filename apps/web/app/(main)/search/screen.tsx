@@ -207,7 +207,7 @@ function SortMenu({ value, onChange }: { value: string; onChange: (value: 'ranki
   const label = options.find(([v]) => v === value)?.[1] ?? '정렬'
   return <div ref={box} className={styles.sortMenu}>
     <button type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={`${t('정렬')}: ${t(label)}`} onClick={() => setOpen(v => !v)}>
-      {t(label)}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      {t(label)}<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
     {open && <ul role="listbox" aria-label={t('정렬')}>
       {options.map(([v, l]) => <li key={v} role="option" aria-selected={v === value}><button type="button" onClick={() => { setOpen(false); if (v !== value) onChange(v) }}>{t(l)}</button></li>)}
