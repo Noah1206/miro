@@ -867,9 +867,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .photo, :global([data-chat-theme]) .photo { aspect-ratio: auto; height: auto; object-fit: contain; }
 /* 11/22 사용자: 내가 보낸 말풍선의 *행동* 글은 연한 라벤더(기울임 유지). */
 :global([data-chat-theme]) .userBubble em, .userBubble em { color: #c9b8ff; }
-/* 11/22 사용자: 대화를 스크롤해 지난 글을 볼 때는 입력창이 아래로 내려가 사라지고(추천 답변은 그대로), 다시 내려오면 올라온다 — 헤더와 같은 신호(data-header-hidden). */
-.composerForm { transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
-:global([data-header-hidden='true']) .composerForm { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .composerForm { transition: none; } }
+/* 11/23 사용자: 스크롤할 때 입력창이 내려가며 사라지던 것(11/22)을 없앰 — 헤더가 접혀도 입력창은 그대로 남는다. */
 /* 11/22 사용자: 대화 끝 자리로 옮긴 추천 답변이 위 카드에 붙어 보였다 — 메시지 사이만큼 띄운다. */
 :global(#suggest-slot) > .suggest { margin-top: 16px; }
