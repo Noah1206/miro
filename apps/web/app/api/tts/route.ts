@@ -86,11 +86,14 @@ function takeVoiceSlot(): (() => void) | null {
   let done = false
   return () => { if (!done) { done = true; voiceInflight-- } }
 }
-function releasing(stream: ReadableStream<Uint8Array>, release: () => void): ReadableStream<Uint8Array> {
+function releasing(stream: ReadableStream<Uint8Array>, release: () => void, gone?: AbortSignal): ReadableStream<Uint8Array> {
   const reader = stream.getReader()
   return new ReadableStream<Uint8Array>({
     async pull(c) {
-      try { const { done, value } = await reader.read(); if (done) { release(); c.close() } else c.enqueue(value) } catch (e) { release(); c.error(e) }
+      try { const { done, value } = await reader.read(); if (done) { release(); c.close() } else c.enqueue(value) }
+      // 11/24 듣는 사람이 방을 나가거나 새로고침하면(요청 취소) 합성 서버 쪽 읽기가 끊기는데, 그걸 오류로 넘겨 '서버 오류 failed to pipe response' 운영 알림이 울렸다 —
+      // 요청이 취소된 경우는 조용히 닫는다. 합성 서버가 도중에 끊긴 진짜 실패만 오류로 남긴다.
+      catch (e) { release(); if (gone?.aborted) { try { c.close() } catch { /* 이미 닫힘 */ } } else c.error(e) }
     },
     cancel(reason) { release(); return reader.cancel(reason) },
   })
@@ -168,7 +171,7 @@ async function handle(req: Request) {
       state.texts.push(...rest.flatMap(seg => seg.parts.map(part => spokenKey(part.text)))); state.at = Date.now()
       for (const l of lines) if (l.voice) state.voices.add(l.voice)
       earlySpoken.set(sid, state)
-      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })
+      return new Response(releasing(out.stream, release, req.signal), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })
     } catch { release(); return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
@@ -225,7 +228,7 @@ async function handle(req: Request) {
       const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId, ...(body?.oral === true ? { oral: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
       // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
       await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: [...new Set([...lines.map(l => l.voice ?? ''), ...(skip ? said!.voices : [])])] }).catch(() => {})
-      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })
+      return new Response(releasing(out.stream, release, req.signal), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })
     } catch { release(); return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }
   const selected = body?.part === undefined ? null : segments[Number(body.part)]
@@ -278,7 +281,7 @@ async function synthesize(tts: TtsProvider, request: TtsRequest, req: Request, s
     const signal = AbortSignal.any([req.signal, AbortSignal.timeout(170_000)])
     if (stream && tts.speakStream) {
       const out = await tts.speakStream(request, signal)
-      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
+      return new Response(releasing(out.stream, release, req.signal), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
     }
     const out = await tts.speak(request, signal)
     release()
