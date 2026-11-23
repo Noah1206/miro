@@ -28,7 +28,9 @@ export function looksLikeBackstageLeak(text: string): boolean { return BACKSTAGE
  */
 export function leaksHiddenSettings(text: string, secret: string | null | undefined, run = 100): boolean {
   const flat = (x: string) => x.replace(/\s+/g, ''), hidden = flat(secret ?? ''), shown = flat(text)
-  if (hidden.length < run || shown.length < run) return false
-  for (let i = 0; i + run <= shown.length; i += 20) if (hidden.includes(shown.slice(i, i + run))) return true
+  // 20자씩 건너뛰며 보므로 창을 run - 19 로 잡아야 run 자 이상 겹친 구간이 어디서 시작하든 창 하나에 통째로 들어간다(창을 run 으로 두면 시작 자리가 어긋난 구간을 놓친다).
+  const size = run - 19
+  if (hidden.length < size || shown.length < size) return false
+  for (let i = 0; i + size <= shown.length; i += 20) if (hidden.includes(shown.slice(i, i + size))) return true
   return false
 }
