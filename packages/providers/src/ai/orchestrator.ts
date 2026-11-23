@@ -374,6 +374,9 @@ export class AIOrchestrator implements LLMProvider {
         // 그래도 공급자 쪽 실패면(과부하가 이어짐·속도 제한·시간 초과·연결 실패) 같은 모델에 또 보내지 않고 다음 후보(예비)로 간다.
         // 다음 후보가 없을 때만 같은 모델에 한 번 더 — 예전 동작 그대로다.
         if (index < selections.length - 1 && PROVIDER_FAILURE.test(last)) break
+        // 11/23 빈 답(JSON 뿌리가 null) — 공급자가 조용히 거절한 것이다(운영: 언베일 방 Flash 3.7 호출의 절반, 7~9초씩 걸려 돌아옴). 같은 모델에 되물어도
+        // 대개 또 비어 한 턴에 15초를 버렸다 — 예비 모델이 있으면 바로 넘어간다(없으면 예전처럼 한 번 더).
+        if (index < selections.length - 1 && last.startsWith('invalid_schema $:invalid_type(null)')) break
       }
     }
     // If the primary already failed, an unaffordable backup does not turn that

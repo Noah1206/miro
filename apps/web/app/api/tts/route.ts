@@ -6,7 +6,7 @@ import { currentUser } from '@/lib/auth'
 import { speechQueueEnabled } from '@/lib/speech/policy'
 import { submitSpeech, speechFailure, quoteSpeech } from '@/lib/speech/http'
 import { speechAmount, speechCreditsEnabled } from '@/lib/speech/credits-policy'
-import { spokenSegments } from '@/lib/voice-text'
+import { spokenSegments, type SpokenSegment } from '@/lib/voice-text'
 import { feature } from '@miro/config'
 import { voiceColumns } from '@/lib/voice'
 import { segmentVoice, speechSource } from '@/lib/speech/access'
@@ -66,8 +66,19 @@ g.miroVoiceTimer.unref?.()
  */
 const VOICE_MAX_INFLIGHT = Number(process.env.MIRO_VOICE_MAX_INFLIGHT ?? 3)
 let voiceInflight = 0
-/** 11/23 방마다 미리 읽은 첫 줄(early) — 저장 뒤 turn 요청이 그 줄을 빼고 읽는다. ponytail: 맥 한 대 프로세스 메모리. */
-const earlySpoken = new Map<string, { text: string; at: number }>()
+/** 11/23 방마다 답이 만들어지는 동안 이미 읽은 줄(early) — 저장 뒤 turn 요청이 그 줄들을 빼고 읽는다. live = 그 턴(새 턴이면 처음부터). ponytail: 맥 한 대 프로세스 메모리. */
+const earlySpoken = new Map<string, { live: object; texts: string[]; voices: Set<string>; at: number }>()
+const spokenKey = (x: string) => x.replace(/[\s…·.,!?~"']/g, '')
+/** 묶음 목록에서 앞의 줄 k 개(이미 읽은 줄)를 뺀 나머지 — 묶음 중간에서 끊기면 남은 줄만으로 그 묶음을 다시 만든다. */
+function dropSpoken(segments: SpokenSegment[], k: number): SpokenSegment[] {
+  const out: SpokenSegment[] = []
+  for (const s of segments) {
+    if (k >= s.parts.length) { k -= s.parts.length; continue }
+    if (k > 0) { const parts = s.parts.slice(k); out.push({ ...s, speech: undefined, text: parts.map(p => p.text).join(' '), lines: s.lines.slice(k), parts }); k = 0 }
+    else out.push(s)
+  }
+  return out
+}
 const voiceBusy = () => Response.json({ error: 'voice_busy' }, { status: 503 })
 function takeVoiceSlot(): (() => void) | null {
   if (voiceInflight >= VOICE_MAX_INFLIGHT) return null
@@ -129,22 +140,32 @@ async function handle(req: Request) {
       .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).leftJoin(officialVoices, eq(officialVoices.id, characters.voiceId))
       .where(and(eq(roleplaySessions.id, sid), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt), eq(roleplaySessions.status, 'active'), isNull(characters.deletedAt))).limit(1)
     if (!row || (row.adultSince && !(await adultModeGateFor(user.id, row.characterId, sid)).allowed)) return new Response(null, { status: 204 })
-    // 마지막 블록은 아직 쓰는 중일 수 있다 — 그 앞까지만.
-    const first = spokenSegments(live.blocks.slice(0, -1), '', row.name, Object.keys(row.ensembleVoices ?? {}))[0]
-    const part = first && !first.inner ? first.parts[0] : undefined
+    // 11/23 사용자 "음성 모드일 때 너무 오래 걸려(30~40초)": 첫 줄만 미리 읽고 나머지는 답이 다 저장된 뒤(40~60초)에야 읽어 그 사이가 침묵이었다 —
+    // 답이 만들어지는 동안 완성된 대사·속마음을 부를 때마다 이어서 읽는다(화면이 앞 소리를 받는 대로 다음을 부른다). 쓰는 중인 블록(partial)은 뺀다.
+    const prior = earlySpoken.get(sid)
+    const state = prior?.live === live ? prior : { live, texts: [] as string[], voices: new Set<string>(), at: 0 }
+    const segs = spokenSegments(live.blocks.filter(b => b.partial !== true), '', row.name, Object.keys(row.ensembleVoices ?? {})), flat = segs.flatMap(seg => seg.parts)
+    // 답을 처음부터 다시 쓰는 경우(형식 오류 재시도 → 블록이 비워짐)에는 읽은 줄이 지금 글의 앞부분과 달라진다 — 같은 데까지만 읽은 것으로 친다.
+    let same = 0
+    while (same < state.texts.length && same < flat.length && spokenKey(flat[same]!.text) === state.texts[same]) same++
+    if (same < flat.length) state.texts.length = same
+    const rest = dropSpoken(segs, state.texts.length)
     const tts = resolveTts()
-    if (!part?.text.trim() || !tts?.speakTurn) return new Response(null, { status: 204 })
-    const voiceId = await segmentVoice(row, first)
-    if (!voiceId) return new Response(null, { status: 204 })
-    if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
+    if (!rest.length || !tts?.speakTurn) return new Response(null, { status: 204 })
+    const lines = await Promise.all(rest.map(async seg => ({ text: seg.speech ?? seg.text, voice: await segmentVoice(row, seg), delivery: seg.delivery, parts: seg.parts, ...(seg.inner ? { inner: true } : {}) })))
+    if (lines.some(l => !l.voice)) return new Response(null, { status: 204 })
+    // 한 턴을 여러 번에 나눠 부르므로 한 턴 통째 요청(voice_speak)과 따로 센다.
+    if (!(await takeUserQuota(user.id, 'voice_early', [{ ms: 60_000, max: 60 }, { ms: 86_400_000, max: 3000 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
     const release = takeVoiceSlot()
     if (!release) return voiceBusy()
     voiceUsed()
     try {
       const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-      const out = await tts.speakTurn({ lines: [{ text: part.text, voice: voiceId, delivery: part.delivery, parts: [part] }], language: settings?.language ?? 'ko', session: sid, turn: `early-${crypto.randomUUID()}` }, AbortSignal.any([req.signal, AbortSignal.timeout(120_000)]))
-      earlySpoken.set(sid, { text: part.text, at: Date.now() })
-      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': voiceId } })
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sid, turn: `early-${crypto.randomUUID()}` }, AbortSignal.any([req.signal, AbortSignal.timeout(180_000)]))
+      state.texts.push(...rest.flatMap(seg => seg.parts.map(part => spokenKey(part.text)))); state.at = Date.now()
+      for (const l of lines) if (l.voice) state.voices.add(l.voice)
+      earlySpoken.set(sid, state)
+      return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })
     } catch { release(); return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
@@ -188,20 +209,19 @@ async function handle(req: Request) {
   voiceUsed()
   if (body?.turn === true && tts.speakTurn) {
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-    // 11/23 첫 줄을 미리 읽었으면(early) 그 줄은 빼고 이어 읽는다 — 글이 검증에서 바뀌어 다르면 빼지 않는다(같은 줄이 두 번 나오는 쪽이 빠지는 쪽보다 낫다).
+    // 11/23 답이 만들어지는 동안 이미 읽은 줄(early)은 빼고 이어 읽는다 — 앞에서부터 글이 같은 줄까지만(검증에서 글이 바뀐 줄부터는 다시 읽는다: 두 번 나오는 쪽이 빠지는 쪽보다 낫다).
     const said = earlySpoken.get(sessionId); earlySpoken.delete(sessionId)
-    const norm = (x: string) => x.replace(/[\s…·.,!?~"']/g, '')
-    const first = segments[0]
-    const rest = said && Date.now() - said.at < 10 * MIN && first && !first.inner && first.parts[0] && norm(first.parts[0].text) === norm(said.text)
-      ? (first.parts.length > 1 ? [{ ...first, speech: undefined, text: first.parts.slice(1).map(p => p.text).join(' '), parts: first.parts.slice(1) }, ...segments.slice(1)] : segments.slice(1))
-      : segments
-    if (!rest.length) { release(); return new Response(null, { status: 204 }) }
+    let skip = 0
+    if (said && Date.now() - said.at < 10 * MIN) { const flat = segments.flatMap(seg => seg.parts); while (skip < said.texts.length && skip < flat.length && spokenKey(flat[skip]!.text) === said.texts[skip]) skip++ }
+    const rest = dropSpoken(segments, skip)
+    // 다 읽었으면 소리 없이 끝 — 목소리 보상은 미리 읽은 목소리로 여기서 쌓는다.
+    if (!rest.length) { release(); if (said?.voices.size) await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: [...said.voices] }).catch(() => {}); return new Response(null, { status: 204 }) }
     const lines = await Promise.all(rest.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
     if (lines.some(l => !l.voice)) { release(); return Response.json({ error: 'voice_unavailable' }, { status: 503 }) }
     try {
       const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId, ...(body?.oral === true ? { oral: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
       // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
-      await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: lines.map(l => l.voice ?? '') }).catch(() => {})
+      await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: [...new Set([...lines.map(l => l.voice ?? ''), ...(skip ? said!.voices : [])])] }).catch(() => {})
       return new Response(releasing(out.stream, release), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })
     } catch { release(); return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }

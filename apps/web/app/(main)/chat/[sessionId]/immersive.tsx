@@ -100,9 +100,22 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
         const job=queue.current.shift()!;current.current=job.key
         try{
           if(job.early){
-            report('preparing')
-            const res=await post({early:true})
-            if(res.ok&&res.headers.get('content-type')?.startsWith('audio/')){lastVoice.current=res.headers.get('x-voice');const fed=await player.current!.feed(res,active.signal,()=>{report('playing');setEarlyStarted(job.id)});ended=fed.ended}
+            // 11/23 사용자 "음성 모드일 때 너무 오래 걸려": 첫 줄만 미리 읽고 나머지는 답이 저장된 뒤에야 읽어 그 사이(20~40초)가 침묵이었다 —
+            // 답이 만들어지는 동안 완성된 대사·속마음이 늘 때마다 이어서 부른다. 앞 소리를 다 받으면(재생이 끝나길 기다리지 않고) 바로 다음을 불러 소리가 끊기지 않게 한다.
+            // 답이 저장되면(진행 중 턴이 사라지면) 멈추고, 남은 줄은 뒤에 선 한 턴 요청이 읽는다(서버가 이미 읽은 줄을 뺀다).
+            const spokenDone=()=>{const l=liveRef.current;return l?.playbackId===job.id?l.blocks.filter(b=>b.partial!==true&&(b.type==='dialogue'||b.type==='thought')).length:-1}
+            let sent=0
+            for(const until=Date.now()+300_000;!active.signal.aborted&&Date.now()<until;){
+              const n=spokenDone()
+              if(n<0)break
+              if(n<sent)sent=0   // 답을 처음부터 다시 쓰는 중(블록이 비워짐) — 다시 센다
+              if(n<=sent){await new Promise(r=>setTimeout(r,250));continue}
+              if(!sent)report('preparing')
+              const res=await post({early:true})
+              if(res.ok&&res.headers.get('content-type')?.startsWith('audio/')){lastVoice.current=res.headers.get('x-voice');const fed=await player.current!.feed(res,active.signal,()=>{report('playing');setEarlyStarted(job.id)});ended=fed.ended}
+              else if(res.status!==204)break   // 바쁨·한도·실패 — 미리 읽기는 그만두고 저장 뒤 한 턴 요청에 맡긴다
+              sent=n
+            }
             continue
           }
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
@@ -184,13 +197,12 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const liveVoice=on&&enabled&&free===true
   // 11/23 사용자 "답마다 음성이 늦게 나와": 답이 다 만들어지길(20~70초) 기다리지 않고, 오고 있는 답에 첫 대사가 완성되면(뒤에 블록이 하나 더 왔으면) 그 줄부터 읽는다.
   const livePid=liveTurn?.playbackId
+  const liveRef=useRef(liveTurn);liveRef.current=liveTurn
   useEffect(()=>{
     if(!liveVoice||!voiceAtSend.current||!livePid||earlyAsked.current.has(livePid))return
-    const done=(liveTurn?.blocks??[]).slice(0,-1)
-    const first=done.find(b=>b.type==='dialogue'||b.type==='thought')
-    if(!first)return
+    // 쓰는 중인 블록(partial)은 빼고, 다 쓴 대사·속마음이 하나라도 생기면 시작한다(속마음도 말과 같은 소리로 순서대로 읽는다).
+    if(!(liveTurn?.blocks??[]).some(b=>b.partial!==true&&(b.type==='dialogue'||b.type==='thought')))return
     earlyAsked.current.add(livePid)
-    if(first.type!=='dialogue')return   // 속마음이 먼저면 순서가 바뀌니 미리 읽지 않는다
     queue.current.push({key:`early:${livePid}`,id:livePid,parts:null,early:true});void drain()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[liveVoice,livePid,liveTurn?.blocks.length])
