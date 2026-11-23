@@ -361,7 +361,15 @@ export function keepOutfitOrder<T extends { index: number }>(photos: T[], s: Sim
   const dressed = (i: number) => dressedPhoto(list, i)
   const redressed = REDRESS.test(told)
   let bare = s.lastPhotoIndex != null && !dressed(s.lastPhotoIndex)
-  return photos.filter(p => { if (dressed(p.index)) return !bare || redressed; bare = true; return true })
+  // heat(11/24): 이번 답에서 성인 사진이 나온 뒤에는 일상 사진으로 돌아가지 않는다 — 옷차림과 같은 '앞으로만' 원칙(행위 사진 사이에 일상 표정 컷이 끼지 않게).
+  let heat = false
+  return photos.filter(p => {
+    const e = list[p.index]
+    if (heat && e && !e.adult && !redressed) return false
+    if (dressed(p.index)) { if (bare && !redressed) return false } else bare = true
+    if (e?.adult) heat = true
+    return true
+  })
 }
 
 export function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null; fill?: boolean }> {
@@ -369,13 +377,20 @@ export function sceneImages(s: SimulationSnapshot, codes: readonly string[] | un
   const out: Array<{ index: number; after: number | null; fill?: boolean }> = []
   // 11/23 태그로 고르는 작품 — "태그:블록번호". 서버가 그 태그의 사진 한 장으로 바꾼다(context photoByTag). 벗은 사진이 나온 뒤에는 벗은 사진만.
   const byTag = photoTagMode(s.character, !!s.adultMode)
-  let bare = s.lastPhotoIndex != null && !dressedPhoto(list, s.lastPhotoIndex)
-  for (const code of codes ?? []) {
-    const m = /^p(\d{1,4})\s*(?:[:@>]\s*(\d{1,3}))?$/i.exec(code.trim()), t = !m && byTag ? /^(.+?)\s*(?:[:@>]\s*(\d{1,3}))?$/.exec(code.trim()) : null
-    const i = t ? photoByTag(s, t[1]!, new Set(out.map(o => o.index)), bare) : Number(m?.[1]) - 1, at = (t ?? m)?.[2]
+  // 11/24 AI 는 사진을 글 순서대로 적지 않을 때가 있다("당황:6, 겁먹음:1, 입으로:3") — 적힌 순서로 옷차림·단계를 따지면 뒤 블록의 일상 사진이 앞 블록의 성인 사진보다 먼저 통과했다.
+  // 글에 나오는 자리(블록 번호) 순서로 놓고 따진다(자리 없는 것은 맨 뒤, 같은 자리는 적힌 순서).
+  const picks = (codes ?? []).map((code, k) => {
+    const c = code.trim(), m = /^p(\d{1,4})\s*(?:[:@>]\s*(\d{1,3}))?$/i.exec(c), t = !m && byTag ? /^(.+?)\s*(?:[:@>]\s*(\d{1,3}))?$/.exec(c) : null
+    const at = (t ?? m)?.[2]
+    return { m, t, k, after: at ? Number(at) : null }
+  }).sort((x, y) => (x.after ?? Infinity) - (y.after ?? Infinity) || x.k - y.k)
+  let bare = s.lastPhotoIndex != null && !dressedPhoto(list, s.lastPhotoIndex), heat = false
+  for (const p of picks) {
+    const i = p.t ? photoByTag(s, p.t[1]!, new Set(out.map(o => o.index)), bare, heat) : Number(p.m?.[1]) - 1
     if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.some(o => o.index === i)) continue
     if (!dressedPhoto(list, i)) bare = true
-    out.push({ index: i, after: at ? Number(at) : null })
+    if (list[i]!.adult) heat = true
+    out.push({ index: i, after: p.after })
     if (out.length === MAX_PHOTOS) break
   }
   return out
