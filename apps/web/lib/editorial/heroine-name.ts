@@ -1,17 +1,7 @@
-import { ensembleNames } from '@miro/engine'
+import { ensembleNames, heroineName } from '@miro/engine'
 
-/**
- * 11/17 작품의 실제 히로인 이름 — 공식 작품은 등록 이름이 작품명·히로인명이 섞여 있다. 화면(말풍선)·알림에 작품명 대신 인물 이름을 쓰려고
- * 설정 글에서 꺼낸다: '[여러 인물]' 첫 인물 → '[히로인] 강세라(28)' → '[숨긴 사정] · 세실리아는' → 소개 '[프로필] 한도은.'. 못 찾으면 null.
- */
-export function heroineName(secret: string | null | undefined, intro: string | null | undefined): string | null {
-  const s = secret ?? ''
-  return ensembleNames(s)[0]
-    ?? /\[히로인[^\]]*\][\s·\-—]*([가-힣A-Za-z]{1,12})\s*\(/.exec(s)?.[1]
-    ?? /\[숨긴 사정\]\s*·\s*([가-힣]{1,6}?)(?:은|는|이|가|의)\s/.exec(s)?.[1]
-    ?? /\[프로필\]\s*([가-힣]{1,6})[.\s]/.exec(intro ?? '')?.[1]
-    ?? null
-}
+// heroineName 은 엔진으로 옮겼다(11/24 검증기가 주인공 실명 화자를 알아봐야 해서) — 여기서는 그대로 다시 내보낸다.
+export { heroineName }
 
 /**
  * 작품의 대표 인물 이름 — 공식 작품 설정 글(heroineName) → 사용자가 만든 다인 작품의 첫 인물(만들기 '캐릭터 추가', ensemble_cast) → 등록 이름.

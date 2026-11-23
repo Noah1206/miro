@@ -1,4 +1,4 @@
-import { REDRESS, castNames, dressedPhoto, photoByTag, photoTagMode, rankedSituationImages } from './context'
+import { REDRESS, castNames, dressedPhoto, heroineName, photoByTag, photoTagMode, rankedSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
@@ -130,6 +130,16 @@ function validateBlocks(
   // 11/11 다인 작품의 함께 나오는 인물도.
   const cast = new Set(castNames(s.character))
   const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name), ...cast])
+  // 11/24 사용자: 설정에 있는 주변 인물(아들·남편·친구)이 장면에 맞게 나와 말해야 하는데 유저와 주인공 1:1 로만 흘렀다 —
+  // 카드 이름·[여러 인물]·다인 인물이 아닌 화자의 대사를 여기서 전부 지우고 있었다. 작품 설정 글 어딘가에 이름이 나오는 사람이면 말할 수 있게 한다
+  // (설정에 없는 새 이름의 대사는 여전히 지운다 — 서술로는 등장할 수 있다). 대화방에서만: 문자는 한 사람이 보내는 글이다.
+  const authored = (s.mode ?? 'chat') === 'chat' ? JSON.stringify(s.character) + (s.worldSetting ?? '') : ''
+  const persona = s.userPersona?.name?.trim() || null
+  // 1:1 작품인데 카드 이름이 작품 제목인 경우 — AI 가 주인공 대사의 화자를 실제 이름('윤미경'·'미경')으로 쓰면 '모르는 화자'로 지워져 대사가 통째로 빠졌다.
+  // 주인공의 실제 이름으로 쓴 줄은 카드 이름 줄로 바꿔 둔다(화면·목소리는 카드 이름 줄을 주인공으로 다룬다).
+  const lead = cast.size ? null : heroineName(s.character.personality.secret, s.character.personality.personality)
+  const isLead = (speaker: string) => { const n = speaker.trim(); return !!lead && lead !== s.character.identity.name && (n === lead || (n.length >= 2 && lead.endsWith(n))) }
+  const inSettings = (speaker: string) => { const n = speaker.trim(); return n.length >= 2 && n.length <= 12 && authored.includes(n) }
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 
   // 11/4 벌점 방식: 상투 표현·턴마다 되풀이된 몸짓·소품 문장을 서술·행동에서 지운다(대사는 그대로). 스트리밍과 저장이 같은 결과를 낸다.
@@ -138,7 +148,7 @@ function validateBlocks(
   const castIntro = new Map((s.character.worldRole.cast ?? []).map(p => [p.name, p.intro]))
   const ownVoice = `${s.character.personality.speechStyle ?? ''} ${s.character.personality.personality}`
   const keepEllipsis = (speaker: string | null | undefined) => ellipsis.test(speaker && castIntro.has(speaker) ? castIntro.get(speaker)! : ownVoice)
-  return trimEllipsisHabit(trimPenalizedSentences(p.rp.blocks.filter((b) => {
+  return trimEllipsisHabit(trimPenalizedSentences(p.rp.blocks.map(b => b.speaker && isLead(b.speaker) ? { ...b, speaker: s.character.identity.name } : b).filter((b) => {
     // 전화 중에는 서술할 화면이 없다. 모드에 맞지 않는 블록은 버린다.
     if (!allowed.has(b.type)) {
       issues.push({ field: 'rp.blocks', reason: `${b.type} not allowed in ${s.mode ?? 'chat'}` })
@@ -156,11 +166,11 @@ function validateBlocks(
         return false
       }
       // AI 가 사용자를 대신 연기하는 것을 막는다.
-      if (b.speaker === '사용자' || b.speaker.toLowerCase() === 'user') {
+      if (b.speaker === '사용자' || b.speaker.toLowerCase() === 'user' || (persona !== null && b.speaker.trim() === persona)) {
         issues.push({ field: 'rp.blocks', reason: 'block speaks for the user' })
         return false
       }
-      if (!known.has(b.speaker)) {
+      if (!known.has(b.speaker) && !inSettings(b.speaker)) {
         issues.push({ field: 'rp.blocks', reason: `unknown speaker: ${b.speaker}` })
         return false
       }
