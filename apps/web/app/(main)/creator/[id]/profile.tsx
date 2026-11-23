@@ -12,6 +12,8 @@ import cards from '../../home/home.module.css'
 import styles from './creator.module.css'
 
 const BIO_MAX = 300
+/** 번역된 글에서 \u0001 로 감싼 숫자만 밝게 */
+const num = (s: string) => s.split('\u0001').map((part, i) => i % 2 ? <b key={i}>{part}</b> : part)
 const compact = (n: number) => n >= 10_000 ? `${Math.floor(n / 1000) / 10}만` : n.toLocaleString('en-US')
 /** 소개글의 주소는 눌러서 연다(새 탭). 나머지는 글 그대로. */
 function Linked({ text }: { text: string }) {
@@ -43,7 +45,7 @@ export function CreatorProfile({ creator, works, signedIn, cheerId }: { creator:
           {creator.pen && <span className={styles.badge}><LogoMark size={14} label="" />{t('공식 크리에이터')}</span>}
         </div>
       </div>
-      <p className={styles.stats}><span>{t('팔로워')} <b>{followers.toLocaleString('en-US')}</b></span>{!creator.pen && <span>{t('팔로잉')} <b>{creator.followingCount.toLocaleString('en-US')}</b></span>}</p>
+      <p className={styles.stats}><span>{t('팔로워')} <b>{followers.toLocaleString('en-US')}</b></span><span>{t('팔로잉')} <b>{creator.followingCount.toLocaleString('en-US')}</b></span></p>
       {editing
         ? <form className={styles.bioForm} onSubmit={e => { e.preventDefault(); startSave(async () => { const saved = await saveCreatorBio(draft).catch(() => null); if (saved !== null) { setBio(saved); setDraft(saved); setEditing(false) } }) }}>
             <textarea id="creator-bio" value={draft} maxLength={BIO_MAX} rows={4} autoFocus onChange={e => setDraft(e.target.value)} aria-label={t('소개')} placeholder={t('예) 문의: 오픈채팅 주소\n안녕하세요, 이런 캐릭터를 만들어요.')} />
@@ -59,9 +61,8 @@ export function CreatorProfile({ creator, works, signedIn, cheerId }: { creator:
             </>}
       </div>
     </section>
-    <div className={styles.tabs}><span aria-current="page">{t('제작 캐릭터')}</span></div>
     <div className={styles.summary}>
-      <p>{t('{n}개의 캐릭터', { n: works.length })}{total > 0 && <><i aria-hidden /> {t('대화량 {n}', { n: compact(total) })}</>}</p>
+      <p>{num(t('{n}개의 캐릭터', { n: `\u0001${works.length}\u0001` }))}{total > 0 && <><i aria-hidden /> {num(t('대화량 {n}', { n: `\u0001${compact(total)}\u0001` }))}</>}</p>
       {works.length > 1 && <select value={sort} onChange={e => setSort(e.target.value as 'chats' | 'new')} aria-label={t('정렬')}>
         <option value="chats">{t('대화량순')}</option><option value="new">{t('최신순')}</option>
       </select>}

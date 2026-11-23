@@ -27,11 +27,9 @@
 .grow { flex: 1.6; min-width: 0; }
 .cheer { flex: 1; min-width: 0; }
 .editBio { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-primary); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
-.tabs { display: flex; gap: 24px; margin: 0 var(--gutter); border-bottom: 1px solid var(--color-border); }
-.tabs span { position: relative; padding: 8px 0 12px; font-size: 18px; font-weight: 700; }
-.tabs span::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--color-lavender-400); }
 .summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px var(--gutter) 14px; }
 .summary p { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--color-text-secondary); font-size: 15px; font-weight: 600; }
+.summary b { color: var(--color-text-primary); font-weight: 700; }
 .summary i { width: 1px; height: 14px; background: var(--color-border-strong); }
 .summary select { min-height: 36px; padding: 0 6px; border: 0; background: transparent; color: var(--color-text-tertiary); font: inherit; font-size: 14px; cursor: pointer; }
 .empty { padding: 0 var(--gutter); color: var(--color-text-tertiary); font-size: 13px; }
