@@ -80,6 +80,10 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const settled = merged.filter((m) => !anchored.has(m.id))
   const items = [...settled, ...liveItems]
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
+  // 11/23 사용자 "인트로 사진이 로딩이 너무 오래 걸려": 인트로는 한 줄씩 차례로 나타나는데, 사진은 제 차례가 되어 화면에 붙을 때에야 받기 시작해 그때마다 기다렸다 —
+  // 방에 들어오면 인트로 사진을 미리 받아 둔다(브라우저 캐시에 들어가 차례가 오면 바로 뜬다). 인트로를 보는 중일 때만, 최대 12장.
+  const openingPhotos = opening.playing ? items.filter(m => m.opening && m.kind === 'photo').slice(0, 12).map(m => m.content).join('\n') : ''
+  useEffect(() => { for (const src of openingPhotos.split('\n')) if (src) new Image().src = src }, [openingPhotos])
   const displayed = items.filter(m => opening.visible(m) && !voice.held(m.id))
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
   const lastOpeningId = [...displayed].reverse().find(m => m.opening)?.id
