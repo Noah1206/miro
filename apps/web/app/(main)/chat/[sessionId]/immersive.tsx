@@ -83,6 +83,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     const report=(v:VoicePlaybackStatus)=>{if(controller.current===active)setStatus(v)}
     let ended:Promise<void>=Promise.resolve()
     const post=(body:object)=>fetch('/api/tts',{method:'POST',signal:active.signal,headers:{'content-type':'application/json'},body:JSON.stringify({sessionId,stream:true,...body})})
+    // 11/24 사용자: 음성이 실제로 나왔는지 기록으로 확인하고 싶다 — 기기에서 첫 소리가 재생 줄에 올라간 순간을 서버에 알린다(소리판 상태 포함, 글·목소리 값은 보내지 않음).
+    const heard=(of:string)=>{void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({played:true,of,sessionId,audio:player.current?.state??'none'}),keepalive:true}).catch(()=>{})}
     const one=async(body:object,pause:number,started?:()=>void)=>{
       if(current.current===null)return
       report('preparing')
@@ -92,7 +94,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       // 11/18 음성 서버가 바쁘면(503 voice_busy) 기다리지 않는다 — 글은 바로 보이고, 안내는 방마다 한 번.
       if(res.status===503&&(await res.clone().json().catch(()=>null))?.error==='voice_busy'&&!busyNoticed.current){busyNoticed.current=true;toast(t('지금 목소리를 듣는 사람이 많아요. 이번 답은 글로 먼저 보여 드려요'))}
       if(!res.ok||!res.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
-      const fed=await player.current!.feed(res,active.signal,()=>{report('playing');started?.()})
+      const fed=await player.current!.feed(res,active.signal,()=>{report('playing');heard('turn' in body?'turn':'part');started?.()})
       ended=fed.ended;player.current!.gap(Math.max(0,Math.min(1500,pause)))
     }
     try{
@@ -119,7 +121,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
                 if(res.ok&&res.headers.get('content-type')?.startsWith('audio/')){
                   lastVoice.current=res.headers.get('x-voice')
                   const fed=await player.current!.feed(res,active.signal,()=>{
-                    report('playing');setEarlyStarted(job.id)
+                    report('playing');heard('early');setEarlyStarted(job.id)
                     const bedClips=oral&&!voicedClip('/sfx/suck.mp3',lastVoice.current).includes('suck-')?[...clips,'/sfx/suck.mp3']:clips,key=bedClips.join()
                     if(key!==bedKey){bed?.();bedKey=key;bed=bedClips.length?player.current!.bed(bedClips,bedClips.some(c=>/suck|gag/.test(c))?0.6:0.35):null}
                   })

@@ -100,9 +100,11 @@ function releasing(stream: ReadableStream<Uint8Array>, release: () => void): Rea
 export async function POST(req: Request) {
   const started = Date.now()
   const b = await req.clone().json().catch(() => null) as Record<string, unknown> | null
-  const kind = b?.beat ? 'beat' : b?.wake ? 'wake' : b?.early ? 'early' : b?.turn ? 'turn' : b?.part !== undefined ? 'part' : 'other'
+  const kind = b?.played ? 'played' : b?.beat ? 'beat' : b?.wake ? 'wake' : b?.early ? 'early' : b?.turn ? 'turn' : b?.part !== undefined ? 'part' : 'other'
   const res = await handle(req)
-  if (kind !== 'beat') observe('tts.request', { kind, status: res.status, ms: Date.now() - started, sessionId: typeof b?.sessionId === 'string' ? b.sessionId : null, inflight: voiceInflight })
+  // played(11/24): 기기에서 소리가 재생 줄에 올라갔다는 알림 — of = 어떤 요청의 소리(early·turn·part), audio = 소리판 상태(running 이면 실제로 나는 상태, suspended 면 잠겨 무음).
+  if (kind === 'played') observe('tts.played', { sessionId: typeof b?.sessionId === 'string' ? b.sessionId : null, of: typeof b?.of === 'string' ? b.of.slice(0, 10) : null, audio: typeof b?.audio === 'string' ? b.audio.slice(0, 12) : null })
+  else if (kind !== 'beat') observe('tts.request', { kind, status: res.status, ms: Date.now() - started, sessionId: typeof b?.sessionId === 'string' ? b.sessionId : null, inflight: voiceInflight })
   return res
 }
 async function handle(req: Request) {
@@ -110,6 +112,7 @@ async function handle(req: Request) {
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
   const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; beat?: unknown; stream?: unknown; turn?: unknown; oral?: unknown; early?: unknown } | null
+  if ((body as { played?: unknown } | null)?.played === true) return new Response(null, { status: 204 })   // 11/24 재생 시작 알림 — 기록만(위 POST 가 남긴다)
   // 11/19 음성 모드가 켜진 방이 보이는 동안 1분마다 — '아직 듣고 있다'는 신호(서버를 깨우지 않는다, 대기 판단만).
   if (body?.beat === true) {
     voice.lastBeat = Date.now()

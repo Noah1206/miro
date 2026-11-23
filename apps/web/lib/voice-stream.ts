@@ -8,6 +8,9 @@ export class VoiceStreamPlayer {
   private next = 0
   private sources = new Set<AudioBufferSourceNode>()
 
+  /** 11/24 소리판 상태(running = 소리가 나는 상태, suspended = 잠겨 무음) — 재생 시작 기록에 함께 남긴다. */
+  get state(): string { return this.ctx?.state ?? 'none' }
+
   unlock() {
     this.ctx ??= new AudioContext()
     void this.ctx.resume().catch(() => {})
