@@ -15,6 +15,7 @@ import type { TtsProvider, TtsRequest } from '@miro/providers'
 import { accrueVoiceReward } from '@/lib/usage/creator-reward'
 import { liveTurn } from '@/lib/simulation/live-turns'
 import { adultModeGateFor } from '@/lib/ops/safety'
+import { observe } from '@/lib/observe'
 
 export const runtime = 'nodejs'
 // The actual native model's cold load exceeded30s in the local comparison.
@@ -84,7 +85,16 @@ function releasing(stream: ReadableStream<Uint8Array>, release: () => void): Rea
   })
 }
 
+// 11/23 사용자 "토글을 켰는데도 음성이 안 나왔다" — 요청마다 결과(상태·종류·시간)를 남겨 어디서 멈췄는지 기록으로 가른다(글·목소리 값은 남기지 않음).
 export async function POST(req: Request) {
+  const started = Date.now()
+  const b = await req.clone().json().catch(() => null) as Record<string, unknown> | null
+  const kind = b?.beat ? 'beat' : b?.wake ? 'wake' : b?.early ? 'early' : b?.turn ? 'turn' : b?.part !== undefined ? 'part' : 'other'
+  const res = await handle(req)
+  if (kind !== 'beat') observe('tts.request', { kind, status: res.status, ms: Date.now() - started, sessionId: typeof b?.sessionId === 'string' ? b.sessionId : null, inflight: voiceInflight })
+  return res
+}
+async function handle(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
