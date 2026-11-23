@@ -541,8 +541,16 @@ const situationList = (c: SimulationSnapshot['character'], adult: boolean) =>
   (c.worldRole.situationImages ?? []).map((e, i) => ({ code: `p${i + 1}`, i, ...e })).filter(e => adult || !e.adult)
 export const bigrams = (text: string) => { const t = text.toLowerCase().replace(/\s+/g, ''); const out = new Set<string>(); for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2)); return out }
 /** 고를 수 있는 사진 전부를 지금 대화와 가까운 순서로(자르지 않음) — 순위(뜻)가 없으면 최근 대화와 글자 겹침으로. */
+/** 사진 설명의 주어('혜원이가 …', '수진이 …')로 본 사진 속 인물 — 3장 이상에 나오는 이름만. 장소로 시작하는 설명('주방에서 …')은 세지 않는다. */
+export function photoSubjects(c: SimulationSnapshot['character']): string[] {
+  const n = new Map<string, number>()
+  for (const e of c.worldRole.situationImages ?? []) { const w = /^(\S+?)(?:이가|가|이|은|는)\s/.exec(e.situation)?.[1]; if (w) n.set(w, (n.get(w) ?? 0) + 1) }
+  return [...n].filter(([, k]) => k >= 3).map(([w]) => w)
+}
 /** 11/23 태그로 고르는 작품인가 — 고를 수 있는 사진 모두에 태그가 붙어 있을 때만(하나라도 없으면 그 사진이 영영 안 뜨므로 예전처럼 설명 목록으로 고른다). */
 export function photoTagMode(c: SimulationSnapshot['character'], adult: boolean): boolean {
+  // 인물이 여럿인 작품은 아직 태그로 고르지 않는다 — 태그에 '누구 사진인지'가 없어 다른 히로인의 사진이 뜬다(설명 목록에는 이름이 있다). ponytail: 인물 태그가 생기면 푼다.
+  if (ensembleNames(c.personality.secret).length >= 2 || photoSubjects(c).length >= 2) return false
   const list = situationList(c, adult)
   return list.length > 0 && list.every(e => e.tags?.length)
 }
