@@ -15,8 +15,6 @@ import { randomUUID } from 'crypto'
 import { PUBLIC_BUCKET, publicMediaName, publicMediaUrl, writeMedia } from '@/lib/storage/media'
 import { tagPhoto, type PhotoTagging } from '@/lib/photo-tags'
 import { takeUserQuota } from '@/lib/usage/user-quota'
-import { revisionEffective } from '@/lib/legal/revisions'
-import { PHOTO_TAG_EFFECTIVE } from '@/lib/legal/transfer-table'
 import { BGM_LIMITS, BGM_TYPES } from '@/lib/bgm'
 import { parseCharacterForm, stripAdult } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
@@ -133,8 +131,8 @@ export async function uploadSituationImage(form: FormData): Promise<{ url: strin
  */
 export async function tagSituationImage(url: string, hint = ''): Promise<PhotoTagging | { off: true }> {
   const user = await requireUser()
-  // 11/23 사용자 확인: 처리방침 개정(국외 이전 표에 '제작자가 올린 상황 사진', 30일 전 공지)의 시행일부터 모든 제작자에게 켠다.
-  const enabled = process.env.MIRO_PHOTO_AUTOTAG === '1' || revisionEffective('privacy', PHOTO_TAG_EFFECTIVE) || (process.env.MIRO_PHOTO_AUTOTAG_USERS ?? '').split(',').map(x => x.trim()).includes(user.id)
+  // 11/24 사용자: "돈이 없어서 태그는 그만 붙이자" — 자동 태그는 꺼 둔다. 시행일(12/23)에 저절로 켜지던 것도 뺐다: 켜려면 MIRO_PHOTO_AUTOTAG=1(전체) 또는 MIRO_PHOTO_AUTOTAG_USERS 를 직접 넣는다(사진 한 장마다 비전 AI 요금이 든다).
+  const enabled = process.env.MIRO_PHOTO_AUTOTAG === '1' || (process.env.MIRO_PHOTO_AUTOTAG_USERS ?? '').split(',').map(x => x.trim()).includes(user.id)
   if (!enabled || !publicMediaName(url)?.startsWith(`${user.id}/`)) return { off: true }
   if (!(await takeUserQuota(user.id, 'photo_tag', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 500 }]))) return { off: true }
   return await tagPhoto(url, typeof hint === 'string' ? hint : '').catch(() => null) ?? { off: true }

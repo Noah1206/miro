@@ -63,7 +63,8 @@ async function viaGemini(img: { type: string; base64: string }, hint: string): P
       generationConfig: { maxOutputTokens: 4096, temperature: 0.2, responseMimeType: 'application/json', thinkingConfig: { thinkingLevel: 'low' } } }),
   }).catch(() => null)
   const debug = process.env.MIRO_PHOTO_TAG_DEBUG === '1'
-  if (res?.status === 429) photoTagQuota.hit = true   // 한도·속도 제한 — 일괄 작업(scripts/photo-tags.mts)이 보고 멈춘다
+  // 429(월 한도·속도 제한)·402(선불 잔액 소진)·403(프로젝트 차단) — 일괄 작업(scripts/photo-tags.mts)이 보고 멈춘다. 11/24 402 를 안 봐서 잔액이 바닥난 뒤에도 수백 장을 계속 불렀다.
+  if (res && [429, 402, 403].includes(res.status)) photoTagQuota.hit = true
   if (!res?.ok) { if (debug) console.log('  tag http', res?.status ?? 'network', (await res?.text().catch(() => ''))?.slice(0, 120)); return null }
   const j = await res.json().catch(() => null) as { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>; promptFeedback?: { blockReason?: string } } | null
   const text = j?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text ?? '').join('') || null
