@@ -1,6 +1,6 @@
 import { REDRESS, castNames, dressedPhoto, heroineName, photoByTag, photoTagMode, rankedSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
-import { POLICY } from '@miro/config'
+import { POLICY, cuePhotoTag } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
 import type { SimulationProposal } from './proposal.schema'
@@ -56,6 +56,12 @@ export function validateProposal(
   // 11/23 사용자 "왜 사진이 한 번도 안 나오는 경우가 있어": AI 가 images 를 빠뜨리거나 쓸 수 없는 코드만 내면 0장이었다 —
   // 고를 수 있는 사진이 있으면 지금 대화와 가장 가까운 것으로 최소 장수(3, 블록이 적으면 블록 수)를 채운다(옷차림 순서를 지키고, 방금 보인 사진은 빼고).
   // 장수가 모자랄 때(1~2장)까지 서버가 채우는 건 넣지 않았다 — 글자 겹침으로 고르면 장면과 어긋난 사진(임신·여러 명)이 끼었다(11/23 실측). 그건 AI 가 목록 전체를 보고 고른다.
+  // 11/24 태그로 고르는 작품은 먼저 이번 답의 글에서 태그를 짐작해(config cuePhotoTag) 그 블록 뒤에 둔다 — 글자 겹침으로 채우면 장면과 다른 행위의 사진이 떴다.
+  if (!photos.length && blocks.length && photoTagMode(snapshot.character, !!snapshot.adultMode)) {
+    const codes: string[] = []; let prev = ''
+    blocks.forEach((b, i) => { const tag = cuePhotoTag(b.text); if (tag && tag !== prev) { codes.push(`${tag}:${i + 1}`); prev = tag } })
+    photos.push(...keepOutfitOrder(sceneImages(snapshot, codes), snapshot, told).slice(0, 5).map(p => ({ ...p, fill: true })))
+  }
   if (!photos.length && blocks.length) {
     const need = Math.min(3, blocks.length), seen = new Set(snapshot.recentPhotoIndexes ?? [])
     keepOutfitOrder(rankedSituationImages(snapshot).filter(e => !seen.has(e.i)).map(e => ({ index: e.i, after: null })), snapshot, told).slice(0, need)
@@ -120,6 +126,17 @@ export function allowedBlocks(blocks: SimulationProposal['rp']['blocks'], s: Sim
   return validateBlocks({ rp: { blocks } } as SimulationProposal, s, [])
 }
 
+/** 두 글의 편집 거리(글자 넣기·빼기·바꾸기 횟수). 짧은 이름 비교용. */
+function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j)
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1))
+    prev = cur
+  }
+  return prev[b.length]!
+}
+
 /** 화자가 등장인물과 맞는지, 사용자를 대신 연기하지 않는지 확인한다. */
 function validateBlocks(
   p: SimulationProposal,
@@ -138,7 +155,10 @@ function validateBlocks(
   // 1:1 작품인데 카드 이름이 작품 제목인 경우 — AI 가 주인공 대사의 화자를 실제 이름('윤미경'·'미경')으로 쓰면 '모르는 화자'로 지워져 대사가 통째로 빠졌다.
   // 주인공의 실제 이름으로 쓴 줄은 카드 이름 줄로 바꿔 둔다(화면·목소리는 카드 이름 줄을 주인공으로 다룬다).
   const lead = cast.size ? null : heroineName(s.character.personality.secret, s.character.personality.personality)
-  const isLead = (speaker: string) => { const n = speaker.trim(); return !!lead && lead !== s.character.identity.name && (n === lead || (n.length >= 2 && lead.endsWith(n))) }
+  // 11/24 예비 모델(Grok)이 카드 이름을 한 글자 틀리게 적어('니 엄마 잘먹습니다') 대사·속마음 5블록이 지워지고 행동만 남았다 — 띄어쓰기를 빼고 두 글자 이내로 다른 이름은 카드 이름으로 본다(5자 이상일 때만).
+  const flatName = (x: string) => x.replace(/\s+/g, ''), card = flatName(s.character.identity.name)
+  const nearCard = (n: string) => { const a = flatName(n); return card.length >= 5 && Math.abs(a.length - card.length) <= 2 && editDistance(a, card) <= 2 }
+  const isLead = (speaker: string) => { const n = speaker.trim(); return (n !== s.character.identity.name && nearCard(n)) || (!!lead && lead !== s.character.identity.name && (n === lead || (n.length >= 2 && lead.endsWith(n)))) }
   const inSettings = (speaker: string) => { const n = speaker.trim(); return n.length >= 2 && n.length <= 12 && authored.includes(n) }
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 

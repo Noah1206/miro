@@ -278,7 +278,9 @@ async function executeTurn(opts: {
     }
     // 검증에서 걸러진 항목은 조용히 버리지 않는다 — Provider 품질 신호다.
     if (transition.issues.length > 0) {
-      observe('provider.llm.validation_issues', { sessionId, turn: turnIndex, count: transition.issues.length, fields: transition.issues.map((i) => i.field).join(',') })
+      observe('provider.llm.validation_issues', { sessionId, turn: turnIndex, count: transition.issues.length, fields: transition.issues.map((i) => i.field).join(','),
+        // 11/24 왜 지워졌는지(이유 글 — 화자 이름까지)도 남긴다: 대사가 통째로 빠진 답의 원인을 기록만으로는 알 수 없었다.
+        reasons: [...new Set(transition.issues.map((i) => i.reason.slice(0, 60)))].slice(0, 8).join(' / ') })
     }
     if (transition.blocks.length === 0) { await refund(); return { ok: false, reason: 'generation' } }
 

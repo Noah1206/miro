@@ -203,7 +203,8 @@ export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   /** 11/10 스탯 새 값 { 이름: 값 } — 서버가 작품 스탯 정의·범위로 자른다. */
   statValues: z.record(z.number()).optional().catch(undefined),
   // 11/18 바베챗식 사진 — 상황별 사진 코드(p1…), 답 중간에 넣을 땐 'p3:2'(2번째 블록 뒤).
-  images: z.array(z.string().max(12)).max(8).optional().catch(undefined),
+  // 11/24 한 항목 12자·8개까지만 받아서, 태그가 길거나("여러 명+후배위:12") 개수가 넘으면 사진 선택 전체가 버려지고 서버가 엉뚱한 사진으로 대신 채웠다 — 넘는 항목만 빼고 받는다.
+  images: z.array(z.unknown()).optional().catch(undefined).transform(v => v?.filter((x): x is string => typeof x === 'string' && x.length <= 40).slice(0, 12)),
 }))
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>
@@ -218,7 +219,7 @@ const text = (description?: string) => ({ type: 'string', ...(description ? { de
  */
 export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 'object', properties: {
   // 11/20 사용자: 사진은 글이 그 자리에 왔을 때 바로 — 사진 코드를 rp 보다 먼저 쓰게 맨 앞 칸(스트리밍이 자리를 미리 안다). 코드 몇 개라 첫 글자가 늦는 건 아주 조금.
-  images: { type: 'array', description: 'Write this FIRST, before rp. Only when the card lists scene photos: plan the scene, then give codes of the listed photos that fit it, at least 3 and at most 5 (all if fewer are listed), each as "code:N" = shown right after rp block N (1-based) — then write rp so block N is that moment, e.g. "p3:4". Otherwise [].', items: { type: 'string' } },
+  images: { type: 'array', description: 'Write this FIRST, before rp. Only when the prompt lists scene photos or photo tags: plan the scene, then give the listed photo codes or tags that fit it, each as "code:N" or "tag:N" = shown right after rp block N (1-based) — then write rp so block N is that moment, e.g. "p3:4" or "입으로:4". Follow the count and rules in the photo section of the prompt. Otherwise [].', items: { type: 'string' } },
   rp: { type: 'object', properties: { blocks: { type: 'array', description: 'Follow the length rule (분량) in the system prompt: a standard scene is about 12 to 18 items; short replies only when that rule says so. Up to 30 items.', items: { type: 'object', properties: {
     type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('name of the person speaking or acting for dialogue/action/thought (in a multi-heroine card, that heroine — never the card title); omit for narrative'),
     text: text('narrative: 2-4 sentences. action: 1-3 sentences. dialogue: 1-4 sentences. thought: one or two short colloquial lines.'),

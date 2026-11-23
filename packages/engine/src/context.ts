@@ -156,7 +156,8 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const prose = /\*[^*]+\*/.test(input) || input.includes('\n') || input.length > 120
   const tense = s.activeEvents.length > 0 || (s.characterState !== undefined && s.characterState.mood !== 'neutral')
   if (style === 'brief') return briefDirective(s, input, prose, tense)
-  const name = s.character.identity.name
+  // 11/24 1:1 작품인데 카드 이름이 작품 제목이면('니 엄마 잘먹겠습니다') 화자 이름으로 쓰기 어색해 모델이 틀리게 적었다 — 설정에서 찾은 주인공의 실제 이름('윤미경')을 화자로 쓰게 한다(검증기가 카드 이름 줄로 바꿔 저장한다).
+  const name = castNames(s.character).length ? s.character.identity.name : heroineName(s.character.personality.secret, s.character.personality.personality) ?? s.character.identity.name
   // ECHO(long)는 같은 장면을 더 길게 — 박자를 더 두고 서술·대사를 깊게 한다. 모델은 글자 수보다 문장·블록 수를 따른다
   // (9/26 실측: 900~1500자를 주자 중앙값 668자, MIRO 581자와 15% 차이). 그래서 문장 수와 오가는 횟수를 올린다.
   const long = style === 'long' || style === 'saga' || style === 'plus'
@@ -964,7 +965,7 @@ export function estimateTokens(text: string): number {
  */
 function dialogueContract(s: SimulationSnapshot, style: ReplyStyle): string {
   // 여러 인물 카드는 카드 이름이 아니라 히로인이 말한다 — 예시의 화자도 히로인으로(카드 이름 말풍선이 생기지 않게).
-  const lead = !s.mode || s.mode === 'chat' ? ensembleNames(s.character.personality.secret)[0] : undefined
+  const lead = !s.mode || s.mode === 'chat' ? ensembleNames(s.character.personality.secret)[0] ?? (castNames(s.character).length ? undefined : heroineName(s.character.personality.secret, s.character.personality.personality) ?? undefined) : undefined
   const n = JSON.stringify(lead ?? s.character.identity.name)
   const blocks = style === 'brief' ? '{"type":"dialogue","speaker":"character name","text":"response"}'
     : !s.mode || s.mode === 'chat'
