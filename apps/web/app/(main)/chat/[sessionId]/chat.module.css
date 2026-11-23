@@ -849,6 +849,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .blockedToastWrap .blockedSticker svg { width: 16px; height: 16px; }
 .blockedToastWrap .blockedText strong { font-size: 14px; }
 .blockedToastWrap .blockedText span { font-size: 12px; }
+/* 11/24 사용자: 오류 안내 토스트 — 글이 두 줄이 될 수 있어 알약 대신 둥근 네모, 글은 한 덩어리로. */
+.blockedToastWrap .blockedPoster.errorPoster { border-radius: 18px; padding: 10px 16px 10px 10px; }
+.blockedToastWrap .errorPoster .blockedText span { font-size: 13px; line-height: 1.4; color: #fff; }
 /* 11/22 사용자: 휴대폰 채팅방 머리의 19 토글 — 컴퓨터는 사이트 머리에 있어 숨긴다. */
 .headerUnveil { flex: none; display: flex; align-items: center; }
 @media (min-width: 1024px) { .headerUnveil { display: none; } }

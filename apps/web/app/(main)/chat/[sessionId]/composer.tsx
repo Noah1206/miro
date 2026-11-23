@@ -49,6 +49,14 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const { append, live, setLive, calendarPending, remove } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   // 막힌 턴 토스트는 4초 뒤 스스로 걷힌다.
+  // 11/24 오류 안내 토스트 — 4초 보이고 사라진다. 상태(state.error·retryWithSameId)는 그대로 둔다: 같은 요청으로 다시 보내는 판단에 쓰인다.
+  const [errorToast, setErrorToast] = useState<string | null>(null)
+  useEffect(() => {
+    if (!state.error || state.limit || state.blocked) { setErrorToast(null); return }
+    setErrorToast(state.error)
+    const id = setTimeout(() => setErrorToast(null), 4000)
+    return () => clearTimeout(id)
+  }, [state])
   useEffect(() => { if (!state.blocked) return; const id = setTimeout(() => setState(st => st.blocked ? { ...st, error: null, blocked: false } : st), 4000); return () => clearTimeout(id) }, [state.blocked])
   const [pending, setPending] = useState(false)
   // 추천 답변(11/3) — 후보 3개와 실패 문구.
@@ -370,10 +378,15 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             </span>
           </motion.div></div>
         )}
-        {state.error && !state.limit && !state.blocked && (
-          <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
-            {t(state.error)}
-          </motion.p>
+        {/* 11/24 사용자: 입력창 위에 빨간 글로 남던 오류 안내(연결 끊김·저장 실패 등)도 토스트로 — 왼쪽에 빨간 아이콘, 4초 뒤 아래로 내려가며 사라진다. */}
+        {errorToast && (
+          <div key="err" className={styles.blockedToastWrap}><motion.div role="alert" className={`${styles.blockedPoster} ${styles.errorPoster}`}
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }} transition={{ type: 'spring', stiffness: 420, damping: 32 }}>
+            <span className={styles.blockedSticker} aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 7v6M12 17h.01" /></svg>
+            </span>
+            <span className={styles.blockedText}><span>{t(errorToast)}</span></span>
+          </motion.div></div>
         )}
       </AnimatePresence>
       {suggest && (list => suggestSlot ? createPortal(list, suggestSlot) : list)(<SuggestList state={suggest} onClose={() => setSuggest(null)} onPick={(text, send) => {
