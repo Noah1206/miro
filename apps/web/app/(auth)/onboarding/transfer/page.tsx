@@ -4,7 +4,7 @@ import { currentUser } from '@/lib/auth'
 import { consentRedirect } from '@/lib/consent-gate'
 import { Page } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
-import { TRANSFER_ROWS } from '@/lib/legal/transfer-table'
+import { transferRows } from '@/lib/legal/transfer-table'
 import { getT } from '@/lib/i18n/server'
 import { agreeTransfer } from './actions'
 import { BackButton } from './back-button'
@@ -50,7 +50,7 @@ export default async function TransferConsentPage() {
 
       <h2 className={s.groupTitle}>{t('개인정보를 받는 업체')}</h2>
       <ul className={s.vendors} lang="ko">
-        {TRANSFER_ROWS.map((r) => (
+        {transferRows().map((r) => (
           <li key={r[0]}><b>{r[0]!.replace(/\s*\(.*\)$/, '')}</b> · {r[1]!.replace(/\(.*\)$/, '')} · {r[4]}</li>
         ))}
       </ul>

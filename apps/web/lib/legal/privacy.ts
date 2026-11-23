@@ -1,7 +1,7 @@
 import type { LegalDoc } from './index'
 import { operatorEmail, operatorName, privacyOfficer } from './operator'
 import { revisionEffective } from './revisions'
-import { TRANSFER_HEAD, TRANSFER_ROWS } from './transfer-table'
+import { TRANSFER_HEAD, transferRows } from './transfer-table'
 
 /**
  * 개인정보 처리방침 — 개인정보 보호법 제30조·시행령 제31조와 개인정보보호위원회 작성지침의 항목 순서를 따르고,
@@ -139,7 +139,7 @@ export function privacyPolicy(now = new Date()): Pick<LegalDoc, 'intro' | 'secti
       blocks: [
         '서비스 제공 계약을 이행하기 위해 다음 업체에 처리를 맡기거나 보관하게 하면서 개인정보가 국외로 이전(국외에서 처리·보관)됩니다. 이 방침에 공개하는 것으로 이전하며(「개인정보 보호법」 제28조의8 제1항 제3호), 각 업체의 데이터 처리 조건에 따라 보호 조치를 적용합니다.',
         // 표는 「개인정보 국외 이전 동의」(transfer.ts)와 공유한다 — 가입 때 따로 받는 동의와 이 방침이 어긋나지 않게.
-        { table: { head: TRANSFER_HEAD, rows: TRANSFER_ROWS } },
+        { table: { head: TRANSFER_HEAD, rows: transferRows(now) } },
         '국외 이전을 원하지 않으면 계정을 삭제할 수 있습니다. 다만 AI 대화와 서비스 운영이 위 업체들을 통해 이루어지므로, 이전을 거부하면 서비스를 이용할 수 없습니다.',
       ],
     },

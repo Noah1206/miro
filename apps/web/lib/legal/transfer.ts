@@ -1,6 +1,6 @@
 import type { LegalDoc } from './index'
 import { operatorEmail, operatorName, privacyOfficer } from './operator'
-import { TRANSFER_HEAD, TRANSFER_ROWS } from './transfer-table'
+import { TRANSFER_HEAD, transferRows } from './transfer-table'
 
 /**
  * 개인정보 국외 이전 동의(2026-10-05) — 가입 화면에서 약관·처리방침 동의와 **따로** 받는다(개인정보 보호법 제28조의8 ① 1호, 시행령 제29조의8의 고지 항목).
@@ -14,7 +14,7 @@ export const TRANSFER_CONSENT: Pick<LegalDoc, 'intro' | 'sections'> = {
       title: '1. 국외로 이전되는 개인정보',
       blocks: [
         '다음 업체에 개인정보 처리를 맡기거나 보관하게 하면서 개인정보가 국외로 이전됩니다. 모든 전송은 암호화된 네트워크(HTTPS)로 이루어집니다.',
-        { table: { head: TRANSFER_HEAD, rows: TRANSFER_ROWS } },
+        { table: { head: TRANSFER_HEAD, get rows() { return transferRows() } } },   // 읽을 때마다 — 시행일이 지나면 서버를 다시 켜지 않아도 바뀐다
       ],
     },
     {

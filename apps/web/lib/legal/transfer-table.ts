@@ -2,6 +2,8 @@
  * 개인정보 국외 이전 표 — 처리방침 7항과 「개인정보 국외 이전 동의」(transfer.ts)가 같은 표를 쓴다(개인정보 보호법 시행령 제29조의8의 고지 항목).
  * 내용은 코드가 실제로 보내는 것(2026-10-02 AI 역할 배치 기준). 업체를 바꾸면 여기만 고치고, 처리방침 16항의 고지 기간을 지킨다.
  */
+import { revisionEffective } from './revisions'
+
 export const TRANSFER_HEAD = ['이전받는 자(연락처)', '국가', '이전 항목', '시기와 방법', '이용 목적', '보유 기간']
 export const TRANSFER_ROWS: string[][] = [
   ['Google LLC (policies.google.com/privacy)', '미국', '대화 입력, 페르소나(닉네임·성별·소개), 캐릭터 설정, 최근 대화와 기억 요약, 이용자 현지 시각·언어', '대화할 때마다 암호화된 네트워크(HTTPS)로 전송', 'AI 응답 생성, 기억 정리', '응답 생성에 필요한 동안 처리'],
@@ -16,3 +18,13 @@ export const TRANSFER_ROWS: string[][] = [
   ['Google LLC — Google Ads (policies.google.com/technologies/ads)', '미국', '방문한 페이지, 광고 클릭 정보, 쿠키 식별값, 기기·브라우저 정보', '서비스 페이지를 열 때 브라우저가 전송', '광고 성과(전환) 측정', 'Google 정책에 따름'],
   ['Discord Inc. (discord.com/privacy)', '미국', '계정 삭제 기록(내부 사용자 번호와 삭제 시각), 서비스 오류 요약', '해당하는 일이 생길 때 자동 전송', '운영자 알림', '운영 채널에서 삭제할 때까지'],
 ]
+
+/**
+ * 11/23 사진 자동 태그 — 제작자가 올린 상황 사진을 Google 의 비전 AI 가 보고 태그·설명을 붙인다(lib/photo-tags.ts). 이전 항목이 늘어나는 변경이라
+ * 30일 전 공지(revisions.ts, 시행 2026-12-23). 시행일부터 Google 줄에 그 항목이 들어가고, 그날부터 모든 제작자에게 자동 태그가 켜진다(create/actions tagSituationImage).
+ */
+export const PHOTO_TAG_EFFECTIVE = '2026-12-23'
+export function transferRows(now = new Date()): string[][] {
+  if (!revisionEffective('privacy', PHOTO_TAG_EFFECTIVE, now)) return TRANSFER_ROWS
+  return TRANSFER_ROWS.map((r, i) => i !== 0 ? r : [r[0]!, r[1]!, `${r[2]}, 제작자가 올린 상황 사진`, `${r[3]}, 상황 사진을 올릴 때`, `${r[4]}, 상황 사진의 태그·설명 자동 작성`, r[5]!])
+}
