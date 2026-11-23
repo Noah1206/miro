@@ -1,4 +1,4 @@
-import { REDRESS, castNames, dressedPhoto, rankedSituationImages } from './context'
+import { REDRESS, castNames, dressedPhoto, photoByTag, photoTagMode, rankedSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
@@ -357,11 +357,15 @@ export function keepOutfitOrder<T extends { index: number }>(photos: T[], s: Sim
 export function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null; fill?: boolean }> {
   const list = s.character.worldRole.situationImages ?? []
   const out: Array<{ index: number; after: number | null; fill?: boolean }> = []
+  // 11/23 태그로 고르는 작품 — "태그:블록번호". 서버가 그 태그의 사진 한 장으로 바꾼다(context photoByTag). 벗은 사진이 나온 뒤에는 벗은 사진만.
+  const byTag = photoTagMode(s.character, !!s.adultMode)
+  let bare = s.lastPhotoIndex != null && !dressedPhoto(list, s.lastPhotoIndex)
   for (const code of codes ?? []) {
-    const m = /^p(\d{1,4})\s*(?:[:@>]\s*(\d{1,3}))?$/i.exec(code.trim())
-    const i = Number(m?.[1]) - 1
+    const m = /^p(\d{1,4})\s*(?:[:@>]\s*(\d{1,3}))?$/i.exec(code.trim()), t = !m && byTag ? /^(.+?)\s*(?:[:@>]\s*(\d{1,3}))?$/.exec(code.trim()) : null
+    const i = t ? photoByTag(s, t[1]!, new Set(out.map(o => o.index)), bare) : Number(m?.[1]) - 1, at = (t ?? m)?.[2]
     if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.some(o => o.index === i)) continue
-    out.push({ index: i, after: m?.[2] ? Number(m[2]) : null })
+    if (!dressedPhoto(list, i)) bare = true
+    out.push({ index: i, after: at ? Number(at) : null })
     if (out.length === MAX_PHOTOS) break
   }
   return out

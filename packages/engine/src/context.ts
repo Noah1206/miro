@@ -1,5 +1,5 @@
 import { prompts, CHARACTER_VOICE_RULES } from '@miro/providers'
-import { ADULT_SPEECH_PROMPT, POLICY, VOICE_DELIVERY_PROMPT } from '@miro/config'
+import { ADULT_SPEECH_PROMPT, PHOTO_CONTEXT_TAGS, PHOTO_SCENE_TAGS, POLICY, VOICE_DELIVERY_PROMPT, orderPhotoTags } from '@miro/config'
 import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, loreLimit, storyCalendarDirective, currentStage, fillCharacterMacros } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
@@ -317,7 +317,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
   // 11/23 사용자 결정: 사진이 많은 작품은 AI 가 사진 목록 전체를 본다 — 그 목록(지시문에 실림)만큼은 맥락 예산 밖으로 쳐서 최근 대화·기억이 줄지 않게 한다(입력 비용은 그만큼 는다).
   // 30장 이하는 예전부터 예산 안이라 그대로. 상한 12,000자: 한 턴 입력 한도(token-pricing maxInputTokens 64,000 글자)를 넘기면 턴이 거절된다 — 46,000 + 12,000 + 여유.
   const photoList = spoken ? [] : situationList(s.character, !!s.adultMode)
-  const photoListChars = photoList.length > 30 && photoList.length <= IMAGE_LIST_MAX ? Math.min(12_000, photoList.reduce((n, e) => n + e.code.length + e.situation.length + 6, 0)) : 0
+  const photoListChars = photoList.length > 30 && photoList.length <= IMAGE_LIST_MAX && !photoTagMode(s.character, !!s.adultMode) ? Math.min(12_000, photoList.reduce((n, e) => n + e.code.length + e.situation.length + 6, 0)) : 0
   let last: BuiltContext | null = null
   for (const plan of plans) {
     const dropped: string[] = []
@@ -500,6 +500,20 @@ function endingRules(c: SimulationSnapshot['character']): string[] {
 function imageRules(c: SimulationSnapshot['character'], adult: boolean): string[] {
   const list = situationList(c, adult)
   if (!list.length) return []
+  if (photoTagMode(c, adult)) {
+    const tags = photoTagsOf(c, adult)
+    return ['', '## 사진 (만든 사람이 올린 장면 사진 — 태그로 고릅니다)',
+      // 11/23 사용자: 사진 목록(수백 줄) 대신 태그로 — AI 는 '지금 무슨 순간인가'만 정하고, 그 태그의 사진 가운데 어느 것을 띄울지는 서버가 정한다(옷차림 단계·장소·방금 보인 사진).
+      `- 아래 태그에서 골라 최상위 images 칸에 "태그:블록번호" 로 냅니다(블록 순서대로). 예: "${tags[0]}:2" 는 2번째 블록 뒤(rp.blocks 를 1부터 센 순서, 마지막 블록 뒤면 마지막 번호). 태그는 목록의 글자 그대로 씁니다.`,
+      '- 그 블록에서 벌어지는 행위·표정과 가장 가까운 태그만 정하면 됩니다. 그 태그의 사진 가운데 장소와 옷차림이 맞는 것은 서버가 골라 띄웁니다.',
+      `- ${PHOTO_CONTEXT_TAGS.filter(t => tags.includes(t)).join('·') || '여러 명·임신'} 같은 태그는 장면이 실제로 그럴 때만 고릅니다. 그 상황에서의 행위는 "여러 명+후배위:6" 처럼 + 로 이어 씁니다(이 태그가 붙은 사진은 이렇게 고를 때만 나옵니다).`,
+      '- 체위·봉사 중의 절정·사정·시오후키는 "후배위+절정:8" 처럼 그때의 행위와 + 로 함께 씁니다. 태그 하나만 쓰면(예: "절정") 체위가 없는 사진에서만 찾습니다.',
+      '- 장수는 응답 길이에 비례합니다 — 대략 블록 2개마다 한 장, 최소 3장(블록이 3개보다 적으면 블록 수만큼), 많게는 10장. 길게 쓰는 응답일수록 장면 흐름을 따라 고르게 더 많이 둡니다.',
+      '- 같은 행위가 이어지는 긴 장면이라도 한두 장으로 끝내지 않습니다 — 사이사이 그 순간의 반응에 맞는 태그(달아오른 표정, 애무받는 모습, 절정, 끝난 뒤 등 목록에 있는 것)를 섞습니다. 같은 태그를 다시 써도 다른 사진이 나오지만, 같은 태그만 연달아 쓰지 않습니다.',
+      '- 진행 단계가 크게 다른 태그(옷을 다 입고 대화만 하는데 성행위 태그)는 고르지 않습니다. 사진에 맞추려고 장면을 바꾸지 않습니다. images 는 rp 보다 먼저 쓰니, 사용자의 이번 입력에 맞춰 이번 응답에서 그릴 장면을 먼저 정하고 그 흐름에 맞춰 고릅니다.',
+      '- 본문에 태그나 사진 설명을 쓰지 않습니다.',
+      `- 태그: ${tags.join(' · ')}`]
+  }
   const many = list.length > IMAGE_LIST_MAX
   return ['', '## 사진 (만든 사람이 올린 장면 사진)',
     // 11/22 사용자(베이비챗 방식대로): 장수를 채우려고 억지로 고르면 장면과 안 맞는 사진이 뜬다 — 베이비챗처럼 최소 장수 없이, 그 블록에 그려진 상황과 정말 같은 사진만.
@@ -525,8 +539,43 @@ export const IMAGE_LIST_MAX = 400
 const IMAGE_LIST_PICK = 60
 const situationList = (c: SimulationSnapshot['character'], adult: boolean) =>
   (c.worldRole.situationImages ?? []).map((e, i) => ({ code: `p${i + 1}`, i, ...e })).filter(e => adult || !e.adult)
-const bigrams = (text: string) => { const t = text.toLowerCase().replace(/\s+/g, ''); const out = new Set<string>(); for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2)); return out }
+export const bigrams = (text: string) => { const t = text.toLowerCase().replace(/\s+/g, ''); const out = new Set<string>(); for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2)); return out }
 /** 고를 수 있는 사진 전부를 지금 대화와 가까운 순서로(자르지 않음) — 순위(뜻)가 없으면 최근 대화와 글자 겹침으로. */
+/** 11/23 태그로 고르는 작품인가 — 고를 수 있는 사진 모두에 태그가 붙어 있을 때만(하나라도 없으면 그 사진이 영영 안 뜨므로 예전처럼 설명 목록으로 고른다). */
+export function photoTagMode(c: SimulationSnapshot['character'], adult: boolean): boolean {
+  const list = situationList(c, adult)
+  return list.length > 0 && list.every(e => e.tags?.length)
+}
+/** 그 작품에 쓰인 태그(보여 줄 순서). bareOnly: 옷을 벗은 사진이 있는 태그만. */
+export function photoTagsOf(c: SimulationSnapshot['character'], adult: boolean, bareOnly = false): string[] {
+  const imgs = c.worldRole.situationImages ?? []
+  return orderPhotoTags(situationList(c, adult).filter(e => !bareOnly || !dressedPhoto(imgs, e.i)).flatMap(e => e.tags ?? []))
+}
+/**
+ * 태그 → 그 태그의 사진 한 장(순번, 없으면 -1). "여러 명+후배위"처럼 + 로 이으면 모두 붙은 사진만.
+ * - 이번 답에 이미 쓴 사진은 빼고, 벗은 단계면 벗은 사진만. 입은 단계에서는 입은 사진이 있으면 그쪽부터(요리 → 일상 사진, 행위 태그는 벗은 사진뿐이라 자연히 넘어간다).
+ * - 무슨 장면인지를 정하는 태그(여러 명·임신 등 특수 상황, 체위, 봉사)가 붙은 사진은 그 태그를 고르지 않았으면 쓰지 않는다('절정'만 골랐는데 엉뚱한 체위 사진이 뜨지 않게).
+ * - 여럿이면: 그 태그가 사진의 핵심(첫 태그)인 것 → 방금 보이지 않은 것 → 이번 입력·직전 답과 설명이 겹치는 것(장소) → 태그가 적은 것.
+ * 답의 글(told)은 보지 않는다 — 글이 오기 전(스트리밍)에 고른 사진과 저장 때 고른 사진이 같아야 한다.
+ */
+export function photoByTag(s: SimulationSnapshot, tag: string, used: ReadonlySet<number>, bare: boolean): number {
+  const imgs = s.character.worldRole.situationImages ?? [], flat = (t: string) => t.replace(/\s+/g, '')
+  const wants = tag.split('+').map(flat).filter(Boolean)
+  if (!wants.length) return -1
+  const has = (e: { tags?: string[] }, w: string, loose = false) => !!e.tags?.some(t => flat(t) === w || (loose && (flat(t).includes(w) || w.includes(flat(t)))))
+  const context = PHOTO_SCENE_TAGS.map(flat)
+  const list = situationList(s.character, !!s.adultMode).filter(e => !used.has(e.i) && !(bare && dressedPhoto(imgs, e.i))
+    && !e.tags?.some(t => context.includes(flat(t)) && !wants.includes(flat(t))))
+  const exact = list.filter(e => wants.every(w => has(e, w)))
+  let hits = exact.length ? exact : list.filter(e => has(e, wants[0]!, true))
+  if (!hits.length) return -1
+  if (!bare && hits.some(e => dressedPhoto(imgs, e.i))) hits = hits.filter(e => dressedPhoto(imgs, e.i))
+  const seen = new Set(s.recentPhotoIndexes ?? [])
+  const q = bigrams([s.recentMessages.at(-1)?.content.slice(-400) ?? '', s.userInput ?? ''].join('\n'))
+  const score = (e: (typeof hits)[number]) => { let n = 0; for (const g of bigrams(e.situation)) if (q.has(g)) n++; return n }
+  const core = (e: (typeof hits)[number]) => wants.includes(flat(e.tags?.[0] ?? '')) ? 0 : 1
+  return hits.map(e => ({ e, n: score(e) })).sort((a, b) => core(a.e) - core(b.e) || Number(seen.has(a.e.i)) - Number(seen.has(b.e.i)) || b.n - a.n || (a.e.tags?.length ?? 0) - (b.e.tags?.length ?? 0) || a.e.i - b.e.i)[0]!.e.i
+}
 export function rankedSituationImages(s: SimulationSnapshot) {
   const list = situationList(s.character, !!s.adultMode)
   if (s.situationRanking?.length) {
@@ -542,7 +591,7 @@ export function rankedSituationImages(s: SimulationSnapshot) {
 /** 11/23 옷은 앞으로만(validator keepOutfitOrder) — '입은' = 일반 사진, 또는 언베일이라도 '옷 입은 채' 장면. REDRESS = 다시 옷을 입는 일이 그려진 글. */
 const DRESSED_SCENE = /옷 입은 채|입은 채로|옷 위로/
 export const REDRESS = /옷을 (?:다시 )?(?:주워 )?입|옷을 챙겨 입|다시 입었|단추를 (?:다시 )?채|옷매무새를|가운을 걸치|이불을 (?:몸에 )?두르|다음 날/
-export const dressedPhoto = (list: ReadonlyArray<{ adult?: boolean; situation?: string }>, i: number) => { const e = list[i]; return !!e && (!e.adult || DRESSED_SCENE.test(e.situation ?? '')) }
+export const dressedPhoto = (list: ReadonlyArray<{ adult?: boolean; situation?: string; outfit?: 'dressed' | 'bare' }>, i: number) => { const e = list[i]; return !!e && (!e.adult || (e.outfit ? e.outfit === 'dressed' : DRESSED_SCENE.test(e.situation ?? ''))) }   // 일반 사진은 늘 입은 사진(수영복 일상 사진 포함)
 export function relevantSituationImages(s: SimulationSnapshot, limit = IMAGE_LIST_PICK) {
   const all = situationList(s.character, !!s.adultMode)
   if (all.length <= IMAGE_LIST_MAX) return all
@@ -747,12 +796,18 @@ function buildPrompt(
     for (const entry of lore) parts.push(`- ${entry.name ? `[${entry.name}] ` : ''}${entry.content}`)
   }
   const photoList = spoken ? [] : situationList(s.character, !!s.adultMode)
-  if (photoList.length > IMAGE_LIST_MAX) {
+  const byTag = photoList.length > 0 && photoTagMode(s.character, !!s.adultMode)
+  if (byTag) {
+    // 벗은 단계에서는 입은 사진뿐인 태그(일상·감정)를 골라도 띄울 사진이 없다 — 지금 띄울 수 있는 태그만 알려 준다.
+    const imgs = s.character.worldRole.situationImages ?? []
+    if (s.lastPhotoIndex != null && !dressedPhoto(imgs, s.lastPhotoIndex)) parts.push('', '## 사진 고르기 (이번 턴)',
+      `- 직전 사진이 옷을 벗은 사진입니다. 이번 응답에서 옷을 다시 입는 일이 그려지지 않는 한 아래 태그에서만 고릅니다(다른 태그는 입은 사진뿐이라 표시되지 않습니다): ${photoTagsOf(s.character, !!s.adultMode, true).join(' · ')}`)
+  } else if (photoList.length > IMAGE_LIST_MAX) {
     parts.push('', '## 지금 고를 수 있는 사진 (지금 대화와 가까운 것만 추림 — 이 중 지금 장면과 맞는 것을 images 에)')
     for (const e of relevantSituationImages(s)) parts.push(`  · ${e.code}: ${e.situation}`)
   }
   // 11/23 목록 전체는 캐시되는 지시문에 있으니, 턴마다 달라지는 것(방금 보인 사진·옷차림 단계)만 여기서 알린다.
-  if (photoList.length) {
+  if (photoList.length && !byTag) {
     const imgs = s.character.worldRole.situationImages ?? []
     const seen = (s.recentPhotoIndexes ?? []).filter(i => photoList.some(e => e.i === i)).map(i => `p${i + 1}`)
     const bare = s.lastPhotoIndex != null && !dressedPhoto(imgs, s.lastPhotoIndex)

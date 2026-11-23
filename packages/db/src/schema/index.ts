@@ -263,7 +263,7 @@ export const characters = pgTable('characters', {
   ensembleCast: jsonb('ensemble_cast').$type<CastProfile[]>().notNull().default([]),
   /** 11/19 상황별 BGM — 만든 사람이 곡마다 상황을 적어 두면 대화가 그 상황일 때 채팅방에서 반복 재생(lib/bgm). 상황이 빈 곡은 기본 곡. */
   bgm: jsonb('bgm').$type<Array<{ url: string; situation: string; name?: string }>>().notNull().default([]),
-  situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string; situation?: string; adult?: true }>>().notNull().default([]),
+  situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string; situation?: string; adult?: true; tags?: string[]; outfit?: 'dressed' | 'bare' }>>().notNull().default([]),
   /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
   /** 이용 대상(10/28) — true 면 언베일(성인 인증·켬)을 연 사람에게만 보인다. */
   adultOnly: boolean('adult_only').notNull().default(false),

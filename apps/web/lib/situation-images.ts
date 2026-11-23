@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { selectLore } from '@miro/domain'
+import { normalizePhotoTags } from '@miro/config'
 import type { LLMProvider } from '@miro/providers'
 
 /**
@@ -8,7 +9,8 @@ import type { LLMProvider } from '@miro/providers'
  * 키워드는 남겨 둔다 — AI 호출이 실패하거나 상황 설명이 없는 옛 사진은 키워드로 찾는다(로어북과 같은 규칙, 조사 붙어도 찾음).
  */
 /** adult: 언베일(성인 모드)이 켜진 턴에만 후보가 된다(11/2) — 일반 대화에는 뜨지 않는다. */
-export type SituationImage = { keywords: string[]; image: string; situation?: string; adult?: true }
+/** tags·outfit(11/23): 사진을 올리면 자동으로 붙는 태그(lib/photo-tags.ts)와 옷차림 단계 — 대화 AI 는 태그로 고르고, 서버가 그 태그의 사진 중 하나를 띄운다. */
+export type SituationImage = { keywords: string[]; image: string; situation?: string; adult?: true; tags?: string[]; outfit?: 'dressed' | 'bare' }
 // 11/18 100→1000장 — 대화 지시문에는 지금 대화와 가까운 30장만 싣는다(engine relevantSituationImages).
 export const SITUATION_LIMITS = { entries: 1000, keywords: 5, keywordLength: 20, situationLength: 120 } as const
 
@@ -24,13 +26,16 @@ export const isStoredImageUrl = (u: unknown): u is string =>
 export function normalizeSituationImages(input: unknown): SituationImage[] {
   if (!Array.isArray(input)) return []
   return input.flatMap((raw) => {
-    const o = (raw ?? {}) as { keywords?: unknown; image?: unknown; situation?: unknown; adult?: unknown }
+    const o = (raw ?? {}) as { keywords?: unknown; image?: unknown; situation?: unknown; adult?: unknown; tags?: unknown; outfit?: unknown }
+    const tags = normalizePhotoTags(o.tags)
     const image = isStoredImageUrl(o.image) ? o.image : ''
     const keywords = Array.isArray(o.keywords)
       ? [...new Set(o.keywords.filter((k): k is string => typeof k === 'string').map(k => k.trim().slice(0, SITUATION_LIMITS.keywordLength)).filter(Boolean))].slice(0, SITUATION_LIMITS.keywords)
       : []
     const situation = typeof o.situation === 'string' ? o.situation.replace(/\s+/g, ' ').trim().slice(0, SITUATION_LIMITS.situationLength) : ''
-    return image && (keywords.length || situation) ? [{ keywords, image, ...(situation ? { situation } : {}), ...(o.adult === true ? { adult: true as const } : {}) }] : []
+    // 태그만 있어도 저장한다(11/23) — 자동 태그가 붙은 사진은 설명·키워드를 안 써도 대화에 뜬다.
+    return image && (keywords.length || situation || tags.length) ? [{ keywords, image, ...(situation ? { situation } : {}), ...(o.adult === true ? { adult: true as const } : {}),
+      ...(tags.length ? { tags } : {}), ...(o.outfit === 'dressed' || o.outfit === 'bare' ? { outfit: o.outfit as 'dressed' | 'bare' } : {}) }] : []
   }).slice(0, SITUATION_LIMITS.entries)
 }
 

@@ -12,7 +12,9 @@ import { msg } from '@/lib/i18n'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages, uploadCharacterImage } from '@/lib/storage/images'
 import { randomUUID } from 'crypto'
-import { PUBLIC_BUCKET, publicMediaUrl, writeMedia } from '@/lib/storage/media'
+import { PUBLIC_BUCKET, publicMediaName, publicMediaUrl, writeMedia } from '@/lib/storage/media'
+import { tagPhoto, type PhotoTagging } from '@/lib/photo-tags'
+import { takeUserQuota } from '@/lib/usage/user-quota'
 import { BGM_LIMITS, BGM_TYPES } from '@/lib/bgm'
 import { parseCharacterForm, stripAdult } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
@@ -120,6 +122,19 @@ export async function uploadSituationImage(form: FormData): Promise<{ url: strin
   if (!(file instanceof File) || file.size === 0) return { error: msg('사진을 고르지 못했어요.') }
   const r = await uploadCharacterImage(file, user.id)
   return r.ok ? { url: r.url } : { error: r.error }
+}
+
+/**
+ * 11/23 사진 자동 태그 — 방금 올린 상황 사진을 비전 AI 가 보고 태그·옷차림·한 줄 설명을 붙인다(lib/photo-tags.ts). 본인이 올린 사진만, 회원당 분당 30장·하루 500장.
+ * 올린 사진을 외부 AI(Google)로 보내는 일이라 처리방침 국외 이전 표에 항목이 들어가기 전까지는 MIRO_PHOTO_AUTOTAG=1(전체) 또는 MIRO_PHOTO_AUTOTAG_USERS(회원 id 목록)일 때만 동작한다.
+ * 꺼져 있거나 실패하면 { off: true } — 화면은 조용히 넘어가고 제작자가 직접 쓴다.
+ */
+export async function tagSituationImage(url: string, hint = ''): Promise<PhotoTagging | { off: true }> {
+  const user = await requireUser()
+  const enabled = process.env.MIRO_PHOTO_AUTOTAG === '1' || (process.env.MIRO_PHOTO_AUTOTAG_USERS ?? '').split(',').map(x => x.trim()).includes(user.id)
+  if (!enabled || !publicMediaName(url)?.startsWith(`${user.id}/`)) return { off: true }
+  if (!(await takeUserQuota(user.id, 'photo_tag', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 500 }]))) return { off: true }
+  return await tagPhoto(url, typeof hint === 'string' ? hint : '').catch(() => null) ?? { off: true }
 }
 
 /** 11/19 상황별 BGM 파일 하나 올리기 — 사진과 같은 서버 디스크(공개 읽기). */
