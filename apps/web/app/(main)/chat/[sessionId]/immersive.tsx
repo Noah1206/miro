@@ -104,18 +104,31 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
             // 답이 만들어지는 동안 완성된 대사·속마음이 늘 때마다 이어서 부른다. 앞 소리를 다 받으면(재생이 끝나길 기다리지 않고) 바로 다음을 불러 소리가 끊기지 않게 한다.
             // 답이 저장되면(진행 중 턴이 사라지면) 멈추고, 남은 줄은 뒤에 선 한 턴 요청이 읽는다(서버가 이미 읽은 줄을 뺀다).
             const spokenDone=()=>{const l=liveRef.current;return l?.playbackId===job.id?l.blocks.filter(b=>b.partial!==true&&(b.type==='dialogue'||b.type==='thought')).length:-1}
-            let sent=0
-            for(const until=Date.now()+300_000;!active.signal.aborted&&Date.now()<until;){
-              const n=spokenDone()
-              if(n<0)break
-              if(n<sent)sent=0   // 답을 처음부터 다시 쓰는 중(블록이 비워짐) — 다시 센다
-              if(n<=sent){await new Promise(r=>setTimeout(r,250));continue}
-              if(!sent)report('preparing')
-              const res=await post({early:true})
-              if(res.ok&&res.headers.get('content-type')?.startsWith('audio/')){lastVoice.current=res.headers.get('x-voice');const fed=await player.current!.feed(res,active.signal,()=>{report('playing');setEarlyStarted(job.id)});ended=fed.ended}
-              else if(res.status!==204)break   // 바쁨·한도·실패 — 미리 읽기는 그만두고 저장 뒤 한 턴 요청에 맡긴다
-              sent=n
-            }
+            // 11/23 사용자: 이어 읽는 줄에도 효과음 — 지금까지 다 쓴 서술·행동으로 고른다(저장 뒤 한 턴 요청과 같은 규칙). 오랄이면 서버가 그 목소리의 빠는 소리를
+            // 문장 사이에 끼우고(oral), 그 목소리 판이 없거나 살 부딪는 소리·헛구역질이면 밑에 깐다. 깔 소리가 바뀌면 바꿔 깔고, 마지막 소리가 끝나면 끈다.
+            let sent=0,bed:(()=>void)|null=null,bedKey=''
+            try{
+              for(const until=Date.now()+300_000;!active.signal.aborted&&Date.now()<until;){
+                const n=spokenDone()
+                if(n<0)break
+                if(n<sent)sent=0   // 답을 처음부터 다시 쓰는 중(블록이 비워짐) — 다시 센다
+                if(n<=sent){await new Promise(r=>setTimeout(r,250));continue}
+                if(!sent)report('preparing')
+                const all=adult?sfxClips((liveRef.current?.blocks??[]).filter(b=>b.partial!==true)):[],oral=all.includes('/sfx/suck.mp3'),clips=oral?all.filter(c=>c!=='/sfx/suck.mp3'):all
+                const res=await post({early:true,...(oral?{oral:true}:{})})
+                if(res.ok&&res.headers.get('content-type')?.startsWith('audio/')){
+                  lastVoice.current=res.headers.get('x-voice')
+                  const fed=await player.current!.feed(res,active.signal,()=>{
+                    report('playing');setEarlyStarted(job.id)
+                    const bedClips=oral&&!voicedClip('/sfx/suck.mp3',lastVoice.current).includes('suck-')?[...clips,'/sfx/suck.mp3']:clips,key=bedClips.join()
+                    if(key!==bedKey){bed?.();bedKey=key;bed=bedClips.length?player.current!.bed(bedClips,bedClips.some(c=>/suck|gag/.test(c))?0.6:0.35):null}
+                  })
+                  ended=fed.ended
+                }
+                else if(res.status!==204)break   // 바쁨·한도·실패 — 미리 읽기는 그만두고 저장 뒤 한 턴 요청에 맡긴다
+                sent=n
+              }
+            }finally{const end=bed as (()=>void)|null;if(end)void ended.then(end)}
             continue
           }
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue

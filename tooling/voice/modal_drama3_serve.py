@@ -671,7 +671,7 @@ class Speaker:
             return {'wav': buf.getvalue(), 'seconds': round(len(a) / self.codec.sample_rate, 2), 'first_s': round(first or 0, 2)}
         return {'plain': take(self.speak_stream(text, voice)), 'tempo': take(self.tempo(self.speak_stream(text, voice)))}
 
-    def speak_turn(self, lines, session=None, turn=None, oral=False):
+    def speak_turn(self, lines, session=None, turn=None, oral=False, more=False):
         """11/11 한 턴 통째로(사용자: 묶음이 아니라 1턴당 바로, 작품은 인물별 대사 전체를 만들어 잘라 쓰기).
         lines = 대화 순서의 대사 묶음 [{text, voice, delivery}] — 같은 사람이 이어 한 말은 이미 한 줄(앱 spokenSegments).
         목소리가 하나면 한 번에 합성하며 그대로 흘려보낸다. 여럿이면 목소리마다 그 턴의 대사를 전부 한 번에 합성하고,
@@ -708,7 +708,9 @@ class Speaker:
                     speech = wave[cuts[j]:cuts[j + 1]]
                     sound = oral_slice(clips[voice], rate, rng, 1.6, 3.2) if tail is None else tail
                     yield pcm(join(sound, speech)); tail = None
-            yield pcm(oral_slice(clips[voice], rate, rng, 2.5, 4.0) if tail is None else tail)
+            # 11/23 more = 이 턴의 대사가 더 온다(답이 만들어지는 동안 나눠 읽는 중) — 끝맺는 긴 빠는 소리는 마지막 요청에만(다음 요청이 다시 빠는 소리로 시작한다).
+            if tail is not None: yield pcm(tail)
+            elif not more: yield pcm(oral_slice(clips[voice], rate, rng, 2.5, 4.0))
             self.prepare_later(session, [voice])
             return
         if len(groups) == 1:
@@ -955,7 +957,7 @@ class Speaker:
             except Exception: return Response(b'voice not found', status_code=400)
             # 11/11 밤 방 단위 기억: 앱이 방(session)과 메시지(turn) 식별자를 주면 같은 방의 지난 턴을 이어 받는다. 없으면 예전처럼 턴마다 새로.
             ident = lambda v: v if isinstance(v, str) and 0 < len(v) <= 64 and all(c.isalnum() or c in '-_' for c in v) else None
-            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn')), body.get('oral') is True), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
+            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn')), body.get('oral') is True, body.get('more') is True), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 

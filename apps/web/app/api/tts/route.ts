@@ -161,7 +161,7 @@ async function handle(req: Request) {
     voiceUsed()
     try {
       const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sid, turn: `early-${crypto.randomUUID()}` }, AbortSignal.any([req.signal, AbortSignal.timeout(180_000)]))
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sid, turn: `early-${crypto.randomUUID()}`, ...(body?.oral === true ? { oral: true, more: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(180_000)]))   // oral: 빠는 장면 — 서버가 그 목소리의 빠는 소리를 문장 사이에 끼운다(한 턴 요청과 같음)
       state.texts.push(...rest.flatMap(seg => seg.parts.map(part => spokenKey(part.text)))); state.at = Date.now()
       for (const l of lines) if (l.voice) state.voices.add(l.voice)
       earlySpoken.set(sid, state)
