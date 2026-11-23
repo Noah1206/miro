@@ -1,6 +1,8 @@
 /* 11/20 크리에이터 프로필(사용자 스크린샷 두 장 기준) */
 /* 11/23 폰: 전역 .page 여백 + 아래 칸들의 --gutter 가 겹쳐 양옆이 두 배로 비던 것 — 페이지 쪽 여백을 뺀다 */
 @media (max-width: 1023px) { .page:global(.page) { padding-left: 0; padding-right: 0; } }
+/* 11/23 데스크톱: 하단 탭이 없는 화면이라 셸이 본문을 사이드바 옆으로 밀지 않아 왼쪽이 사이드바 밑으로 잘리던 것 — 탭 화면과 같은 규칙(사이드바 오른쪽 영역의 가운데, 최대 1100) */
+@media (min-width: 1024px) { .page:global(.page) { --main-w: min(1100px, calc(100% - var(--side, 0px) - 48px)); max-width: var(--main-w); margin-left: calc(var(--side, 0px) + (100% - var(--side, 0px) - var(--main-w)) / 2); margin-right: 0; } }
 .top { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; min-height: 52px; padding: 4px var(--gutter) 0; }
 .top h2 { margin: 0; text-align: center; font-size: 17px; font-weight: 700; }
 .head { display: grid; gap: 16px; padding: 16px var(--gutter) 24px; }
