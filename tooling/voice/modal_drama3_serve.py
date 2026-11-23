@@ -30,7 +30,8 @@ SESSION_PREFIXES = 24   # 이어 붙인 상태까지 읽어 둔 모델 상태(�
 TEMPO = 1.1
 # 11/19 사용자: "급박할 때와 당황스러운 상황에 맥락에 맞춰 말의 빠르기가 달라야 한다" — 감정 지시(EMOTION_TAGS)는 목소리를 바꿔서 못 쓰니,
 # 줄마다 앱이 붙인 delivery 로 만든 소리의 빠르기·크기만 바꾼다(음높이·음색 그대로). 빠르기가 다른 줄끼리는 따로 만든다(turn_batches).
-PACE_TEMPO = {'slow': 0.95, 'normal': TEMPO, 'fast': 1.3}
+# 11/24 사용자: "속도가 너무 빠르고 운율이 다 똑같다" — 성인 장면은 모든 줄이 fast 로 와서 턴 전체가 1.3배였다. fast 를 1.18 로 낮춘다(normal 1.1 과 차이가 작아져 줄마다 섞여도 갑자기 늘어지지 않는다).
+PACE_TEMPO = {'slow': 0.95, 'normal': TEMPO, 'fast': 1.18}
 GAIN = {'soft': 0.8, 'normal': 1.0, 'strong': 1.3}
 # 11/17 사용자: 긴 답(읽을 글 2,000자)도 끝까지, 속마음도 읽되 조금 다르게.
 # 한 번에 만드는 길이는 프레임 상한(4096 ≈ 190초 ≈ 800자)에 걸린다 — 읽을 글이 BATCH_CHARS 를 넘으면 줄 경계에서 나눠 차례로 만든다(짧은 턴은 예전처럼 한 번에).
@@ -169,9 +170,7 @@ def feel(delivery, text):
     d = delivery if isinstance(delivery, dict) else {}
     pace, intensity = d.get('pace', 'normal'), d.get('intensity', 'normal')
     if pace == 'normal' and intensity == 'strong' and d.get('emotion') in ('anxious', 'angry'): pace = 'fast'
-    if '[moaning' in text:
-        intensity = 'strong'
-        if pace == 'normal': pace = 'fast'   # 11/23 빠르기를 안 고른 신음 줄이 '빠르게'를 고른 줄보다 느려 다급하다가 갑자기 늘어졌다 — 일부러 느리게(slow) 고른 줄만 그대로
+    if '[moaning' in text: intensity = 'strong'   # 11/24 신음 줄을 모두 '빠르게'로 올리던 것(11/23)은 뺌 — 줄마다 빠르기가 똑같아졌다. 빠르기는 AI 가 그 순간의 움직임대로 고른 값 그대로
     return PACE_TEMPO.get(pace, TEMPO), GAIN.get(intensity, 1.0)
 
 def louder(chunks, gain):
