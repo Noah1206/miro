@@ -333,12 +333,14 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     return () => cancelAnimationFrame(id)
   }, [showTyping, typingSlot])
   const typing = (
-          <motion.p key="thinking" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 10, display: 'flex', alignItems: 'center' }}>
+          <motion.p key="thinking" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: waited > 0 ? 28 : 10, display: 'flex', alignItems: 'center' }}>
             {/* 11/11 사용자: 베이비챗처럼 글 없이 점 셋만(흰→회색 색 순환, 1.2초). 화면 낭독기에는 글로 알린다. */}
             <span className="sr-only">{t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}</span>
-            <span className={styles.typingBubble} aria-hidden><span className={styles.typingDots}><i /><i /><i /></span></span>
+            {/* 11/24 사용자: 기다린 초는 점 박스 옆이 아니라 박스 바로 밑에(가운데) — 박스 크기는 그대로 두고 밑에 띄워 그린다. */}
+            <span className={styles.typingBubble} aria-hidden><span className={styles.typingDots}><i /><i /><i /></span>
+              {waited > 0 && <span style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 4, whiteSpace: 'nowrap', color: 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{t('{n}초', { n: waited })}</span>}
+            </span>
             {slow && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)' }}>{t('조금 오래 걸리고 있어요')}</span>}
-            {waited > 0 && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{t('{n}초', { n: waited })}</span>}
           </motion.p>
   )
   return (

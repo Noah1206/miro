@@ -8,6 +8,9 @@ import { PUBLIC_BUCKET, mediaType, publicMediaName, readMedia } from './storage/
  * 올린 사진이 가는 곳은 처리방침 국외 이전 표(lib/legal/transfer-table.ts)에 적힌 Google 뿐이어야 하므로 다른 공급자로 넘기지 않는다.
  * ponytail: 공급자를 직접 부른다(운영 예산·사용량 기록 밖) — 회원당 한도(create/actions tagSituationImage)로만 막는다. 양이 늘면 orchestrator 로 옮긴다.
  */
+/** 11/23 Gemini 가 429(월 지출 한도·속도 제한)를 돌려준 적이 있는가 — 한도에 걸린 채 수백 장을 계속 부르다 운영 키까지 막히지 않게 일괄 작업이 확인한다. */
+export const photoTagQuota = { hit: false }
+
 export type PhotoTagging = { tags: string[]; outfit: 'dressed' | 'bare'; adult: boolean; situation: string }
 
 export const PHOTO_TAG_SYSTEM = `너는 캐릭터 채팅 앱의 상황 사진에 태그를 붙인다. 사진 한 장을 보고 JSON 하나만 답한다(설명·코드펜스 없이):
@@ -60,6 +63,7 @@ async function viaGemini(img: { type: string; base64: string }, hint: string): P
       generationConfig: { maxOutputTokens: 4096, temperature: 0.2, responseMimeType: 'application/json', thinkingConfig: { thinkingLevel: 'low' } } }),
   }).catch(() => null)
   const debug = process.env.MIRO_PHOTO_TAG_DEBUG === '1'
+  if (res?.status === 429) photoTagQuota.hit = true   // 한도·속도 제한 — 일괄 작업(scripts/photo-tags.mts)이 보고 멈춘다
   if (!res?.ok) { if (debug) console.log('  tag http', res?.status ?? 'network', (await res?.text().catch(() => ''))?.slice(0, 120)); return null }
   const j = await res.json().catch(() => null) as { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>; promptFeedback?: { blockReason?: string } } | null
   const text = j?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text ?? '').join('') || null

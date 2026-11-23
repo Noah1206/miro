@@ -7,7 +7,7 @@
  *   npx tsx --env-file=../../.env scripts/photo-tags.mts --apply --slug <slug>        # 그 작품만 채워 DB 반영(40장마다 저장)
  *   … --max 300 : 이번에 채울 최대 장수(기본 400), --retag : 이미 있는 태그도 다시
  */
-import { tagPhoto } from '../lib/photo-tags'
+import { photoTagQuota, tagPhoto } from '../lib/photo-tags'
 const { db, characters, sql, eq } = await import('@miro/db')
 const argv = process.argv.slice(2), arg = (k: string) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : undefined }
 const slug = arg('--slug'), max = Number(arg('--max') ?? 400), retag = argv.includes('--retag')
@@ -31,12 +31,14 @@ for (let pass = 0; pass < 4 && list.length; pass++) {
   const missed: number[] = []; let next = 0
   const worker = async () => {
     while (next < list.length) {
+      if (photoTagQuota.hit) return   // 한도에 걸렸다 — 더 부르지 않는다
       const i = list[next++]!, e = imgs[i]!
       const r = await tagPhoto(e.image, e.situation ?? '').catch(() => null)
       if (r) { e.tags = r.tags; e.outfit = r.outfit; if (++done % 40 === 0) { await save(); console.log(`  ${done}/${todo.length}`) } } else missed.push(i)
     }
   }
   await Promise.all(Array.from({ length: 4 }, worker))
+  if (photoTagQuota.hit) { await save(); console.log(`한도(429)에 걸려 멈춤 — ${done}장까지 저장`); process.exit(3) }
   if (missed.length) console.log(`  ${pass + 1}차: ${missed.length}장 다시`)
   list = missed
 }
