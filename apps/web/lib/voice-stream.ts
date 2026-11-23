@@ -87,7 +87,8 @@ export class VoiceStreamPlayer {
       } else schedule(await ctx.decodeAudioData(await response.arrayBuffer()))
     } finally { signal.removeEventListener('abort', abort) }
     const final = last as AudioBufferSourceNode | null
-    return { ended: !final || signal.aborted ? Promise.resolve() : new Promise<void>(resolve => {
+    // 11/23 소리판이 멈춰 있으면(iOS 잠금) 'ended' 가 영영 안 와 다음 답을 못 읽었다 — 그땐 기다리지 않는다.
+    return { ended: !final || signal.aborted || ctx.state !== 'running' ? Promise.resolve() : new Promise<void>(resolve => {
       const done = () => { signal.removeEventListener('abort', done); resolve() }
       final.addEventListener('ended', done, { once: true }); signal.addEventListener('abort', done, { once: true })
     }) }

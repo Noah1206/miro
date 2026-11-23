@@ -166,7 +166,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   }
   // 11/22 사용자: 답이 만들어지는 도중에 음성을 켜면 그 답은 글로만, 다음 답부터 음성 — 보낼 때 음성 상태로 가른다(서버도 그 값으로 음성용 답을 만든다).
   const voiceAtSend=useRef(false)
-  const markSend=(voiced:boolean)=>{voiceAtSend.current=voiced}
+  // 11/23 음성 모드는 새로고침해도 켜진 채라(localStorage) 소리 잠금 풀기(unlock)가 켤 때만 있었다 — iOS 는 손짓 밖에서 만든 소리판이 멈춰 있어 아무 소리도 안 나고 줄이 멈췄다. 보내기(손짓)에서 푼다.
+  const markSend=(voiced:boolean)=>{voiceAtSend.current=voiced;if(voiced&&on)unlock()}
   // 켜는 순간 이미 와 있던 답은 읽지 않는다 — 켠 뒤에 새로 오는 답부터.
   const spoken=useRef(new Set<string>())
   useEffect(()=>{if(on){for(const m of appended)spoken.current.add(m.id);setSkipped(new Set(appended.map(m=>m.id)))}
