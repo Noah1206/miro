@@ -245,6 +245,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     </div>
     {/* 만들어지는 사진 자리(11/9) — 사진은 대화 맨 끝에 붙으므로 사진 버튼이 여기로 그린다(photo-button.tsx). */}
     <div id="photo-making-slot" />
+    {/* 11/23 사용자: 대기 표시(점 셋)는 입력창 위에 떠 있지 않고 대화 맨 끝에 — composer.tsx 가 여기로 그린다. */}
+    <div id="typing-slot" />
     <div id="suggest-slot" />
     {opening.playing && <button type="button" className={styles.openingSkip} onClick={opening.finish}>{t('인트로 전체 보기')}</button>}
     {/* 11/7 사용자: 말풍선 밑 다시 받기 버튼은 지운다. */}

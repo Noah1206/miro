@@ -63,6 +63,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     const id = requestAnimationFrame(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }))
     return () => cancelAnimationFrame(id)
   }, [suggest, suggestSlot])
+  // 11/23 사용자: 대기 표시가 입력창 위에 떠서 스크롤하면 글 위에 겹쳤다 — 대화 끝 자리(#typing-slot)에 그린다.
+  const [typingSlot, setTypingSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => { setTypingSlot(document.getElementById('typing-slot')) }, [])
   const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
   const hadRefresh = useRef(false)
@@ -315,17 +318,25 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     return () => ro.disconnect()
   }, [])
 
-  return (
-    <div ref={box} className={styles.composer} data-chat-composer>
-      <AnimatePresence initial={false}>
-        {showTyping && (
+  useEffect(() => {
+    const host = typingSlot?.parentElement
+    if (!showTyping || !host) return
+    const id = requestAnimationFrame(() => host.scrollTo({ top: host.scrollHeight, behavior: 'smooth' }))
+    return () => cancelAnimationFrame(id)
+  }, [showTyping, typingSlot])
+  const typing = (
           <motion.p key="thinking" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 10, display: 'flex', alignItems: 'center' }}>
             {/* 11/11 사용자: 베이비챗처럼 글 없이 점 셋만(흰→회색 색 순환, 1.2초). 화면 낭독기에는 글로 알린다. */}
             <span className="sr-only">{t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}</span>
             <span className={styles.typingBubble} aria-hidden><span className={styles.typingDots}><i /><i /><i /></span></span>
             {slow && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)' }}>{t('조금 오래 걸리고 있어요')}</span>}
           </motion.p>
-        )}
+  )
+  return (
+    <div ref={box} className={styles.composer} data-chat-composer>
+      {typingSlot && createPortal(<AnimatePresence initial={false}>{showTyping && typing}</AnimatePresence>, typingSlot)}
+      <AnimatePresence initial={false}>
+        {showTyping && !typingSlot && typing}
         {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</motion.p>}
         {/* 11/10 잔액 부족 + 오늘 출석 안 함 → 출석 안내(출석했으면 안 나오고 충전 시트가 열린다). */}
         {state.limit?.attend && (
