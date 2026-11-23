@@ -232,6 +232,14 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   // 첫 블록이 오면 점 대신 답이 보인다.
   // 11/16 음성 모드에선 소리가 시작될 때까지 글을 잡아 두므로 그동안 점을 계속 보인다.
   const showTyping = (pending && (!live?.blocks.length || voice.live)) || waiting || voice.holding
+  // 11/23 사용자: 얼마나 기다렸는지 숫자로 — 대기 표시가 보이는 동안 1초마다.
+  const [waited, setWaited] = useState(0)
+  useEffect(() => {
+    setWaited(0)
+    if (!showTyping) return
+    const start = Date.now(), id = setInterval(() => setWaited(Math.floor((Date.now() - start) / 1000)), 1000)
+    return () => clearInterval(id)
+  }, [showTyping])
   const [slow, setSlow] = useState(false)
   useEffect(() => {
     setSlow(false)
@@ -330,6 +338,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <span className="sr-only">{t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}</span>
             <span className={styles.typingBubble} aria-hidden><span className={styles.typingDots}><i /><i /><i /></span></span>
             {slow && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)' }}>{t('조금 오래 걸리고 있어요')}</span>}
+            {waited > 0 && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{t('{n}초', { n: waited })}</span>}
           </motion.p>
   )
   return (
