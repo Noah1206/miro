@@ -10,7 +10,7 @@ export const PHOTO_TAGS = {
   노출: ['속옷 차림', '옷 벗기', '가슴 노출', '알몸', '엉덩이', '유혹 포즈', '셀카', '아헤가오'],
   애무: ['가슴 애무', '가슴 빨기', '엉덩이 애무', '손가락 애무', '핥기', '자위', '기구'],
   봉사: ['손으로', '입으로', '목 깊이', '가슴으로', '발로'],
-  체위: ['정상위', '후배위', '기승위', '역기승위', '측위', '대면좌위', '들어서', '교배 프레스', '풀 넬슨', '엎드려', '서서 뒤로', '애널'],
+  체위: ['정상위', '후배위', '기승위', '역기승위', '측위', '대면좌위', '들어서', '교배 프레스', '풀 넬슨', '엎드려', '서서 뒤로', '애널', '69'],
   마무리: ['절정', '시오후키', '안에 사정', '입에 사정', '몸에 사정', '관계 뒤'],
   특수: ['여러 명', '구속', '샤워', '수유', '오줌', '통화 중'],
 } as const
@@ -80,4 +80,74 @@ const POSITION_CUES: ReadonlyArray<readonly [string, RegExp]> = [
 ]
 export function cueUserPosition(input: string): string | null {
   return POSITION_CUES.find(([, cue]) => cue.test(input))?.[0] ?? null
+}
+
+/**
+ * 11/24 사진 설명에서 태그 읽기 — 자동 태그(비전 AI)가 체위를 틀리게 붙인 사진이 있어(설명 '후배위로 받아들일 때'인데 태그 '기승위'),
+ * 설명에 체위·행위 이름이 적혀 있으면 그 이름을 태그로 삼는다(AI 호출 없음, scripts/photo-tags-from-captions.mts 가 쓴다).
+ * 돌려주는 순서 = 핵심부터(체위 → 봉사 → 애무 → 마무리 → 특수). 설명에 행위 이름이 없으면 빈 배열(그 사진은 자동 태그 그대로).
+ */
+const CAPTION_TAGS: ReadonlyArray<readonly [string, RegExp]> = [
+  ['69', /69 ?자세/],
+  ['역기승위', /역기승위|등을 (?:돌려|보인 채).{0,8}올라타|올라타.{0,4}뒤돌아/],
+  ['기승위', /(?<!역)기승위|위에 올라타|올라탈|올라타 |아마존 체위/],
+  ['교배 프레스', /교배 ?프레스|파일드라이버/],
+  ['풀 넬슨', /풀 ?넬슨/],
+  ['대면좌위', /대면좌위/],
+  ['들어서', /들어서 (?:정면|안)/],
+  ['측위', /측위/],
+  ['애널', /애널/],
+  ['서서 뒤로', /서서 뒤(?:로|에서)|부스에서 뒤로/],
+  ['엎드려', /엎드린 후배위|엎드려 뒤로/],
+  ['후배위', /후배위|뒤로 (?:받|안에|하다|격렬|박)|뒤에서 (?:받|박)/],
+  ['정상위', /정상위/],
+  ['목 깊이', /목 깊숙이/],
+  ['입으로', /입으로(?:도)? 해|입과 손으로|입·손|핥으며 손으로|번갈아 핥|입으로 깨워/],
+  ['가슴으로', /가슴 사이에 끼|가슴으로 끼/],
+  ['손으로', /손으로(?:도)? 해|입과 손으로|입·손/],
+  ['발로', /발로 (?:자지|밟)/],
+  ['가슴 빨기', /가슴을 빨|젖을 빨/],
+  ['가슴 애무', /가슴을 (?:만져지|만져질|주물리)/],
+  ['엉덩이 애무', /엉덩이를 만져/],
+  ['손가락 애무', /손가락(?:으로|에) 애무|속옷 위로 비벼/],
+  ['핥기', /핥아질|핥아지/],
+  ['자위', /자위/],
+  ['기구', /딜도|바이브/],
+  ['시오후키', /시오후키/],
+  ['절정', /절정/],
+  ['안에 사정', /안에 (?:사정|싼)/],
+  ['입에 사정', /입안 가득|입안의 정액|정액을 삼키|목 깊숙이 사정/],
+  ['몸에 사정', /(?:가슴|얼굴|몸|배|등)(?: 사이)?에 사정|정액 범벅|사정받고 브이|해 주다 사정받/],
+  ['관계 뒤', /관계 뒤|끝난 뒤|탈진|늘어졌/],
+  ['여러 명', /여러 남자|남자들|세 남자|다른 남자/],
+  ['임신', /임신|만삭/],
+  ['구속', /눈가리개|재갈|묶인/],
+  ['샤워', /샤워/],
+  ['수유', /젖을 물리/],
+  ['오줌', /오줌/],
+  ['통화 중', /통화/],
+]
+export function captionPhotoTags(caption: string): string[] {
+  // 체위는 설명에서 먼저 맞은 하나만(구체적인 것이 위) — '서서 뒤에서 박힐 때'가 서서 뒤로·후배위 둘 다로 읽히지 않게.
+  const positions: readonly string[] = PHOTO_TAGS.체위
+  let position = false
+  return CAPTION_TAGS.filter(([tag, cue]) => { if (!cue.test(caption)) return false; if (!positions.includes(tag)) return true; if (position) return false; position = true; return true }).map(([tag]) => tag)
+}
+/**
+ * 설명에서 읽은 태그로 자동 태그를 보정한다.
+ * - 설명이 행위(체위·봉사·애무)를 적었으면 그 행위가 핵심 — 자동 태그의 체위·봉사·애무는 버린다(잘못 본 것). 설명이 마무리·특수만 적었으면 자동 태그의 체위는 그대로 둔다.
+ * - 마무리(절정·사정)·특수·표정·노출 태그는 양쪽 것을 합친다. 설명에 욕실·샤워가 없는데 붙은 '목욕'·'샤워'는 뺀다(윤기 나는 피부를 목욕으로 잘못 본 것).
+ * - 순서는 체위 → 봉사 → 애무 → 마무리 → 특수 → 나머지(첫 태그가 그 사진의 핵심). 설명에 행위 이름이 없으면 자동 태그 그대로.
+ */
+export function correctedPhotoTags(caption: string, vision: readonly string[]): string[] {
+  const named = captionPhotoTags(caption)
+  const wet = /욕실|욕조|욕장|목욕|샤워|온천|수영장/.test(caption)
+  const cleaned = vision.filter(t => wet || (t !== '목욕' && t !== '샤워'))
+  if (!named.length) return cleaned.length ? cleaned : [...vision]
+  const groups: ReadonlyArray<readonly string[]> = [PHOTO_TAGS.체위, PHOTO_TAGS.봉사, PHOTO_TAGS.애무, PHOTO_TAGS.마무리, [...PHOTO_CONTEXT_TAGS, '샤워', '통화 중']]
+  const acts: readonly string[] = [...groups[0]!, ...groups[1]!, ...groups[2]!]
+  const actNamed = named.some(t => acts.includes(t))
+  const kept = cleaned.filter(t => !named.includes(t) && !(actNamed && acts.includes(t)))
+  const rank = (t: string) => { const g = groups.findIndex(x => x.includes(t)); return g < 0 ? groups.length : g }
+  return normalizePhotoTags([...named, ...kept].map((t, i) => ({ t, i })).sort((a, b) => rank(a.t) - rank(b.t) || a.i - b.i).map(x => x.t))
 }
