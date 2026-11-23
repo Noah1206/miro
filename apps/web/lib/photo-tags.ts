@@ -56,13 +56,15 @@ async function viaGemini(img: { type: string; base64: string }, hint: string): P
     method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(45_000),
     body: JSON.stringify({ systemInstruction: { parts: [{ text: PHOTO_TAG_SYSTEM }] }, contents: [{ role: 'user', parts: [{ inlineData: { mimeType: img.type, data: img.base64 } }, { text: `이 사진의 태그.${hint ? ` 제작자가 적은 설명(참고): ${hint}` : ''}` }] }],
       safetySettings: ['HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_HARASSMENT'].map(category => ({ category, threshold: 'BLOCK_NONE' })),
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.2, responseMimeType: 'application/json' } }),
+      // 11/23 생각(thinking)도 출력 한도를 먹는다 — 1024 에서는 생각이 길어진 사진의 답이 중간에 잘려 태그 없음으로 떨어졌다(한 작품 80장 중 38장). 생각은 가장 낮게, 한도는 넉넉히.
+      generationConfig: { maxOutputTokens: 4096, temperature: 0.2, responseMimeType: 'application/json', thinkingConfig: { thinkingLevel: 'low' } } }),
   }).catch(() => null)
   const debug = process.env.MIRO_PHOTO_TAG_DEBUG === '1'
   if (!res?.ok) { if (debug) console.log('  tag http', res?.status ?? 'network', (await res?.text().catch(() => ''))?.slice(0, 120)); return null }
   const j = await res.json().catch(() => null) as { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>; promptFeedback?: { blockReason?: string } } | null
   const text = j?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text ?? '').join('') || null
   if (!text && debug) console.log('  tag empty', j?.promptFeedback?.blockReason ?? j?.candidates?.[0]?.finishReason ?? 'unknown', hint ? '(설명 있음)' : '')
+  else if (debug && j?.candidates?.[0]?.finishReason !== 'STOP') console.log('  tag cut', j?.candidates?.[0]?.finishReason, text?.length)
   return text
 }
 
@@ -72,7 +74,8 @@ export async function tagPhoto(url: string, hint = ''): Promise<PhotoTagging | n
   if (!img) return null
   const note = hint.replace(/\s+/g, ' ').trim().slice(0, 120)
   // 설명 글 때문에 막히는 경우가 있어(성인 표현) 설명을 준 요청이 실패하면 그림만으로 한 번 더.
-  return parsePhotoTagging(await viaGemini(img, note) ?? '') ?? (note ? parsePhotoTagging(await viaGemini(img, '') ?? '') : null)
+  const ask = async (h: string) => { const text = await viaGemini(img, h), out = parsePhotoTagging(text ?? ''); if (!out && text && process.env.MIRO_PHOTO_TAG_DEBUG === '1') console.log('  tag unparsed', text.slice(0, 200)); return out }
+  return await ask(note) ?? (note ? await ask('') : null)
 }
 
 if (process.argv[1]?.endsWith('photo-tags.ts')) {

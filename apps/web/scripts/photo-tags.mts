@@ -23,25 +23,26 @@ if (!slug || rows.length !== 1) { console.error('--apply 는 --slug <작품> 하
 const work = rows[0]!, imgs = work.imgs.map(e => ({ ...e }))
 const todo = imgs.map((e, i) => i).filter(i => only.size ? only.has(imgs[i]!.image.split('/').pop()!.split('?')[0]!) : retag || !imgs[i]!.tags?.length).slice(0, max)
 console.log(`${work.name}: ${todo.length}장 채움(전체 ${imgs.length}장)`)
-let next = 0, done = 0, failed = 0
+let done = 0
 const save = () => db.update(characters).set({ situationImages: imgs }).where(eq(characters.id, work.id))
-const missed: number[] = []
-const worker = async () => {
-  while (next < todo.length) {
-    const i = todo[next++]!, e = imgs[i]!
-    const r = await tagPhoto(e.image, e.situation ?? '').catch(() => null)
-    if (r) { e.tags = r.tags; e.outfit = r.outfit } else { failed++; missed.push(i) }
-    if (++done % 40 === 0) { await save(); console.log(`  ${done}/${todo.length} (실패 ${failed})`) }
+// 실패한 사진(답이 잘리거나 비어 옴 — 다시 물으면 대개 된다)은 네 번까지 다시 돈다. 한 번에 4장씩.
+let list = todo
+for (let pass = 0; pass < 4 && list.length; pass++) {
+  const missed: number[] = []; let next = 0
+  const worker = async () => {
+    while (next < list.length) {
+      const i = list[next++]!, e = imgs[i]!
+      const r = await tagPhoto(e.image, e.situation ?? '').catch(() => null)
+      if (r) { e.tags = r.tags; e.outfit = r.outfit; if (++done % 40 === 0) { await save(); console.log(`  ${done}/${todo.length}`) } } else missed.push(i)
+    }
   }
+  await Promise.all(Array.from({ length: 4 }, worker))
+  if (missed.length) console.log(`  ${pass + 1}차: ${missed.length}장 다시`)
+  list = missed
 }
-await Promise.all(Array.from({ length: 4 }, worker))
-// 실패한 사진은 하나씩 천천히 두 번 더(동시에 몰려 막힌 경우).
-for (let pass = 0; pass < 2 && missed.length; pass++) {
-  const again = missed.splice(0)
-  for (const i of again) { const e = imgs[i]!, r = await tagPhoto(e.image, e.situation ?? '').catch(() => null); if (r) { e.tags = r.tags; e.outfit = r.outfit; failed-- } else missed.push(i) }
-}
-if (missed.length) console.log('끝내 실패:', missed.map(i => imgs[i]!.image.split('/').pop()!.split('?')[0]).join(' '))
+const failed = list.length
+if (failed) console.log('끝내 실패:', list.map(i => imgs[i]!.image.split('/').pop()!.split('?')[0]).join(' '))
 await save()
 const left = imgs.filter(e => !e.tags?.length).length
-console.log(`끝: ${done - failed}장 채움, 실패 ${failed}, 태그 없는 사진 ${left}장${left ? ' — 다시 돌리면 남은 것만 채운다' : ' (이 작품은 이제 태그로 고른다)'}`)
+console.log(`끝: ${done}장 채움, 실패 ${failed}, 태그 없는 사진 ${left}장${left ? ' — 다시 돌리면 남은 것만 채운다' : ' (이 작품은 이제 태그로 고른다)'}`)
 process.exit(0)
