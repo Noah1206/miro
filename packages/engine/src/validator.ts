@@ -1,6 +1,6 @@
-import { REDRESS, castNames, dressedPhoto, heroineName, photoByTag, photoTagMode, rankedSituationImages } from './context'
+import { REDRESS, castNames, dressedPhoto, heroineName, photoTagsOf, photoByTag, photoTagMode, rankedSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
-import { POLICY, cuePhotoTag } from '@miro/config'
+import { PENETRATION_CUE, PHOTO_TAGS, POLICY, cuePhotoTag, cueUserPosition } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
 import type { SimulationProposal } from './proposal.schema'
@@ -50,7 +50,9 @@ export function validateProposal(
   const issues: ValidationIssue[] = []
   const blocks = validateBlocks(proposal, snapshot, issues)
   const told = blocks.map(b => b.text).join('\n')
-  const photos = keepOutfitOrder(sceneImages(snapshot, proposal.images), snapshot, told)
+  // 11/24 블록마다 정한 사진(블록의 photo 칸)이 있으면 그것을 쓴다 — 없을 때만 예전처럼 최상위 images.
+  const perBlock = blockPhotoCodes(proposal.rp.blocks)
+  const photos = keepOutfitOrder(sceneImages(snapshot, perBlock.length ? perBlock : proposal.images), snapshot, told)
   // 11/23 사용자 "왜 사진이 한 번도 안 나오는 경우가 있어": AI 가 images 를 빠뜨리거나 쓸 수 없는 코드만 내면 0장이었다 —
   // 고를 수 있는 사진이 있으면 지금 대화와 가장 가까운 것으로 최소 장수(3, 블록이 적으면 블록 수)를 채운다(옷차림 순서도 지킨다).
   // 11/23 사용자 "왜 사진이 한 번도 안 나오는 경우가 있어": AI 가 images 를 빠뜨리거나 쓸 수 없는 코드만 내면 0장이었다 —
@@ -59,7 +61,14 @@ export function validateProposal(
   // 11/24 태그로 고르는 작품은 먼저 이번 답의 글에서 태그를 짐작해(config cuePhotoTag) 그 블록 뒤에 둔다 — 글자 겹침으로 채우면 장면과 다른 행위의 사진이 떴다.
   if (!photos.length && blocks.length && photoTagMode(snapshot.character, !!snapshot.adultMode)) {
     const codes: string[] = []; let prev = ''
-    blocks.forEach((b, i) => { const tag = cuePhotoTag(b.text); if (tag && tag !== prev) { codes.push(`${tag}:${i + 1}`); prev = tag } })
+    // 체위 이름 없이 삽입만 그려진 블록 — 사용자가 체위를 적었으면 그 체위, 아니면 이 작품에 있는 체위 사진 가운데 하나를 돌아가며(사용자: 지정하지 않았으면 다양하게 나와도 된다).
+    const positions = photoTagsOf(snapshot.character, !!snapshot.adultMode, true).filter(t => (PHOTO_TAGS.체위 as readonly string[]).includes(t) && t !== '애널')
+    const wanted = cueUserPosition(snapshot.userInput ?? '')
+    blocks.forEach((b, i) => {
+      let tag = cuePhotoTag(b.text)
+      if (tag === '달아오름' && PENETRATION_CUE.test(b.text)) tag = wanted ?? positions[(snapshot.turnCount + i) % (positions.length || 1)] ?? tag
+      if (tag && tag !== prev) { codes.push(`${tag}:${i + 1}`); prev = tag }
+    })
     photos.push(...keepOutfitOrder(sceneImages(snapshot, codes), snapshot, told).slice(0, 5).map(p => ({ ...p, fill: true })))
   }
   if (!photos.length && blocks.length) {
@@ -392,6 +401,11 @@ export function keepOutfitOrder<T extends { index: number }>(photos: T[], s: Sim
   })
 }
 
+/** 블록마다 정한 사진(photo 칸) → "태그:블록번호" 목록. 번호는 AI 가 쓴 블록 순서(검증 전) 그대로. */
+export function blockPhotoCodes(blocks: ReadonlyArray<{ photo?: string }>): string[] {
+  return blocks.flatMap((b, i) => { const tag = b.photo?.replace(/\s*[:@>]\s*\d{1,3}\s*$/, '').trim(); return tag ? [`${tag}:${i + 1}`] : [] })
+}
+
 export function sceneImages(s: SimulationSnapshot, codes: readonly string[] | undefined): Array<{ index: number; after: number | null; fill?: boolean }> {
   const list = s.character.worldRole.situationImages ?? []
   const out: Array<{ index: number; after: number | null; fill?: boolean }> = []
@@ -405,8 +419,14 @@ export function sceneImages(s: SimulationSnapshot, codes: readonly string[] | un
     return { m, t, k, after: at ? Number(at) : null }
   }).sort((x, y) => (x.after ?? Infinity) - (y.after ?? Infinity) || x.k - y.k)
   let bare = s.lastPhotoIndex != null && !dressedPhoto(list, s.lastPhotoIndex), heat = false
+  // 11/24 사용자: 유저가 체위를 명시했으면(뒤에서·후배위 등) 그 체위 사진이 나와야 한다 — AI 가 다른 체위 태그를 골랐으면 명시한 체위로 바꾼다(그 체위 사진이 없으면 AI 가 고른 대로).
+  const wanted = byTag ? cueUserPosition(s.userInput ?? '') : null
+  const flat = (x: string) => x.replace(/\s+/g, ''), positions = new Set((PHOTO_TAGS.체위 as readonly string[]).map(flat))
+  const asked = (tag: string) => wanted ? tag.split('+').map(x => positions.has(flat(x)) && flat(x) !== flat(wanted) ? wanted : x).join('+') : tag
   for (const p of picks) {
-    const i = p.t ? photoByTag(s, p.t[1]!, new Set(out.map(o => o.index)), bare, heat) : Number(p.m?.[1]) - 1
+    const used = new Set(out.map(o => o.index))
+    let i = p.t ? photoByTag(s, asked(p.t[1]!), used, bare, heat) : Number(p.m?.[1]) - 1
+    if (p.t && i < 0 && asked(p.t[1]!) !== p.t[1]) i = photoByTag(s, p.t[1]!, used, bare, heat)
     if (!(i >= 0 && i < list.length) || (list[i]!.adult && !s.adultMode) || out.some(o => o.index === i)) continue
     if (!dressedPhoto(list, i)) bare = true
     if (list[i]!.adult) heat = true

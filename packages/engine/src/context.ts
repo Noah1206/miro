@@ -521,16 +521,18 @@ function imageRules(c: SimulationSnapshot['character'], adult: boolean): string[
     const tags = photoTagsOf(c, adult)
     return ['', '## 사진 (만든 사람이 올린 장면 사진 — 태그로 고릅니다)',
       // 11/23 사용자: 사진 목록(수백 줄) 대신 태그로 — AI 는 '지금 무슨 순간인가'만 정하고, 그 태그의 사진 가운데 어느 것을 띄울지는 서버가 정한다(옷차림 단계·장소·방금 보인 사진).
-      `- 아래 태그에서 골라 최상위 images 칸에 "태그:블록번호" 로 냅니다(블록 순서대로). 예: "${tags[0]}:2" 는 2번째 블록 뒤(rp.blocks 를 1부터 센 순서, 마지막 블록 뒤면 마지막 번호). 태그는 목록의 글자 그대로 씁니다.`,
-      '- 그 블록에서 벌어지는 행위·표정과 가장 가까운 태그만 정하면 됩니다. 그 태그의 사진 가운데 장소와 옷차림이 맞는 것은 서버가 골라 띄웁니다.',
-      `- ${PHOTO_CONTEXT_TAGS.filter(t => tags.includes(t)).join('·') || '여러 명·임신'} 같은 태그는 장면이 실제로 그럴 때만 고릅니다. 그 상황에서의 행위는 "여러 명+후배위:6" 처럼 + 로 이어 씁니다(이 태그가 붙은 사진은 이렇게 고를 때만 나옵니다).`,
-      '- 체위·봉사 중의 절정·사정·시오후키는 "후배위+절정:8" 처럼 그때의 행위와 + 로 함께 씁니다. 태그 하나만 쓰면(예: "절정") 체위가 없는 사진에서만 찾습니다.',
+      // 11/24 글을 쓰기 전에 사진부터 고르게 했더니(최상위 images) 실제로 쓴 내용과 사진이 따로 놀았다 — 블록을 쓴 직후 그 블록의 사진을 정한다(블록의 photo 칸).
+      `- 사진은 블록마다 정합니다. 블록의 글을 다 쓴 뒤 그 블록에 사진을 둘 만하면, 그 블록 객체의 마지막 칸으로 "photo":"태그" 를 붙입니다 — 예: {"type":"narrative","speaker":null,"text":"…","photo":"${tags[0]}"}. 방금 쓴 그 블록에서 실제로 벌어진 행위·표정과 가장 가까운 태그를 아래 목록의 글자 그대로 씁니다. 사진이 필요 없는 블록에는 photo 칸을 쓰지 않습니다. 최상위 images 칸은 [] 로 둡니다.`,
+      '- 그 태그의 사진 가운데 장소와 옷차림이 맞는 것은 서버가 골라 띄웁니다. 본문(text)에 태그나 사진 설명을 쓰지 않습니다.',
+      `- ${PHOTO_CONTEXT_TAGS.filter(t => tags.includes(t)).join('·') || '여러 명·임신'} 같은 태그는 장면이 실제로 그럴 때만 고릅니다. 그 상황에서의 행위는 "여러 명+후배위" 처럼 + 로 이어 씁니다(이 태그가 붙은 사진은 이렇게 고를 때만 나옵니다).`,
+      '- 체위·봉사 중의 절정·사정·시오후키는 "후배위+절정" 처럼 그때의 행위와 + 로 함께 씁니다. 태그 하나만 쓰면(예: "절정") 체위가 없는 사진에서만 찾습니다.',
+      // 11/24 사용자: 유저가 체위를 명시했으면 그 체위 사진, 명시하지 않은 섹스 장면은 여러 체위가 다양하게 나와도 된다.
+      '- 체위: 사용자의 입력이나 방금 쓴 글에 체위·자세가 분명히 나오면(뒤에서, 후배위, 올라타서, 눕혀서, 서서 등) 그 블록의 사진은 반드시 그 체위 태그로 고릅니다. 체위가 따로 정해지지 않은 삽입 장면이면 목록의 체위 태그 가운데 그 장소·자세에 무리 없는 것을 골라 쓰고, 한 응답 안에서 같은 체위만 되풀이하지 말고 서로 다른 체위 사진으로 다양하게 둡니다.',
       // 11/24 사용자: 사진 장수는 출력량(글 길이)과 따로 — 글이 짧게 나와도 사진은 충분히.
-      '- 장수는 글 길이와 따로 정합니다: 한 응답에 4~6장(블록이 그보다 적으면 블록 수만큼, 많게는 10장). 글이 짧아도 장면의 순간마다 사진을 두고, 사진 사이가 블록 3개를 넘지 않게 고르게 둡니다.',
+      '- 장수는 글 길이와 따로 정합니다: 한 응답에 4~6장(블록이 그보다 적으면 블록 수만큼, 많게는 10장). 글이 짧아도 장면의 순간마다 사진을 두고, 사진 사이가 블록 3개를 넘지 않게 고르게 둡니다. 첫 사진은 첫 블록이나 둘째 블록에 둡니다.',
       PHOTO_ACT_RULE,
       '- 같은 행위가 이어지는 긴 장면이라도 한두 장으로 끝내지 않습니다 — 사이사이 그 순간의 반응에 맞는 태그(달아오른 표정, 애무받는 모습, 절정, 끝난 뒤 등 목록에 있는 것)를 섞습니다. 같은 태그를 다시 써도 다른 사진이 나오지만, 같은 태그만 연달아 쓰지 않습니다.',
-      '- 진행 단계가 크게 다른 태그(옷을 다 입고 대화만 하는데 성행위 태그)는 고르지 않습니다. 사진에 맞추려고 장면을 바꾸지 않습니다. images 는 rp 보다 먼저 쓰니, 사용자의 이번 입력에 맞춰 이번 응답에서 그릴 장면을 먼저 정하고 그 흐름에 맞춰 고릅니다.',
-      '- 본문에 태그나 사진 설명을 쓰지 않습니다.',
+      '- 진행 단계가 크게 다른 태그(옷을 다 입고 대화만 하는데 성행위 태그)는 고르지 않습니다. 사진에 맞추려고 장면을 바꾸지 않습니다.',
       `- 태그: ${tags.join(' · ')}`]
   }
   const many = list.length > IMAGE_LIST_MAX
@@ -610,7 +612,9 @@ export function photoByTag(s: SimulationSnapshot, tag: string, used: ReadonlySet
   const q = bigrams([s.recentMessages.at(-1)?.content.slice(-400) ?? '', s.userInput ?? ''].join('\n'))
   const score = (e: (typeof hits)[number]) => { let n = 0; for (const g of bigrams(e.situation)) if (q.has(g)) n++; return n }
   const core = (e: (typeof hits)[number]) => wants.includes(flat(e.tags?.[0] ?? '')) ? 0 : 1
-  return hits.map(e => ({ e, n: score(e) })).sort((a, b) => core(a.e) - core(b.e) || Number(seen.has(a.e.i)) - Number(seen.has(b.e.i)) || b.n - a.n || (a.e.tags?.length ?? 0) - (b.e.tags?.length ?? 0) || a.e.i - b.e.i)[0]!.e.i
+  // 11/24 고른 태그 말고 다른 행위 태그가 더 붙은 사진은 뒤로 — '기승위'를 골랐는데 [기승위, 입에 사정](69 자세) 사진이 먼저 나왔다. '달아오름'은 표정이라 세지 않는다.
+  const extra = (e: (typeof hits)[number]) => (e.tags ?? []).filter(t => !wants.includes(flat(t)) && flat(t) !== '달아오름').length
+  return hits.map(e => ({ e, n: score(e) })).sort((a, b) => core(a.e) - core(b.e) || extra(a.e) - extra(b.e) || Number(seen.has(a.e.i)) - Number(seen.has(b.e.i)) || b.n - a.n || a.e.i - b.e.i)[0]!.e.i
 }
 export function rankedSituationImages(s: SimulationSnapshot) {
   const list = situationList(s.character, !!s.adultMode)

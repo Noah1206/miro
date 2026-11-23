@@ -1,5 +1,5 @@
 import { RpBlock, type SimulationProposal } from './proposal.schema'
-import { allowedBlocks, sceneImages } from './validator'
+import { allowedBlocks, blockPhotoCodes, sceneImages } from './validator'
 import type { SimulationSnapshot } from './context'
 
 export type StreamBlock = SimulationProposal['rp']['blocks'][number]
@@ -92,7 +92,8 @@ export function blockStream(snapshot: SimulationSnapshot, stream: TurnStream, op
     onText(text: string) {
       if (!started && text) { started = true; stream.onFirstText?.() }
       const parsed = completedBlocks(text).flatMap(raw => { const r = RpBlock.safeParse(raw); return r.success ? [r.data] : [] }).filter(keep)
-      if (!picks && stream.onPhotos) { const codes = earlyImageCodes(text); if (codes) picks = sceneImages(snapshot, codes) }
+      // 11/24 블록마다 정한 사진(photo 칸)이 오면 그것으로 — 블록이 늘 때마다 다시 계산한다(앞에서 고른 사진은 바뀌지 않는다). 없을 때만 예전처럼 맨 앞의 images.
+      if (stream.onPhotos) { const codes = blockPhotoCodes(parsed); if (codes.length) picks = sceneImages(snapshot, codes); else if (!picks) { const early = earlyImageCodes(text); if (early) picks = sceneImages(snapshot, early) } }
       photos(parsed)
       const blocks = allowedBlocks(parsed, snapshot)
       // 11/19 쓰는 중인 블록도 붙인다(partial 표시, 화면은 늘어나는 대로 이어 친다). 글이 늘었을 때만, 120ms 에 한 번 — 매 조각마다 전체를 보내지 않게.

@@ -26,7 +26,7 @@ function normalizeBlock(v: unknown): unknown {
   const keys = RP_BLOCK_TYPES.filter((t) => t in o)
   if (keys.length !== 1) return v
   const speaker = o[keys[0]!]
-  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text, delivery: o.delivery, speech: o.speech }
+  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text, delivery: o.delivery, speech: o.speech, photo: o.photo }
 }
 
 /** 대사 글에 섞여 나온 영어 괄호 태그([moaning softly]·[breathing heavily] 등). */
@@ -40,6 +40,8 @@ export const RpBlock = z.preprocess(normalizeBlock, z.object({
   delivery: VoiceDeliverySchema.optional().catch(undefined),
   /** 언베일 대사의 음성용 글(신음 태그 포함). 화면엔 text 만 — 태그만 더한 같은 대사인지는 읽을 때 taggedSpeech 가 확인한다. */
   speech: z.string().max(2400).optional().catch(undefined),
+  /** 11/24 이 블록 뒤에 띄울 사진의 태그(또는 코드) — 블록 글을 다 쓴 뒤에 정한다(글을 쓰기 전에 고르던 최상위 images 는 실제로 쓴 내용과 어긋났다). 화면엔 안 보인다. */
+  photo: z.string().max(40).optional().catch(undefined),
 }).transform(block => {
   // A malformed optional direction must never discard an otherwise valid reply.
   if (block.type !== 'dialogue') { delete block.delivery; delete block.speech }
@@ -228,7 +230,8 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
       pace: { type: 'string', enum: [...VOICE_PACES] }, intensity: { type: 'string', enum: [...VOICE_INTENSITIES] },
       pauseAfterMs: { type: 'integer', minimum: 0, maximum: 1500 },
     } },
-    speech: text('Adult scenes only, dialogue only: same text with vocal tags and muffled sound syllables inserted; omit otherwise. Never shown.') },
+    speech: text('Adult scenes only, dialogue only: same text with vocal tags and muffled sound syllables inserted; omit otherwise. Never shown.'),
+    photo: text('Only when the prompt tells you to choose photos per block: the photo tag for this block, decided after writing its text and written as the last key of the block; omit when this block gets no photo. Never shown.') },
     required: ['type', 'text'] } } }, required: ['blocks'] },
   emotion: { type: 'string', enum: ['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious'] },
   intent: text('at most 80 characters'),

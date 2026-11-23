@@ -57,3 +57,27 @@ const PHOTO_TAG_CUES: ReadonlyArray<readonly [string, RegExp]> = [
 export function cuePhotoTag(text: string): string | null {
   return PHOTO_TAG_CUES.find(([, cue]) => cue.test(text))?.[0] ?? null
 }
+
+/** 삽입이 그려진 글 — 체위 이름이 없을 때 쓴다(cuePhotoTag 에서는 '달아오름'으로 떨어진다). */
+export const PENETRATION_CUE = /박혀|박아|박는|박히|찔러 넣|삽입|밀어 넣|허리를 (?:흔들|움직)/
+/**
+ * 11/24 사용자: "유저가 직접 뒤에서, 후배위 한다고 명시했으면 그 context 에 맞는 사진이 나와야 한다(지정하지 않은 섹스 장면은 다양한 체위로 랜덤하게 나와도 된다)".
+ * 사용자 입력에 체위가 적혀 있으면 그 체위 태그, 없으면 null. 구체적인 것부터 본다.
+ */
+const POSITION_CUES: ReadonlyArray<readonly [string, RegExp]> = [
+  ['역기승위', /역기승위|등을 돌려 (?:올라|앉)/],
+  ['서서 뒤로', /서서.{0,10}뒤|세워 ?놓고.{0,8}뒤|벽에 (?:밀어|세워|기대게)/],
+  ['후배위', /후배위|뒤치기|뒤에서|뒤로 (?:돌려|박|넣)|엎드리게|엎드려 ?(?:놓|세)|네 발/],
+  ['기승위', /기승위|올라타|위에 올라|위에서 (?:움직|흔들)게/],
+  ['교배 프레스', /교배 ?프레스|다리를 (?:어깨|머리) (?:위|쪽)/],
+  ['풀 넬슨', /풀 ?넬슨/],
+  ['대면좌위', /대면좌위|마주 앉|무릎 위에 앉/],
+  ['들어서', /들어 ?올려|안아 ?들고|들어서 박/],
+  ['측위', /측위|옆으로 (?:누워|눕)/],
+  ['엎드려', /완전히 엎드|엎드려 눕/],
+  ['애널', /애널|뒷구멍|항문/],
+  ['정상위', /정상위|눕히고|눕혀서|다리를 벌리(?:고|게)/],
+]
+export function cueUserPosition(input: string): string | null {
+  return POSITION_CUES.find(([, cue]) => cue.test(input))?.[0] ?? null
+}
