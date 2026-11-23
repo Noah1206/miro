@@ -21,7 +21,7 @@ export default async function CreatorPage({ params }: { params: Promise<{ id: st
   // 응원은 작품 단위로 보낸다(창작 보상) — 운영 필명·본인 페이지는 없음, 회원이면 대화가 가장 많은 공개 작품으로.
   const cheerId = creator.pen || creator.self || !user ? null : [...works].filter(c => !c.isOfficial).sort((a, b) => (b.chats ?? 0) - (a.chats ?? 0))[0]?.id ?? null
   return (
-    <Page wide>
+    <Page wide className={styles.page}>
       <header className={styles.top}><Back href="/home" /><h2>{t('크리에이터 프로필')}</h2><span /></header>
       <CreatorProfile creator={creator} works={works} signedIn={!!user} cheerId={cheerId} />
     </Page>

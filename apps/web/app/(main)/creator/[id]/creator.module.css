@@ -1,4 +1,6 @@
 /* 11/20 크리에이터 프로필(사용자 스크린샷 두 장 기준) */
+/* 11/23 폰: 전역 .page 여백 + 아래 칸들의 --gutter 가 겹쳐 양옆이 두 배로 비던 것 — 페이지 쪽 여백을 뺀다 */
+@media (max-width: 1023px) { .page:global(.page) { padding-left: 0; padding-right: 0; } }
 .top { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; min-height: 52px; padding: 4px var(--gutter) 0; }
 .top h2 { margin: 0; text-align: center; font-size: 17px; font-weight: 700; }
 .head { display: grid; gap: 16px; padding: 16px var(--gutter) 24px; }
