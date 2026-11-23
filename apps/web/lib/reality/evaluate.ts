@@ -288,6 +288,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }
   const contentInput = {
     allowAbstain: !intent.answers && !intent.momentKey && !intent.promise,
+    adult: row.session.adultSince !== null,   // 11/23 언베일이 꺼진 방의 문자에는 청소년 안전 문장이 실린다
     characterName: row.character.name,
     // 11/17 다인 작품: 이 문자를 보낸 인물을 고르게 한다(저장 블록의 speaker → 문자방 이름·알림 제목).
     cast: castOf(row.character),
