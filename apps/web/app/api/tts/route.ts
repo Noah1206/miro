@@ -67,7 +67,9 @@ g.miroVoiceTimer.unref?.()
 const VOICE_MAX_INFLIGHT = Number(process.env.MIRO_VOICE_MAX_INFLIGHT ?? 3)
 let voiceInflight = 0
 /** 11/23 방마다 답이 만들어지는 동안 이미 읽은 줄(early) — 저장 뒤 turn 요청이 그 줄들을 빼고 읽는다. live = 그 턴(새 턴이면 처음부터). ponytail: 맥 한 대 프로세스 메모리. */
-const earlySpoken = new Map<string, { live: object; texts: string[]; voices: Set<string>; at: number }>()
+// 11/24 turn = 이 답을 나눠 읽는 요청들이 음성 서버에 함께 쓰는 턴 이름 — 요청마다 다른 이름을 주면 서버가 앞 요청의 소리를 '지난 턴'으로 기억에 넣어
+// 다음 요청마다 준비(읽어 둔 상태)를 처음부터 다시 했다(첫 줄 뒤 16초·남은 대사 앞 22초 공백).
+const earlySpoken = new Map<string, { live: object; texts: string[]; voices: Set<string>; at: number; turn: string }>()
 const spokenKey = (x: string) => x.replace(/[\s…·.,!?~"']/g, '')
 /** 묶음 목록에서 앞의 줄 k 개(이미 읽은 줄)를 뺀 나머지 — 묶음 중간에서 끊기면 남은 줄만으로 그 묶음을 다시 만든다. */
 function dropSpoken(segments: SpokenSegment[], k: number): SpokenSegment[] {
@@ -149,7 +151,7 @@ async function handle(req: Request) {
     // 11/23 사용자 "음성 모드일 때 너무 오래 걸려(30~40초)": 첫 줄만 미리 읽고 나머지는 답이 다 저장된 뒤(40~60초)에야 읽어 그 사이가 침묵이었다 —
     // 답이 만들어지는 동안 완성된 대사·속마음을 부를 때마다 이어서 읽는다(화면이 앞 소리를 받는 대로 다음을 부른다). 쓰는 중인 블록(partial)은 뺀다.
     const prior = earlySpoken.get(sid)
-    const state = prior?.live === live ? prior : { live, texts: [] as string[], voices: new Set<string>(), at: 0 }
+    const state = prior?.live === live ? prior : { live, texts: [] as string[], voices: new Set<string>(), at: 0, turn: `early-${crypto.randomUUID()}` }
     const segs = spokenSegments(live.blocks.filter(b => b.partial !== true), '', row.name, Object.keys(row.ensembleVoices ?? {})), flat = segs.flatMap(seg => seg.parts)
     // 답을 처음부터 다시 쓰는 경우(형식 오류 재시도 → 블록이 비워짐)에는 읽은 줄이 지금 글의 앞부분과 달라진다 — 같은 데까지만 읽은 것으로 친다.
     let same = 0
@@ -167,7 +169,7 @@ async function handle(req: Request) {
     voiceUsed()
     try {
       const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sid, turn: `early-${crypto.randomUUID()}`, ...(body?.oral === true ? { oral: true, more: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(180_000)]))   // oral: 빠는 장면 — 서버가 그 목소리의 빠는 소리를 문장 사이에 끼운다(한 턴 요청과 같음)
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sid, turn: state.turn, more: true, ...(body?.oral === true ? { oral: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(180_000)]))   // oral: 빠는 장면 — 서버가 그 목소리의 빠는 소리를 문장 사이에 끼운다(한 턴 요청과 같음)
       state.texts.push(...rest.flatMap(seg => seg.parts.map(part => spokenKey(part.text)))); state.at = Date.now()
       for (const l of lines) if (l.voice) state.voices.add(l.voice)
       earlySpoken.set(sid, state)
@@ -221,11 +223,11 @@ async function handle(req: Request) {
     if (said && Date.now() - said.at < 10 * MIN) { const flat = segments.flatMap(seg => seg.parts); while (skip < said.texts.length && skip < flat.length && spokenKey(flat[skip]!.text) === said.texts[skip]) skip++ }
     const rest = dropSpoken(segments, skip)
     // 다 읽었으면 소리 없이 끝 — 목소리 보상은 미리 읽은 목소리로 여기서 쌓는다.
-    if (!rest.length) { release(); if (said?.voices.size) await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: [...said.voices] }).catch(() => {}); return new Response(null, { status: 204 }) }
+    if (!rest.length) { release(); void tts.warm?.(AbortSignal.timeout(60_000), sessionId).catch(() => {}); if (said?.voices.size) await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: [...said.voices] }).catch(() => {}); return new Response(null, { status: 204 }) }
     const lines = await Promise.all(rest.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
     if (lines.some(l => !l.voice)) { release(); return Response.json({ error: 'voice_unavailable' }, { status: 503 }) }
     try {
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId, ...(body?.oral === true ? { oral: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: said && Date.now() - said.at < 10 * MIN ? said.turn : messageId, ...(body?.oral === true ? { oral: true } : {}) }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
       // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
       await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: [...new Set([...lines.map(l => l.voice ?? ''), ...(skip ? said!.voices : [])])] }).catch(() => {})
       return new Response(releasing(out.stream, release, req.signal), { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no', 'x-voice': lines.find(l => !l.inner)?.voice ?? lines[0]?.voice ?? '' } })

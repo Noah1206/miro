@@ -710,7 +710,7 @@ class Speaker:
             # 11/23 more = 이 턴의 대사가 더 온다(답이 만들어지는 동안 나눠 읽는 중) — 끝맺는 긴 빠는 소리는 마지막 요청에만(다음 요청이 다시 빠는 소리로 시작한다).
             if tail is not None: yield pcm(tail)
             elif not more: yield pcm(oral_slice(clips[voice], rate, rng, 2.5, 4.0))
-            self.prepare_later(session, [voice])
+            if not more: self.prepare_later(session, [voice])
             return
         if len(groups) == 1:
             voice = next(iter(groups))
@@ -721,7 +721,9 @@ class Speaker:
                 made = louder(self.tempo(self.speak_stream(turn_text(batch), voice, session, turn, keep=k == 0 and not inner), speed), gain)
                 yield from (inner_voice(made, rate) if inner else made)
                 prev = batch[-1]
-            self.prepare_later(session, [voice])
+            # 11/24 more(이 답의 대사가 더 온다)면 다음 턴 준비를 시작하지 않는다 — 준비가 GPU 를 잡아 바로 뒤 요청이 12초 넘게 기다렸고(첫 줄 뒤 공백),
+            # 앱은 한 답을 나눠 읽는 요청에 같은 turn 을 줘서 기억·읽어 둔 상태가 답이 끝날 때까지 그대로다.
+            if not more: self.prepare_later(session, [voice])
             return
         # 11/11 첫소리를 먼저(사용자): 대화 순서대로 필요할 때 만든다 — 그 턴에 한 번만 말하는 인물은 만드는 대로 흘려보내고,
         # 여러 번 말하는 인물은 그 인물의 대사 전체를 한 번에 만든 뒤 잘라 첫 조각부터 보낸다. 뒤 인물은 앞 소리가 재생되는 동안 만든다.
@@ -758,7 +760,7 @@ class Speaker:
             if i < len(lines) - 1:
                 pause = min(1.5, max(0.0, float((line.get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
                 yield pcm(np.zeros(int(rate * pause), dtype='float32'))
-        self.prepare_later(session, list(groups))
+        if not more: self.prepare_later(session, list(groups))
 
     def oral_clip(self, voice):
         """11/23 그 목소리로 입힌 빠는 소리(16비트 모노 wav) — 없으면 None(그 목소리는 끼우지 않는다)."""
