@@ -11,7 +11,7 @@ import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gat
 import { characterAgencyMode, feature, tokensForCost, voicePaused, POLICY, MIN_TURN_BALANCE, REFERRAL_GRANT } from '@miro/config'
 import { VOICE_TOKENS_MAX, voiceTokens } from '../voice-text'
 import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
-import { looksLikeBackstageLeak, looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
+import { IMAGE_LIST_MAX, looksLikeBackstageLeak, looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { leadName } from '@/lib/editorial/heroine-name'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
@@ -131,9 +131,12 @@ async function executeTurn(opts: {
     // 11/18 사진이 30장을 넘는 작품 — 최근 대화와 뜻이 가까운 순서를 미리 계산해 둔다(모델 준비와 겹쳐 돌고, 실패하면 엔진이 글자 겹침으로).
     // 11/23 사용자: 옷은 벗은 → 입은 사진으로 되돌아가면 안 된다 — 이 방에서 마지막으로 보인 상황 사진의 순번(엔진 keepOutfitOrder).
     const lastPhotoIndex = db.select({ content: messages.content }).from(messages)
-      .where(and(eq(messages.sessionId, loaded.sessionId), eq(messages.kind, 'photo'), sql`${messages.hiddenAt} is null`)).orderBy(sql`${messages.createdAt} desc`).limit(1)
-      .then(([m]) => { const path = m?.content.split('?')[0]; const i = path ? (charSettings?.situationImages ?? []).findIndex(e => e.image?.split('?')[0] === path) : -1; return i >= 0 ? i : null }).catch(() => null)
-    const situationRanking = rankSituationImages(charSettings?.situationImages ?? [], [...loaded.snapshot.recentMessages.slice(-4).map(m => m.content), input].join('\n')).catch(() => null)
+      .where(and(eq(messages.sessionId, loaded.sessionId), eq(messages.kind, 'photo'), sql`${messages.hiddenAt} is null`)).orderBy(sql`${messages.createdAt} desc`).limit(8)
+      // 11/23 최근 8장의 순번(최신부터) — 첫째가 직전 사진(옷차림 순서), 전체는 같은 사진 되풀이 방지(엔진 relevantSituationImages).
+      .then(rows => rows.map(m => { const path = m.content.split('?')[0]; return (charSettings?.situationImages ?? []).findIndex(e => e.image?.split('?')[0] === path) })).catch(() => [] as number[])
+    // 11/23 순위는 목록을 추려야 하는 작품(IMAGE_LIST_MAX 초과)만 — 그 아래는 AI 가 목록 전체를 본다. 묻는 글은 이번 입력을 앞에:
+    // 예전엔 최근 대화 4개 뒤에 입력을 붙이고 앞 2,000자만 써서, 답 하나가 2,000자를 넘으면 입력이 통째로 잘렸다.
+    const situationRanking = rankSituationImages(charSettings?.situationImages ?? [], [input, loaded.snapshot.recentMessages.at(-1)?.content.slice(-400) ?? ''].join('\n'), IMAGE_LIST_MAX).catch(() => null)
     // 11/16 생각 강도는 3단계(빠름·보통·깊게) — 예전 '깊게·최대'(xhigh·max)는 Sonnet 에서 답 없이 잘렸다. 생각이 먹지 않는 모델(DeepSeek 등)은 무시한다.
     const wanted = opts.thinking ?? charSettings?.rec?.thinking
     const thinking = model.thinking && wanted ? (wanted === 'xhigh' || wanted === 'max' ? 'high' as const : wanted) : undefined
@@ -209,7 +212,9 @@ async function executeTurn(opts: {
       // 계산은 위에서 미리 시작했다 — 여기선 길어야 1.5초만 더 기다리고, 넘으면 이번 턴은 글자 겹침으로(답을 늦추지 않게).
       const ranking = await Promise.race([situationRanking, new Promise<null>(r => setTimeout(() => r(null), 1500))])
       if (ranking) prepared.snapshot.situationRanking = ranking
-      prepared.snapshot.lastPhotoIndex = await lastPhotoIndex
+      const shown = await lastPhotoIndex
+      prepared.snapshot.lastPhotoIndex = shown.length && shown[0]! >= 0 ? shown[0]! : null
+      prepared.snapshot.recentPhotoIndexes = shown.filter(i => i >= 0)
       marks.model = at()
       // 11/20 스트리밍 사진 — 엔진은 순번만 안다, 주소는 여기서 붙인다.
       const photoUrl = (i: number) => charSettings?.situationImages?.[i]?.image

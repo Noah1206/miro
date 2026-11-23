@@ -36,7 +36,8 @@ GAIN = {'soft': 0.8, 'normal': 1.0, 'strong': 1.3}
 # 한 번에 만드는 길이는 프레임 상한(4096 ≈ 190초 ≈ 800자)에 걸린다 — 읽을 글이 BATCH_CHARS 를 넘으면 줄 경계에서 나눠 차례로 만든다(짧은 턴은 예전처럼 한 번에).
 BATCH_CHARS = 500
 # 속마음: 조금 작게 + 짧은 울림 한 번(머릿속에서 들리는 느낌). 0 이면 끔. 값은 청취로 정한다.
-INNER_GAIN, INNER_ECHO, INNER_ECHO_S = 0.85, 0.32, 0.11
+# 11/23 사용자: "마음을 이야기할 때의 소리는 말할 때 소리와 동일하게" — 울림·작게 끔(1, 0). 속마음도 앞 대사의 빠르기·크기를 그대로 받아 한 묶음으로 이어 만든다(turn_batches).
+INNER_GAIN, INNER_ECHO, INNER_ECHO_S = 1, 0, 0.11
 QUIET_END = 4           # 말하던 도중 이만큼(초) 조용하면 끝난 것으로 본다
 RETRIES = 3             # 무음으로 시작하면 씨앗을 바꿔 다시(11/11 같은 대사가 71초 무음으로 나온 고장)
 # 11/11 오후 .7·.7(안정 설정)로 바꿨다가 음질이 크게 떨어졌다(사용자) — 시험 생성과 같은 설정으로 되돌림. 줄마다 다르던 톤은 감정 지시를 빼서(EMOTION_TAGS) 잡는다.
@@ -122,9 +123,16 @@ def turn_batches(lines):
             if cur and len(cur) + len(sent) > BATCH_CHARS: pieces.append({**l, 'text': cur.strip(), 'parts': []}); cur = ''
             cur += sent
         if cur.strip(): pieces.append({**l, 'text': cur.strip(), 'parts': []})
-    out = []
+    # 11/23 사용자: 블록마다 끊기고(대사·속마음이 번갈아 오면 줄마다 따로 만들어 사이에 쉼), 다급한 신음 뒤 속마음·다음 줄이 느려졌다 —
+    # 속마음은 바로 앞 대사(없으면 바로 뒤 대사)의 빠르기·크기를 그대로 받고, 말과 같은 묶음으로 이어 만든다(소리도 같게: INNER_ECHO 0).
+    feels, last = [], None
     for l in pieces:
-        key = (bool(l.get('inner')), *feel(l.get('delivery'), l['text']))
+        last = last if l.get('inner') else feel(l.get('delivery'), l['text']); feels.append(last)
+    for i in range(len(feels) - 2, -1, -1):
+        if feels[i] is None: feels[i] = feels[i + 1]
+    out = []
+    for l, f in zip(pieces, feels):
+        key = (False, *(f or feel(l.get('delivery'), l['text'])))
         if out and out[-1][0] == key and sum(len(x['text']) + 1 for x in out[-1][1]) + len(l['text']) <= BATCH_CHARS: out[-1][1].append(l)
         else: out.append((key, [l]))
     return out
@@ -161,7 +169,9 @@ def feel(delivery, text):
     d = delivery if isinstance(delivery, dict) else {}
     pace, intensity = d.get('pace', 'normal'), d.get('intensity', 'normal')
     if pace == 'normal' and intensity == 'strong' and d.get('emotion') in ('anxious', 'angry'): pace = 'fast'
-    if '[moaning' in text: intensity = 'strong'
+    if '[moaning' in text:
+        intensity = 'strong'
+        if pace == 'normal': pace = 'fast'   # 11/23 빠르기를 안 고른 신음 줄이 '빠르게'를 고른 줄보다 느려 다급하다가 갑자기 늘어졌다 — 일부러 느리게(slow) 고른 줄만 그대로
     return PACE_TEMPO.get(pace, TEMPO), GAIN.get(intensity, 1.0)
 
 def louder(chunks, gain):
@@ -984,11 +994,12 @@ if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌
     import numpy as _np
     _f = turn_batches([{'text': '헉! 뭐야. 아 그게', 'parts': [{'text': '헉!', 'delivery': {'pace': 'fast'}}, {'text': '뭐야.', 'delivery': {'pace': 'fast'}}, {'text': '아 그게', 'delivery': {}}]}])
     assert [(k, [l['text'] for l in x]) for k, x in _f] == [((False, 1.3, 1.0), ['헉!', '뭐야.']), ((False, TEMPO, 1.0), ['아 그게'])], _f
-    assert feel({'emotion': 'anxious', 'intensity': 'strong'}, 'a') == (1.3, 1.3) and feel({}, '[moaning] 아') == (TEMPO, 1.3)
+    assert feel({'emotion': 'anxious', 'intensity': 'strong'}, 'a') == (1.3, 1.3) and feel({}, '[moaning] 아') == (1.3, 1.3) and feel({'pace': 'slow'}, '[moaning] 아') == (0.95, 1.3)
     assert gap_after({'delivery': {'pauseAfterMs': 0}}) == 0.12 and gap_after({}) == 0.3
     _b = turn_batches([{'text': '가' * 300}, {'text': '나' * 300}, {'text': '속', 'inner': True}, {'text': ('다' * 99 + '. ') * 9}])
-    assert [(k[0], len(x)) for k, x in _b][:3] == [(False, 1), (False, 1), (True, 1)] and all(sum(len(l['text']) for l in x) <= BATCH_CHARS for _, x in _b) and ''.join(l['text'] for _, x in _b[3:] for l in x).count('다') == 891
-    _e = b''.join(inner_voice([(_np.ones(4410, '<i2') * 1000).tobytes()] * 3, 44100)); assert len(_e) == (4410 * 3 + int(44100 * INNER_ECHO_S)) * 2
+    assert [(k[0], len(x)) for k, x in _b][:2] == [(False, 1), (False, 2)] and all(sum(len(l['text']) for l in x) <= BATCH_CHARS for _, x in _b) and ''.join(l['text'] for _, x in _b[2:] for l in x).count('다') == 891   # 속마음은 앞 대사 묶음에 이어 붙는다
+    _m = turn_batches([{'text': '[moaning] 아', 'delivery': {'pace': 'fast'}}, {'text': '안 돼', 'inner': True}, {'text': '[moaning] 응'}]); assert len(_m) == 1 and _m[0][0] == (False, 1.3, 1.3), _m
+    _e = b''.join(inner_voice([(_np.ones(4410, '<i2') * 1000).tobytes()] * 3, 44100)); assert len(_e) == (4410 * 3 + (int(44100 * INNER_ECHO_S) if INNER_ECHO or INNER_GAIN != 1 else 0)) * 2
     _t = '오늘은 날씨가 참 좋아서 산책을 다녀왔어요. 기분이 좋네요.'; _r = 44100
     _tone = lambda secs: (0.2 * _np.sin(2 * _np.pi * 220 * _np.arange(int(_r * secs)) / _r)).astype('float32')
     assert healthy(_t, _tone(6), _r) and not healthy(_t, _tone(6) * 0.001, _r) and not healthy(_t, _tone(1.5), _r) and not healthy(_t, _tone(40), _r)

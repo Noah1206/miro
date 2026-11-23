@@ -1,4 +1,4 @@
-import { castNames, relevantSituationImages } from './context'
+import { REDRESS, castNames, dressedPhoto, rankedSituationImages } from './context'
 import { trimEllipsisHabit, trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
@@ -53,9 +53,12 @@ export function validateProposal(
   const photos = keepOutfitOrder(sceneImages(snapshot, proposal.images), snapshot, told)
   // 11/23 사용자 "왜 사진이 한 번도 안 나오는 경우가 있어": AI 가 images 를 빠뜨리거나 쓸 수 없는 코드만 내면 0장이었다 —
   // 고를 수 있는 사진이 있으면 지금 대화와 가장 가까운 것으로 최소 장수(3, 블록이 적으면 블록 수)를 채운다(옷차림 순서도 지킨다).
+  // 11/23 사용자 "왜 사진이 한 번도 안 나오는 경우가 있어": AI 가 images 를 빠뜨리거나 쓸 수 없는 코드만 내면 0장이었다 —
+  // 고를 수 있는 사진이 있으면 지금 대화와 가장 가까운 것으로 최소 장수(3, 블록이 적으면 블록 수)를 채운다(옷차림 순서를 지키고, 방금 보인 사진은 빼고).
+  // 장수가 모자랄 때(1~2장)까지 서버가 채우는 건 넣지 않았다 — 글자 겹침으로 고르면 장면과 어긋난 사진(임신·여러 명)이 끼었다(11/23 실측). 그건 AI 가 목록 전체를 보고 고른다.
   if (!photos.length && blocks.length) {
-    const need = Math.min(3, blocks.length)
-    keepOutfitOrder(relevantSituationImages(snapshot).map(e => ({ index: e.i, after: null })), snapshot, told).slice(0, need)
+    const need = Math.min(3, blocks.length), seen = new Set(snapshot.recentPhotoIndexes ?? [])
+    keepOutfitOrder(rankedSituationImages(snapshot).filter(e => !seen.has(e.i)).map(e => ({ index: e.i, after: null })), snapshot, told).slice(0, need)
       .forEach((e, k) => photos.push({ index: e.index, after: Math.max(1, Math.round(blocks.length * (k + 1) / (need + 1))), fill: true }))
   }
 
@@ -343,11 +346,9 @@ const MAX_PHOTOS = 10   // 11/22 사용자: 최소 3장, 응답이 길수록 더
 /** after: AI 가 고른 사진은 AI 가 센(검증 전) 블록 번호, 채운 사진(fill)은 저장 블록 기준 자리. 스트리밍(stream-blocks)도 이걸 쓴다. */
 /** 11/23 사용자: 옷은 앞으로만 — 입은 → 벗은 사진은 되지만 벗은 → 입은 사진은 안 된다(이 방의 직전 사진부터 이어서).
  *  '입은' = 일반 사진, 또는 언베일이라도 '옷 입은 채' 장면. 답에 다시 옷을 입는 일이 그려졌으면 입은 사진도 허용. */
-const DRESSED_SCENE = /옷 입은 채|입은 채로|옷 위로/
-const REDRESS = /옷을 (?:다시 )?(?:주워 )?입|옷을 챙겨 입|다시 입었|단추를 (?:다시 )?채|옷매무새를|가운을 걸치|이불을 (?:몸에 )?두르|다음 날/
 export function keepOutfitOrder<T extends { index: number }>(photos: T[], s: SimulationSnapshot, told: string): T[] {
   const list = s.character.worldRole.situationImages ?? []
-  const dressed = (i: number) => { const e = list[i]; return !!e && (!e.adult || DRESSED_SCENE.test(e.situation ?? '')) }
+  const dressed = (i: number) => dressedPhoto(list, i)
   const redressed = REDRESS.test(told)
   let bare = s.lastPhotoIndex != null && !dressed(s.lastPhotoIndex)
   return photos.filter(p => { if (dressed(p.index)) return !bare || redressed; bare = true; return true })

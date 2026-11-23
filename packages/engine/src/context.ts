@@ -62,6 +62,8 @@ export type SimulationSnapshot = {
   situationRanking?: number[]
   /** 11/23 이 방에서 마지막으로 보인 상황 사진의 순번(없으면 null) — 옷을 벗은 사진 뒤에 입은 사진으로 되돌아가지 않게(validator keepOutfitOrder). */
   lastPhotoIndex?: number | null
+  /** 11/23 이 방에서 최근에 보인 상황 사진 순번(최신부터) — 같은 사진이 턴마다 되풀이되지 않게 후보에서 뺀다. */
+  recentPhotoIndexes?: number[]
   /** 아직 기억에 반영되지 않은 최근 턴이 있다(memory_jobs 대기 중, §3.5). 옛 기억을 확정 사실로 내밀지 않게 한다. */
   memoryLag?: boolean
   /** 사용자가 정한 자기 설정(페르소나). 없으면 사용자는 '사용자' 로만 안다 — 옛 세션·체험·테스트 경로. */
@@ -312,6 +314,10 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
       : [{ memories: Math.ceil(POLICY.context.relevantMemoryCount / 2), messages: Math.ceil(POLICY.context.recentMessageCount / 2) }]),
     { memories: 2, messages: 4 },
   ]
+  // 11/23 사용자 결정: 사진이 많은 작품은 AI 가 사진 목록 전체를 본다 — 그 목록(지시문에 실림)만큼은 맥락 예산 밖으로 쳐서 최근 대화·기억이 줄지 않게 한다(입력 비용은 그만큼 는다).
+  // 30장 이하는 예전부터 예산 안이라 그대로. 상한 12,000자: 한 턴 입력 한도(token-pricing maxInputTokens 64,000 글자)를 넘기면 턴이 거절된다 — 46,000 + 12,000 + 여유.
+  const photoList = spoken ? [] : situationList(s.character, !!s.adultMode)
+  const photoListChars = photoList.length > 30 && photoList.length <= IMAGE_LIST_MAX ? Math.min(12_000, photoList.reduce((n, e) => n + e.code.length + e.situation.length + 6, 0)) : 0
   let last: BuiltContext | null = null
   for (const plan of plans) {
     const dropped: string[] = []
@@ -332,7 +338,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
     const fill = (t: string) => fillCharacterMacros(t, s.character.identity.name, s.userPersona?.name)
     last = { system: fill(full), cachePrefix: fill(full.slice(0, cachePrefix)).length, prompt: fill(prompt), ...(cacheLayout ? { history: history.map(fill) } : {}), promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(history.join('') + prompt), dropped }
-    if (last.approxTokens <= POLICY.context.maxTokens) return last
+    if (last.approxTokens <= POLICY.context.maxTokens + photoListChars) return last
   }
   throw new Error('context_budget_exceeded')
 }
@@ -499,7 +505,7 @@ function imageRules(c: SimulationSnapshot['character'], adult: boolean): string[
     // 11/22 사용자(베이비챗 방식대로): 장수를 채우려고 억지로 고르면 장면과 안 맞는 사진이 뜬다 — 베이비챗처럼 최소 장수 없이, 그 블록에 그려진 상황과 정말 같은 사진만.
     // 11/22 사용자: 넷 다 맞아야 고르게 했더니 맞는 사진이 있어도 0장 — 행동(진행 단계)을 먼저 보고, 장소·옷차림은 크게 어긋날 때만 뺀다.
     // 11/22 사용자(같은 날 나중): 한 장만 나오는 턴이 많다 — 최소 3장. 그다음: 내용이 길수록 사진도 많아야 한다 — 블록 2개마다 한 장, 최대 10장. 꼭 같은 사진이 없으면 가장 가까운 것.
-    `- ${many ? "프롬프트의 '## 지금 고를 수 있는 사진'" : '아래 목록'}에서 사진을 골라 최상위 images 칸에 냅니다(블록 순서대로). 장수는 응답 길이에 비례합니다 — 대략 블록 2개마다 한 장, 최소 3장(블록이 3개보다 적으면 블록 수만큼), 많게는 10장. 길게 쓰는 응답일수록 사진도 장면 흐름을 따라 고르게 더 많이 둡니다. 블록마다 그 순간과 가장 가까운 사진을 고르고, 먼저 하는 행동과 진행 단계(대화·스킨십·애무·성행위·관계 뒤 등)가 같은 것을 우선합니다. 꼭 같은 사진이 없으면 단계·장소·옷차림이 가장 가까운 것을 고릅니다. 다만 단계가 크게 다른 사진(옷을 다 입고 대화만 하는데 성행위 사진)은 고르지 않습니다. 사진에 맞추려고 장면을 바꾸지 않습니다. images 는 rp 보다 먼저 쓰니, 사용자의 이번 입력에 맞춰 이번 응답에서 그릴 장면을 먼저 정하고 그 흐름에 맞춰 고릅니다(사진 때문에 사용자가 이끈 방향을 바꾸지 않습니다).`,
+    `- ${many ? "프롬프트의 '## 지금 고를 수 있는 사진'" : '아래 목록'}에서 사진을 골라 최상위 images 칸에 냅니다(블록 순서대로). 장수는 응답 길이에 비례합니다 — 대략 블록 2개마다 한 장, 최소 3장(블록이 3개보다 적으면 블록 수만큼), 많게는 10장. 길게 쓰는 응답일수록 사진도 장면 흐름을 따라 고르게 더 많이 둡니다. 같은 행위가 이어지는 긴 장면이라도 한두 장으로 끝내지 않습니다 — 사이사이 그 순간의 반응에 맞는 다른 사진(만져지는·애무받는 모습, 달아오른 표정, 절정, 끝난 뒤 등 목록에 있는 것)을 섞어 장면마다 다른 사진이 보이게 하고, 한 응답 안에서 같은 사진이나 거의 같은 장면의 사진을 되풀이하지 않습니다. 블록마다 그 순간과 가장 가까운 사진을 고르고, 먼저 하는 행동과 진행 단계(대화·스킨십·애무·성행위·관계 뒤 등)가 같은 것을 우선합니다. 꼭 같은 사진이 없으면 단계·장소·옷차림이 가장 가까운 것을 고릅니다. 다만 단계가 크게 다른 사진(옷을 다 입고 대화만 하는데 성행위 사진)은 고르지 않습니다. 사진에 맞추려고 장면을 바꾸지 않습니다. images 는 rp 보다 먼저 쓰니, 사용자의 이번 입력에 맞춰 이번 응답에서 그릴 장면을 먼저 정하고 그 흐름에 맞춰 고릅니다(사진 때문에 사용자가 이끈 방향을 바꾸지 않습니다).`,
     '- 장면 흐름을 따라 서로 다른 사진을 고르고, 같은 응답에 같은 사진을 두 번 쓰지 않습니다. 본문에 코드나 사진 설명을 쓰지 않습니다.',
     // 11/23 사용자: 옷이 마음대로 다시 입혀지면 안 된다.
     '- 옷차림은 앞으로만 갑니다: 옷 입은 사진 → 벗은 사진은 되지만, 이미 벗은 사진(또는 장면에서 벗은 뒤)에서 옷 입은 사진으로 돌아가지 않습니다. 장면에서 실제로 옷을 다시 입는 일이 그려질 때만 입은 사진을 고릅니다.',
@@ -513,22 +519,40 @@ function imageRules(c: SimulationSnapshot['character'], adult: boolean): string[
  * 30장 이하는 위처럼 캐시되는 지시문에 그대로, 넘으면 이번 턴 프롬프트에 지금 대화와 가까운 30장만 싣는다(코드는 원래 순번 그대로라 검증기와 맞는다).
  * 가까움은 뜻으로(s.situationRanking — 웹의 임베딩 순위), 그게 없을 때(임베딩 실패·시간 초과)만 글자 겹침으로.
  */
-const IMAGE_LIST_MAX = 30
+// 11/23 사용자 "내용이 많은데 사진이 왜 안 나타나지": 30장만 추려 보여 주니(뜻 순위·글자 겹침 모두) '쑤시며 절정시킨다'에 손가락 애무·시오후키 사진이 후보에 못 들었다
+// (실측: 임베딩 순위 59~228위). 그런 연결은 대화 AI 만 한다 — 400장까지는 목록 전체를 캐시되는 지시문에 싣고(작품당 4천~1만3천 자), 넘는 작품만 60장을 추린다.
+export const IMAGE_LIST_MAX = 400
+const IMAGE_LIST_PICK = 60
 const situationList = (c: SimulationSnapshot['character'], adult: boolean) =>
   (c.worldRole.situationImages ?? []).map((e, i) => ({ code: `p${i + 1}`, i, ...e })).filter(e => adult || !e.adult)
 const bigrams = (text: string) => { const t = text.toLowerCase().replace(/\s+/g, ''); const out = new Set<string>(); for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2)); return out }
-export function relevantSituationImages(s: SimulationSnapshot, limit = IMAGE_LIST_MAX) {
+/** 고를 수 있는 사진 전부를 지금 대화와 가까운 순서로(자르지 않음) — 순위(뜻)가 없으면 최근 대화와 글자 겹침으로. */
+export function rankedSituationImages(s: SimulationSnapshot) {
   const list = situationList(s.character, !!s.adultMode)
-  if (list.length <= limit) return list
   if (s.situationRanking?.length) {
     const pos = new Map(s.situationRanking.map((i, p) => [i, p]))
-    return [...list].sort((a, b) => (pos.get(a.i) ?? Infinity) - (pos.get(b.i) ?? Infinity) || a.i - b.i).slice(0, limit)
+    return [...list].sort((a, b) => (pos.get(a.i) ?? Infinity) - (pos.get(b.i) ?? Infinity) || a.i - b.i)
   }
   const query = [...s.recentMessages.slice(-4).map(m => m.content), s.userInput ?? '', s.scene ? `${s.scene.mood} ${s.scene.weather}` : ''].join('\n')
   const q = bigrams(query)
   // 상황 설명(없으면 키워드 — character-context 가 이미 합쳐 줌)과 최근 대화가 겹치는 두 글자 수.
   const score = (e: (typeof list)[number]) => { let n = 0; for (const b of bigrams(e.situation)) if (q.has(b)) n++; return n }
-  return list.map(e => ({ e, n: score(e) })).sort((a, b) => b.n - a.n || a.e.i - b.e.i).slice(0, limit).map(x => x.e)
+  return list.map(e => ({ e, n: score(e) })).sort((a, b) => b.n - a.n || a.e.i - b.e.i).map(x => x.e)
+}
+/** 11/23 옷은 앞으로만(validator keepOutfitOrder) — '입은' = 일반 사진, 또는 언베일이라도 '옷 입은 채' 장면. REDRESS = 다시 옷을 입는 일이 그려진 글. */
+const DRESSED_SCENE = /옷 입은 채|입은 채로|옷 위로/
+export const REDRESS = /옷을 (?:다시 )?(?:주워 )?입|옷을 챙겨 입|다시 입었|단추를 (?:다시 )?채|옷매무새를|가운을 걸치|이불을 (?:몸에 )?두르|다음 날/
+export const dressedPhoto = (list: ReadonlyArray<{ adult?: boolean; situation?: string }>, i: number) => { const e = list[i]; return !!e && (!e.adult || DRESSED_SCENE.test(e.situation ?? '')) }
+export function relevantSituationImages(s: SimulationSnapshot, limit = IMAGE_LIST_PICK) {
+  const all = situationList(s.character, !!s.adultMode)
+  if (all.length <= IMAGE_LIST_MAX) return all
+  // 11/23 사용자 "사진이 왜 안 나타나지 · 다양하게": 직전 사진이 벗은 사진이면 입은 사진은 검증에서 빠진다 — AI 가 그런 사진을 골라 장수가 줄지 않게 후보에서 미리 뺀다
+  // (사용자가 이번에 옷을 다시 입는 쪽으로 이끌 때는 그대로). 방금 보인 사진도 후보에서 빼 같은 사진이 턴마다 되풀이되지 않게 한다. 남는 게 모자라면 빼지 않는다.
+  const imgs = s.character.worldRole.situationImages ?? []
+  const bare = s.lastPhotoIndex != null && !dressedPhoto(imgs, s.lastPhotoIndex) && !REDRESS.test(s.userInput ?? '')
+  const ranked = rankedSituationImages(s), fit = bare ? ranked.filter(e => !dressedPhoto(imgs, e.i)) : ranked
+  const seen = new Set(s.recentPhotoIndexes ?? []), fresh = fit.filter(e => !seen.has(e.i))
+  return (fresh.length >= limit ? fresh : fit.length >= limit ? fit : ranked).slice(0, limit)
 }
 
 function statusRules(c: SimulationSnapshot['character']): string[] {
@@ -722,9 +746,19 @@ function buildPrompt(
     parts.push('', '## 캐릭터가 알고 있는 것 (원래 알던 배경 — 새로 알게 된 척하지 말 것)')
     for (const entry of lore) parts.push(`- ${entry.name ? `[${entry.name}] ` : ''}${entry.content}`)
   }
-  if (!spoken && situationList(s.character, !!s.adultMode).length > IMAGE_LIST_MAX) {
+  const photoList = spoken ? [] : situationList(s.character, !!s.adultMode)
+  if (photoList.length > IMAGE_LIST_MAX) {
     parts.push('', '## 지금 고를 수 있는 사진 (지금 대화와 가까운 것만 추림 — 이 중 지금 장면과 맞는 것을 images 에)')
     for (const e of relevantSituationImages(s)) parts.push(`  · ${e.code}: ${e.situation}`)
+  }
+  // 11/23 목록 전체는 캐시되는 지시문에 있으니, 턴마다 달라지는 것(방금 보인 사진·옷차림 단계)만 여기서 알린다.
+  if (photoList.length) {
+    const imgs = s.character.worldRole.situationImages ?? []
+    const seen = (s.recentPhotoIndexes ?? []).filter(i => photoList.some(e => e.i === i)).map(i => `p${i + 1}`)
+    const bare = s.lastPhotoIndex != null && !dressedPhoto(imgs, s.lastPhotoIndex)
+    if (seen.length || bare) parts.push('', '## 사진 고르기 (이번 턴)')
+    if (seen.length) parts.push(`- 방금 보인 사진: ${seen.join(', ')} — 이번 응답에서는 다시 고르지 않고, 같은 행위가 이어지더라도 다른 사진(다른 구도·반응·단계)을 고릅니다.`)
+    if (bare) parts.push("- 직전 사진이 옷을 벗은 사진입니다. 이번 응답에서 옷을 다시 입는 일이 그려지지 않는 한 옷을 입은 사진(일상 사진, '옷 위로'·'옷 입은 채' 사진)은 고르지 않습니다 — 골라도 표시되지 않으니 벗은 사진 가운데서 장수를 채웁니다.")
   }
 
   const r = s.relationship
