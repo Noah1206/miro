@@ -2609,5 +2609,9 @@
   "기억을 고칠 수 없어요.": "Couldn't edit this memory.",
   "기억을 지울 수 없어요.": "Couldn't delete this memory.",
   "이 기억을 지울까요? 되돌릴 수 없어요.": "Delete this memory? This can't be undone.",
-  "캐릭터에게 하는 말이 아니라 진행을 지시해요": "Not said to the character — a note on how the story should go"
+  "캐릭터에게 하는 말이 아니라 진행을 지시해요": "Not said to the character — a note on how the story should go",
+ "호감도": "Affection",
+ "이 다음 이야기, 미로에서 이어서": "Continue the story on Miro",
+ "링크를 복사했어요": "Link copied",
+ "결과 공유하기": "Share result"
 }
