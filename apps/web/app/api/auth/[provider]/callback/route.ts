@@ -30,8 +30,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   } catch (e) { observe('auth.exchange_failed', { provider, error: (e as Error).message }); return to('/login?error=failed') }
 
   const r = await signInWithProfile(profile)
+  const jar0 = await cookies()
   if (!r.ok) return to('/login?error=deleted')
-  void track(r.userId, r.isNew ? 'signup' : 'login', { provider })
+  // 11/24 가입 출처: 처음 들어온 광고·링크(miro_src 쿠키, /api/presence 가 남김) — 채널·키워드별 가입 수를 센다.
+  const first = (() => { try { const v = JSON.parse((jar0.get('miro_src')?.value) ?? 'null') as Record<string, unknown> | null; return v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([, x]) => typeof x === 'string').map(([k, x]) => [k, (x as string).slice(0, 60)])) : null } catch { return null } })()
+  void track(r.userId, r.isNew ? 'signup' : 'login', { provider, ...(r.isNew && first && { src: first.s, ref: first.r, camp: first.c, term: first.k }) })
   // 11/18 친구 초대 링크(/r/<코드>)로 들어왔으면 로그인·가입하자마자 추천 적용(가입 7일 안의 계정만, 자기 코드·두 번은 applyReferral 이 막는다).
   {
     const jar = await cookies(), ref = jar.get(REF_COOKIE)?.value

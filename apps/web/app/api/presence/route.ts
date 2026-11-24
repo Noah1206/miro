@@ -6,13 +6,15 @@ import { deviceOf, leavePresence, livePresence, presenceOf, touchPresence } from
 
 const clean = (v: unknown, max: number) => typeof v === 'string' && v.length > 0 ? v.slice(0, max) : null
 const USER_RECHECK_MS = 5 * 60_000
+/** 11/24 첫 방문 출처(가입에 붙인다) — 30일, 처음 한 번만. 콜백이 signup 이벤트에 넣는다. */
+const FIRST_SRC_COOKIE = 'miro_src'
 
 /**
  * 화면이 45초마다 보내는 '아직 보고 있어요' 신호(11/13). 익명 ID 쿠키(홈 방문 집계와 같은 것)로 사람을 구분한다.
  * 11/18: 주소가 바뀐 신호만 page_viewed 로 남긴다(같은 화면 새로고침·45초 신호는 안 남김), 탭을 닫으면 { leave: true }.
  */
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null) as { path?: unknown; src?: unknown; ref?: unknown; leave?: unknown } | null
+  const body = await req.json().catch(() => null) as { path?: unknown; src?: unknown; ref?: unknown; camp?: unknown; term?: unknown; leave?: unknown } | null
   const jar = await cookies()
   let id = jar.get('miro_anon')?.value
   if (body?.leave === true) { if (id) leavePresence(id); return new Response(null, { status: 204 }) }
@@ -24,6 +26,11 @@ export async function POST(req: Request) {
     jar.set('miro_anon', id, { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 365 * 86400 })
   }
   const src = clean(body?.src, 20), ref = clean(body?.ref, 60)
+  // 광고·외부 링크로 처음 들어온 순간만 남긴다(이미 있으면 덮지 않음 = 첫 방문 기준).
+  if ((src || ref) && !jar.get(FIRST_SRC_COOKIE)) {
+    const first = { s: src && /^[a-z0-9_-]+$/i.test(src) ? src.toLowerCase() : undefined, r: ref ?? undefined, c: clean(body?.camp, 40) ?? undefined, k: clean(body?.term, 60) ?? undefined }
+    jar.set(FIRST_SRC_COOKIE, JSON.stringify(first), { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 30 * 86400 })
+  }
   const device = deviceOf(req.headers.get('user-agent'))
   const cur = presenceOf(id)
   const moved = !cur || !!cur.leftAt || cur.path !== path
