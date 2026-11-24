@@ -26,7 +26,8 @@ export function CoachMarks({ storageKey, steps }: { storageKey: string; steps: C
   // 서버에선 그리지 않는다: 봤는지는 브라우저만 안다. 버튼이 그려진 다음 프레임에 대상을 고른다.
   useEffect(() => {
     let seen = false
-    try { seen = !!localStorage.getItem(storageKey) } catch { /* 못 읽으면 보여 준다 */ }
+    // 11/25: 예전 키는 방마다(…:방id) 따로라 새 방마다 다시 떴다 — 그 키가 하나라도 있으면 본 것으로.
+    try { seen = !!localStorage.getItem(storageKey) || Object.keys(localStorage).some((k) => k.startsWith(`${storageKey}:`)) } catch { /* 못 읽으면 보여 준다 */ }
     if (seen) return
     const id = requestAnimationFrame(() => setList(steps.filter((s) => s.open || document.querySelector(`[data-coach="${s.target}"]`))))
     return () => cancelAnimationFrame(id)

@@ -164,7 +164,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         {/* 11/21 사용자: 대화방마다 처음 들어왔을 때 무조건 한 번 — 방마다 따로 기억한다. */}
-        <CoachMarks storageKey={`miro:tour:chat:v2:${sessionId}`} steps={CHAT_COACH} />
+        <CoachMarks storageKey="miro:tour:chat:v2" steps={CHAT_COACH} />
         {/* 11/13 사용자: '이 세계에서의 나'는 선택 — 카드가 떠 있어도 입력창을 같이 보여 준다. */}
         {<ChatComposer adultAllowed={!(await minor)} sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies?.map(fill) : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
           persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
