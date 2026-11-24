@@ -116,9 +116,15 @@ export class AIOrchestrator implements LLMProvider {
     const production = this.run({ ...request, task: taskOf(opts.task), json: true }, (text, truncated) => {
       // 잘린 답은 닫는 괄호를 채워 완성하지 않는다 — 없는 끝을 지어내는 것이다. 공급자가 다 썼다고 알린 답의 빠진 괄호만 채운다
       // (끝을 알리지 않는 공급자의 답은 채우지 않는다).
-      const parsed = opts.schema.safeParse(extractJson(text, { closeUnclosed: truncated === false }))
+      const value = extractJson(text, { closeUnclosed: truncated === false })
+      const parsed = opts.schema.safeParse(value)
       // Schema paths and issue codes only, never output text: enough to see which field a model keeps breaking.
-      if (!parsed.success) throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}${i.code === 'invalid_type' ? `(${i.received})` : ''}`).join(' ')}`)
+      if (!parsed.success) {
+        // 11/24 뿌리의 필수 칸이 통째로 없을 때는 모델이 대신 쓴 뿌리 키 이름도 남긴다(영숫자 16자·8개까지, 값은 아님) — 어떤 모양으로 어긋나는지 알아야 받아 줄 수 있다.
+        const rootMissing = parsed.error.issues.some(i => i.path.length === 1 && i.code === 'invalid_type' && i.received === 'undefined')
+        const keys = rootMissing && value && typeof value === 'object' ? ` keys=${(Array.isArray(value) ? ['array'] : Object.keys(value)).slice(0, 8).map(k => k.replace(/[^A-Za-z0-9_]/g, '').slice(0, 16)).join(',')}` : ''
+        throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}${i.code === 'invalid_type' ? `(${i.received})` : ''}`).join(' ')}${keys}`)
+      }
       return parsed.data
     }, opts.maxRetries, onAttempt)
     const shadow = this.opts.shadow
@@ -210,7 +216,9 @@ export class AIOrchestrator implements LLMProvider {
         // 다시 보낼 때는 어느 칸이 어떻게 어긋났는지(경로·코드만, 답의 글은 아님)도 알려 준다 — '형식대로' 만으로는 같은 실수를 되풀이했다(10/2 rules:too_big 두 번).
         const repairSchema = retry > 0 && req.json === true && /^invalid_schema(?: |$)/.test(last)
         const failed = repairSchema && last.startsWith('invalid_schema ') ? ` The previous output failed validation at: ${last.slice('invalid_schema '.length)}.` : ''
-        const request = { ...req, hardTokenCap: !!this.opts.context?.turnMeter,
+        // 11/24 속도: 예비 모델로 넘어간 대사는 생각을 끈다 — 고른 모델이 이미 실패해 사용자가 기다린 뒤다. 운영에서 예비(Grok)가 생각 '보통'으로
+        // 500자 답에 4,000~5,600토큰·32~66초를 썼다(글이 나오기 전 대부분이 생각). 생각이 필수인 모델은 공급자 쪽이 최소값으로 바꾼다.
+        const request = { ...req, ...(index > 0 && taskOf(req.task) === 'dialogue' ? { thinking: undefined } : {}), hardTokenCap: !!this.opts.context?.turnMeter,
           disableProviderFallback: !!this.opts.context?.turnMeter || !!this.opts.context?.dialogueModelId || this.opts.taskModels?.[taskOf(req.task)] !== undefined || req.disableProviderFallback,
           maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity),
           prompt: repairSchema ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt,
@@ -349,7 +357,7 @@ export class AIOrchestrator implements LLMProvider {
           userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null, origin: context.origin ?? null,
           provider: result?.provider ?? model.provider, model: result?.model ?? model.providerModelId,
           modelId: model.id, modelVersion: model.version, promptVersion: req.promptVersion ?? `${req.task}:v1`,
-          inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out, result?.cachedInputTokens, result?.cacheWriteInputTokens), actualCost: null,
+          inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out, result?.cachedInputTokens, result?.cacheWriteInputTokens), actualCost: null, cachedInputTokens: result?.cachedInputTokens ?? null,
           usageUnits: ok ? context.usageUnits ?? 0 : 0, latencyMs: Date.now() - started, ok, error: ok ? null : last, fallbackUsed: index > 0, shadow: context.shadow ?? false,
         }
         ticket?.settle(usage)

@@ -54,7 +54,8 @@ export function withAdultDialogueFallback(main: AI, opts: Opts): AI {
       if (!(e instanceof AIContentBlockedError) || (req.task ?? 'dialogue') !== 'dialogue') throw e
       for (const modelId of adultDialogueFallbacks(opts.context?.dialogueModelId)) {
         const alt = createAI({ ...opts, context: { ...opts.context!, dialogueModelId: modelId } })
-        try { return await alt.generateStructured(req) } catch (e2) {
+        // 11/24 속도: 다른 모델로 다시 받는 턴은 생각을 끈다 — 이미 한 번 기다린 뒤다(orchestrator 의 예비 시도와 같은 규칙).
+        try { return await alt.generateStructured({ ...req, thinking: undefined }) } catch (e2) {
           if (e2 instanceof AIContentBlockedError) continue   // 이 모델도 거절 — 다음 후보.
           throw e2   // 공급자 장애 등은 그대로 올려 평소 경로가 처리한다.
         }

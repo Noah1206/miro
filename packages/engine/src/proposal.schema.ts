@@ -169,7 +169,22 @@ export function lenientArray<T extends z.ZodTypeAny>(item: T, max: number) {
  */
 const ROOT_KEYS = ['emotion', 'intent', 'worldDelta', 'relationshipDelta', 'sceneDelta', 'memoryCandidates', 'eventCandidates',
   'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent', 'status', 'statValues', 'images'] as const
+/**
+ * 11/24 속도: 모델이 뿌리 모양만 어긋나게 쓴 답(rp 없이 blocks 를 뿌리에, 한 겹 더 감쌈, 한 칸짜리 배열, rp 를 배열로)도 블록이 온전하면 받아 준다.
+ * 운영에서 40~55초 걸려 다 쓴 답이 'rp 없음'으로 통째로 버려지고 처음부터 다시 받았다(5일 7건) — 화면에 흐르던 글이 지워지고 한 번 더 기다렸다.
+ */
+function adoptRp(v: unknown): unknown {
+  if (Array.isArray(v) && v.length === 1) v = v[0]
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+  const root = v as Record<string, unknown>
+  if (Array.isArray(root.rp)) return { ...root, rp: { blocks: root.rp } }
+  if (root.rp && typeof root.rp === 'object') return root
+  if (Array.isArray(root.blocks)) { const { blocks, ...rest } = root; return { ...rest, rp: { blocks } } }
+  const wrapped = Object.values(root).filter((x): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x) && ('rp' in x || Array.isArray((x as Record<string, unknown>).blocks)))
+  return wrapped.length === 1 ? adoptRp(wrapped[0]) : root
+}
 function hoistFromRp(v: unknown): unknown {
+  v = adoptRp(v)
   if (!v || typeof v !== 'object' || Array.isArray(v)) return v
   const root = v as Record<string, unknown>
   const rp = root.rp

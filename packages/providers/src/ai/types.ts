@@ -106,6 +106,8 @@ export type AIUsageRecord = {
   usageUnits?: number
   estimatedCost?: number | null
   actualCost?: number | null
+  /** 11/24 캐시로 읽은 입력 토큰 — 기록 표에는 넣지 않고 속도 진단 로그(ai.cache)에만 쓴다. */
+  cachedInputTokens?: number | null
   fallbackUsed?: boolean
   shadow?: boolean
   ip?: string | null

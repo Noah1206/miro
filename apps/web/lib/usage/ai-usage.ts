@@ -98,7 +98,8 @@ export const productionBudgetGuard: BudgetGuard = {
  * 예약(authorize)은 여전히 호출 전에 막으므로 한도는 그대로 지켜진다. 기록 실패는 턴을 깨지 않고 남긴다.
  */
 export function installAIUsageSink(): void {
-  setAIUsageSink(r => afterResponse(() => recordAIUsage(r).catch(e => observe('ai.usage_record_failed', { attemptId: r.attemptId, error: (e as Error).message }))))
+  // 11/24 속도 진단: 대사 호출마다 입력 가운데 캐시로 읽은 몫을 남긴다 — 설정·유저노트가 긴 방의 첫 글자 시간은 이 적중에 달렸다.
+  setAIUsageSink(r => { if (r.task === 'dialogue' && r.ok) observe('ai.cache', { sessionId: r.sessionId ?? undefined, model: r.model, inputTokens: r.inputTokens ?? undefined, cachedTokens: r.cachedInputTokens ?? undefined, latencyMs: r.latencyMs ?? undefined }); return afterResponse(() => recordAIUsage(r).catch(e => observe('ai.usage_record_failed', { attemptId: r.attemptId, error: (e as Error).message }))) })
   setAIBudgetGuard(productionBudgetGuard)
   setAILeaseGuard(process.env.MIRO_AI_DB_LEASES === '1' ? databaseAILeaseGuard : undefined)
 }
