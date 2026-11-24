@@ -39,7 +39,7 @@ export function ResumeOrNew({ resume, fresh }: { resume: string; fresh: string }
   return <div style={{ display: 'flex', gap: 8 }}>
     <SubmitNavigates />
     <Button type="submit" full status={pending && !isFresh ? 'loading' : 'idle'} disabled={pending}
-      style={{ ...base, background: '#353535', border: '1px solid #353535', color: 'var(--color-white)' }}>{resume}</Button>
+      style={{ ...base, background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)' }}>{resume}</Button>
     <Button type="submit" name="fresh" value="1" full status={pending && isFresh ? 'loading' : 'idle'} disabled={pending}
       style={{ ...base, background: '#f3f3f3', border: '1px solid #f3f3f3', color: '#1c1c1c' }}>{fresh}</Button>
   </div>
