@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, like } from 'drizzle-orm'
 import { characters, db } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { homeUnveilEnabled } from '@/lib/home-mode'
@@ -22,7 +22,7 @@ export default async function PlayPage({ searchParams }: { searchParams: Promise
   const [unveil, rows] = await Promise.all([
     homeUnveilEnabled(user?.id ?? null),
     db.select({ id: characters.id, slug: characters.slug, name: characters.name, images: characters.images, situationImages: characters.situationImages })
-      .from(characters).where(and(eq(characters.isPublic, true), eq(characters.isOfficial, true), eq(characters.audience, 'male'), isNull(characters.deletedAt))),
+      .from(characters).where(and(eq(characters.isPublic, true), like(characters.slug, 'official-m-%'), eq(characters.audience, 'male'), isNull(characters.deletedAt))),
   ])
   const works = rows.filter(r => r.slug && r.situationImages.length >= 5)
   const plays = await playCounts(works.map(r => r.id), 7)
