@@ -8,7 +8,7 @@ export type Card = { img: string; rarity: Rarity; caption: string }
 export type CardSet = { key: string; slug: string; title: string; name: string; cards: Card[] }
 
 export const RATES: Record<Rarity, number> = { N: 0.55, R: 0.28, SR: 0.12, UR: 0.05 }
-export const DAILY_PULLS = 3
+export const DAILY_PULLS = 5
 
 export const CARD_SETS: CardSet[] = [
   {

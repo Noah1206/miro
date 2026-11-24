@@ -83,9 +83,11 @@ export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: bool
         ) : (
           <div className={s.coverCard}><img src={set.cover} alt="" /><span>{set.name}</span></div>
         )}
-        <button type="button" className={s.primary} disabled={!save || left <= 0} onClick={pull}>
-          {save && left <= 0 ? t('오늘 뽑기를 다 썼어요') : `${t('카드 뽑기')} (${left})`}
-        </button>
+        {signedIn ? (
+          <button type="button" className={s.primary} disabled={!save || left <= 0} onClick={pull}>
+            {save && left <= 0 ? t('오늘 뽑기를 다 썼어요') : `${t('카드 뽑기')} (${left})`}
+          </button>
+        ) : <Link className={s.primary} href="/login?next=/play">{t('로그인하고 카드 뽑기')}</Link>}
         <div className={s.row}>
           <button type="button" onClick={share}>{copied ? t('링크를 복사했어요') : save?.bonus ? t('결과 공유하기') : t('공유하고 +1 뽑기')}</button>
           <Link href={`/character/${set.slug}?utm_source=play&utm_campaign=${set.key}`}>{t('{name} 만나러 가기', { name: set.name })}</Link>
@@ -113,7 +115,7 @@ function Locked({ cover, href, t, small }: { cover: string; href: string; t: Ret
   return (
     <Link href={href} className={s.locked}>
       <img src={cover} alt="" />
-      <span>🔒{!small && <><br />{t('언베일 카드')}<br /><small>{t('성인 인증 후 언베일을 켜면 공개')}</small></>}</span>
+      <span><i className={s.nineteen}>19</i>{!small && <><br />{t('언베일 카드')}<br /><small>{t('성인 인증 후 언베일을 켜면 공개')}</small></>}</span>
     </Link>
   )
 }
