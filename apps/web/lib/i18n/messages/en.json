@@ -2602,5 +2602,11 @@
   "지금 대화방은 지워지지 않아요. 대화 목록에서 언제든 다시 열 수 있어요.": "This room isn't deleted. You can reopen it from your chat list anytime.",
   "기억 노트와 유저노트는 대화방마다 따로예요.": "Memory notes and user notes are separate for each room.",
   "대화방을 찾을 수 없어요.": "Chat room not found.",
-  "지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.": "Can't open a new room right now. Please try again shortly."
+  "지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.": "Can't open a new room right now. Please try again shortly.",
+  "기억 고치기": "Edit memory",
+  "기억 지우기": "Delete memory",
+  "기억은 300자까지 적을 수 있어요.": "A memory can be up to 300 characters.",
+  "기억을 고칠 수 없어요.": "Couldn't edit this memory.",
+  "기억을 지울 수 없어요.": "Couldn't delete this memory.",
+  "이 기억을 지울까요? 되돌릴 수 없어요.": "Delete this memory? This can't be undone."
 }

@@ -7,11 +7,12 @@ import { reflectionKey } from '@/lib/memory-reflection'
 import { leadName } from '@/lib/editorial/heroine-name'
 import { getT } from '@/lib/i18n/server'
 import { Reflection } from './reflection'
+import { MemoryItem } from './memory-item'
 import styles from './memory.module.css'
 
 /**
  * 11/17 대화 기억 페이지 — 캐릭터가 대화에서 정리해 둔 기억을 사람의 수첩처럼 본다.
- * 나에 대한 생각(캐릭터가 쓴 글) · 단기 기억(요약) · 장기 기억(약속·아는 것·함께한 일·세계·지난 이야기). 캐릭터의 독립적인 기억이라 보기만(11/17). 유저노트는 /note.
+ * 나에 대한 생각(캐릭터가 쓴 글) · 단기 기억(요약) · 장기 기억(약속·아는 것·함께한 일·세계·지난 이야기). 11/17엔 보기만이었고, 11/24부터 한 줄짜리 장기 기억은 사용자가 고치고 지울 수 있다. 유저노트는 /note.
  */
 /** 기억 노트 본문 — 기억 노트·유저노트 화면(NotesView)이 두 판을 함께 그려 두고 토글로 바꾼다. */
 export async function MemoryNote({ sessionId, userId }: { sessionId: string; userId: string }) {
@@ -37,7 +38,8 @@ export async function MemoryNote({ sessionId, userId }: { sessionId: string; use
   const List = ({ title, items }: { title: string; items: typeof rows }) => items.length ? (
     <div className={styles.card}>
       <p className={styles.small}>{title}</p>
-      <ul className={styles.list}>{items.map(m => <li key={m.id}>{human(m.content)}</li>)}</ul>
+      {/* 11/24 사용자: 한 줄 기억은 옆의 아이콘으로 고치고 지울 수 있다(memory-item.tsx). */}
+      <ul className={styles.list}>{items.map(m => <MemoryItem key={m.id} sessionId={sessionId} id={m.id} text={human(m.content)} />)}</ul>
     </div>
   ) : null
   const story = (text: string) => human(text).split(/\[([^\]]{1,20})\]/).map((part, i) => i % 2 ? <h4 key={i}>{part}</h4> : part.trim() && <p key={i}>{part.trim()}</p>)
