@@ -23,14 +23,14 @@ export type Thinking = 'low' | 'medium' | 'high'
 const THINKING_KEY = 'miro:chat-thinking-v2', THINKING_EVENT = 'miro:chat-thinking'
 /** 11/10 사용자: 5단계 — 만들기 화면의 '생각' 막대와 같은 값·이름. 안 고르면 기본은 '보통'(high). */
 const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'low', label: '빠름' }, { value: 'medium', label: '보통' }, { value: 'high', label: '깊게' }]
-/** 11/21 사용자: 안 골랐으면 기본은 가운데 '보통'(medium) — 그 전 '빠름'(low). */
-const DEFAULT_THINKING: Thinking = 'medium'
+/** 11/24 사용자: 안 골랐으면 기본은 '빠름'(low) — 답이 빨리 시작되게. 11/21엔 가운데 '보통'(medium)이었다. 직접 고른 사람은 고른 값 그대로. */
+const DEFAULT_THINKING: Thinking = 'low'
 const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : DEFAULT_THINKING } catch { return DEFAULT_THINKING } }
 const subscribe = (on: () => void) => { window.addEventListener(THINKING_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(THINKING_EVENT, on); window.removeEventListener('storage', on) } }
 /** 11/10 생각 강도(effort) — 이 기기에서 고른 값. 입력창이 턴마다 싣고, 서버는 작품 권장값보다 이 값을 먼저 쓴다. */
 /** 사용자가 막대를 움직여 고른 값만 — 안 골랐으면 null(서버가 작품 권장값을 쓴다). 화면 표시용 기본값(high)과 구분한다. */
 const readChosen = (): Thinking | null => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : null } catch { return null } }
-/** 11/21: 안 골랐어도 기본 '보통'을 보낸다(작품 권장값 대신 — 사용자 지시 '채팅방 기본 effort 는 중간'). */
+/** 11/21: 안 골랐어도 기본값을 보낸다(작품 권장값 대신). 기본값은 11/24부터 '빠름'. */
 export function useChosenThinking(): Thinking { return useSyncExternalStore(subscribe, () => readChosen() ?? DEFAULT_THINKING, () => DEFAULT_THINKING) }
 export function useChatThinking(): [Thinking, (v: Thinking) => void] {
   const value = useSyncExternalStore(subscribe, readThinking, () => DEFAULT_THINKING)
