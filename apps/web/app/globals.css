@@ -397,8 +397,6 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* chat: mobile = one column; desktop = scene + context panel (DESIGN §31, main scene always widest) */
 .chat-layout { min-height: 100dvh; display: grid; grid-template-columns: 1fr; }
-/* 11/24 화면 설정의 글자 크기 — 대화 영역에서 --font-body-size 를 배수로 다시 정하기 전에, 이 화면의 기본값을 다른 이름으로 잡아 둔다(chat.module.css). */
-[data-chat-font] { --chat-font-base: var(--font-body-size); }
 .chat-main { display: flex; flex-direction: column; min-height: 100dvh; max-width: 720px; width: 100%; margin: 0 auto; }
 .chat-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .chat-header > :nth-child(2) { flex: 1 1 160px; min-width: 0; }
