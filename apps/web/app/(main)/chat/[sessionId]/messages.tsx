@@ -12,8 +12,7 @@ import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, PHOTO_PAUSE_MS, REPLY_TYPING_PA
 import { UnveilCover } from '@/components/unveil-badge'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
-import { CONTINUE, ENDING_VIEW, UNDO, useTurns } from './turns'
-import { CONTINUE_INPUT } from '@/lib/simulation/pace'
+import { ENDING_VIEW, UNDO, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
@@ -85,8 +84,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   // 방에 들어오면 인트로 사진을 미리 받아 둔다(브라우저 캐시에 들어가 차례가 오면 바로 뜬다). 인트로를 보는 중일 때만, 최대 12장.
   const openingPhotos = opening.playing ? items.filter(m => m.opening && m.kind === 'photo').slice(0, 12).map(m => m.content).join('\n') : ''
   useEffect(() => { for (const src of openingPhotos.split('\n')) if (src) new Image().src = src }, [openingPhotos])
-  // 11/24 이어서 받기로 보낸 턴은 보낸 말 자리가 표식뿐이라 말풍선을 그리지 않는다.
-  const displayed = items.filter(m => opening.visible(m) && !voice.held(m.id) && !(m.role === 'user' && m.content === CONTINUE_INPUT))
+  const displayed = items.filter(m => opening.visible(m) && !voice.held(m.id))
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
   const lastOpeningId = [...displayed].reverse().find(m => m.opening)?.id
   const guide = afterIntro && !opening.playing ? afterIntro : null
@@ -213,19 +211,12 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               // 11/19 사용자: 카드 맨 아래 줄 — 사진 아이콘 옆에 '되돌리기'(마지막 답에만, 그 턴을 지우고 보낸 말을 입력칸으로).
               const canUndo = theme === 'miro' && settledReply && rerollInput !== undefined && m.id === lastSettled?.id
               const canPhoto = settledReply && !!photo && !!sessionId
-              // 11/24 사용자: 이어서 받기 — 마지막 답에만. 할 말이 없을 때 입력 없이 다음 장면을 받는다(보통 턴과 같은 값).
-              const canContinue = settledReply && !!sessionId && !live && m.id === lastSettled?.id
-              return (canPhoto || canUndo || canContinue) && <div className={styles.turnPhotoRow}>
+              return (canPhoto || canUndo) && <div className={styles.turnPhotoRow}>
                 {canPhoto && <PhotoButton variant="turn" sessionId={sessionId!} unveil={photo!.unveil} bundle={photo!.bundle} audience={photo!.audience} custom={photo!.scenes} />}
                 {canUndo && <button type="button" className={styles.turnPhoto} aria-label={t('되돌리기')} title={t('되돌리기')}
                   onClick={() => window.dispatchEvent(new CustomEvent(UNDO, { detail: { replyId: m.id } }))}>
                   <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
                   <span>{t('되돌리기')}</span>
-                </button>}
-                {canContinue && <button type="button" className={styles.turnPhoto} aria-label={t('이어서 받기')} title={t('이어서 받기')}
-                  onClick={() => window.dispatchEvent(new CustomEvent(CONTINUE))}>
-                  <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m5 6 6 6-6 6"/><path d="m13 6 6 6-6 6"/></svg>
-                  <span>{t('이어서')}</span>
                 </button>}
               </div>
             })()}

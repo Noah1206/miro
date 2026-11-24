@@ -15,8 +15,7 @@ import { SuggestButton, SuggestList, type SuggestState } from './suggest-replies
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { CONTINUE, ENDING_VIEW, REROLL, UNDO, useTurns, type LiveTurn } from './turns'
-import { CONTINUE_INPUT } from '@/lib/simulation/pace'
+import { ENDING_VIEW, REROLL, UNDO, useTurns, type LiveTurn } from './turns'
 import { useChatPace } from '@/components/chat-pace'
 import { undoTurn } from './actions'
 import { useChosenThinking } from '@/components/reply-length-sheet'
@@ -283,7 +282,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         const { remove: drop, router: nav, toast: say } = undoLatest.current
         if (!r.ok) { say(t(r.error), 'error'); return }
         drop(r.messageIds)
-        if (!draftNow.current.trim() && r.input !== CONTINUE_INPUT) setDraft(r.input)
+        if (!draftNow.current.trim()) setDraft(r.input)
         startRefresh(() => nav.refresh())
       } catch { undoLatest.current.toast(t('이 답은 지금 되돌릴 수 없어요.'), 'error') }
       finally { sending.current = false }
@@ -293,8 +292,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }, [sessionId, t])
 
   // 리롤(10/27): 마지막 답 아래 '다시 받기' — 지금 고른 모델로 같은 말을 다시 보낸다. 보낼 말·명령어는 서버가 되돌리기 기록에서 꺼낸다.
-  const latest = useRef({ action, ready, calendarPending, lowBalance, lowBalanceToast })
-  latest.current = { action, ready, calendarPending, lowBalance, lowBalanceToast }
+  const latest = useRef({ action, ready, calendarPending })
+  latest.current = { action, ready, calendarPending }
   useEffect(() => {
     const onReroll = (event: Event) => {
       const { replyId, input } = (event as CustomEvent<{ replyId: string; input: string }>).detail
@@ -312,19 +311,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       form.set('input', msg('엔딩 보기')); form.set('ending', name); form.set('requestId', crypto.randomUUID()); form.delete('command'); form.delete('commandId')
       void send(form, true)   // 쓰던 글은 그대로 둔다
     }
-    // 11/24 이어서 받기 — 입력 없이 다음 장면을 받는다. 쓰던 글·고른 명령어는 그대로 둔다.
-    const onContinue = () => {
-      const { action: send, ready: canSend, calendarPending: busy, lowBalance: low, lowBalanceToast: warn } = latest.current
-      if (sending.current || !canSend || busy || !ref.current) return
-      if (low) { warn(); return }
-      const form = new FormData(ref.current)
-      form.set('input', CONTINUE_INPUT); form.set('requestId', crypto.randomUUID()); form.delete('command'); form.delete('commandId')
-      void send(form, true)
-    }
     window.addEventListener(REROLL, onReroll)
     window.addEventListener(ENDING_VIEW, onEnding)
-    window.addEventListener(CONTINUE, onContinue)
-    return () => { window.removeEventListener(REROLL, onReroll); window.removeEventListener(ENDING_VIEW, onEnding); window.removeEventListener(CONTINUE, onContinue) }
+    return () => { window.removeEventListener(REROLL, onReroll); window.removeEventListener(ENDING_VIEW, onEnding) }
   }, [])
   useEffect(() => {
     if (refreshing) { hadRefresh.current = true; return }
