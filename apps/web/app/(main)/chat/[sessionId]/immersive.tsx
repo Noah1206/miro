@@ -8,7 +8,6 @@ import { spokenSegments } from '@/lib/voice-text'
 import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { VoiceStreamPlayer } from '@/lib/voice-stream'
 import { sfxClips, voicedClip } from '@/lib/voice-sfx'
-import { usedVoice } from '@/lib/voice-used'
 import { useTurns } from './turns'
 import type { Msg } from './messages'
 import { SpeechPanel } from './speech-panel'
@@ -29,8 +28,10 @@ type Immersive = { media: CharacterMedia; available:boolean; soon:boolean; on: b
   /** 11/11 음성 모드로 이어 읽는 중 — 폼에 voice=1(답을 쓰는 동안 합성 서버를 깨운다). */
   live:boolean
   /** 11/22 보낼 때 음성이 켜져 있었나 — 꺼진 채 보낸 턴의 답은 도중에 음성을 켜도 읽지 않는다(그 답은 신음 태그 없이 만들어졌다). */
-  markSend:(voiced:boolean)=>void }
-const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, held:()=>false, holding:false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},markSend:()=>{},live:false })
+  markSend:(voiced:boolean)=>void
+  /** 11/24 음성이 켜진 방에서 곧 쓸 것 같을 때(글을 쓰기 시작·보내기) 서버를 깨운다 — 2분에 한 번만 실제로 나간다. */
+  wake:()=>void }
+const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, held:()=>false, holding:false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},markSend:()=>{},wake:()=>{},live:false })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
@@ -164,8 +165,14 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
 
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // 11/6: 음성 모드가 켜지면(토글·다시 들어옴) 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간을 기다리지 않게.
-  // 11/23 사용자 "음성 모드 열 때 너무 오래 걸려": 켜기 전, 방에 들어오는 순간에도 깨운다 — 음성을 써 본 사람만(usedVoice, 회원당 5분에 한 번은 서버가 막는다).
-  useEffect(()=>{if(on||(enabled&&!soon&&usedVoice()))void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true,sessionId}),keepalive:true}).catch(()=>{})},[on,sessionId,enabled,soon])
+  // 11/24 사용자(Modal 비용을 최대한 아끼며 빠르게): 음성이 꺼진 방에 들어올 때는 더 깨우지 않는다(11/23엔 음성을 써 본 사람이면 깨웠다 — 그날 방 깨우기 26번 중 대부분이 음성 없이 끝났다).
+  // 대신 음성이 켜진 방에서 '곧 쓸 때'만 깨운다 — 들어올 때·켤 때(아래), 글을 쓰기 시작할 때·보낼 때(wake). 서버가 꺼져 있으면 켜지는 데 약 30초라, 글 쓰는 시간과 답이 만들어지는 시간에 겹쳐 둔다.
+  const lastWake=useRef(0)
+  const sendWake=()=>{lastWake.current=Date.now();void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true,sessionId}),keepalive:true}).catch(()=>{})}
+  const wake=()=>{if(on&&!soon&&Date.now()-lastWake.current>120_000)sendWake()}
+  useEffect(()=>{if(on&&!soon)sendWake()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[on,sessionId,soon])
   // 11/19 음성 모드가 켜져 있고 화면이 보이는 동안 1분마다 '아직 듣는 중' — 신호가 끊기면 서버가 몇 분 안에 꺼진다(api/tts route).
   useEffect(()=>{
     if(!on)return
@@ -195,7 +202,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   // 11/22 사용자: 답이 만들어지는 도중에 음성을 켜면 그 답은 글로만, 다음 답부터 음성 — 보낼 때 음성 상태로 가른다(서버도 그 값으로 음성용 답을 만든다).
   const voiceAtSend=useRef(false)
   // 11/23 음성 모드는 새로고침해도 켜진 채라(localStorage) 소리 잠금 풀기(unlock)가 켤 때만 있었다 — iOS 는 손짓 밖에서 만든 소리판이 멈춰 있어 아무 소리도 안 나고 줄이 멈췄다. 보내기(손짓)에서 푼다.
-  const markSend=(voiced:boolean)=>{voiceAtSend.current=voiced;if(voiced&&on)unlock()}
+  const markSend=(voiced:boolean)=>{voiceAtSend.current=voiced;if(voiced&&on){unlock();wake()}}
   // 켜는 순간 이미 와 있던 답은 읽지 않는다 — 켠 뒤에 새로 오는 답부터.
   const spoken=useRef(new Set<string>())
   useEffect(()=>{if(on){for(const m of appended)spoken.current.add(m.id);setSkipped(new Set(appended.map(m=>m.id)))}
@@ -221,6 +228,16 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     queue.current.push({key:`early:${livePid}`,id:livePid,parts:null,early:true});void drain()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[liveVoice,livePid,liveTurn?.blocks.length])
+  // 11/24 사용자 "음성 모드가 더 느린 것 같다": 글은 소리가 시작될 때까지 잡아 두는데(11/16), 서버가 꺼져 있다 켜지는 턴(약 30초)이나 서술로 길게 시작하는 답은 그동안 빈 화면이었다 —
+  // 답의 첫 글이 온 뒤 7초 안에 소리가 시작되지 않으면 글부터 보여 준다(소리는 준비되는 대로 뒤따른다). 서버가 켜져 있을 땐 첫 소리가 2~5초 안이라 전처럼 같이 나온다.
+  const textCap=useRef(new Set<string>())
+  useEffect(()=>{
+    if(!liveVoice||!voiceAtSend.current||!livePid||textCap.current.has(livePid)||!(liveTurn?.blocks.length))return
+    textCap.current.add(livePid)
+    // 정리 함수로 끄지 않는다 — 답을 다시 쓰는 턴(블록이 비워졌다 다시 옴)에도 처음 건 시간이 그대로 가야 한다. 턴이 끝난 뒤 울려도 그 턴의 글을 보이게 할 뿐이다.
+    setTimeout(()=>setEarlyStarted(prev=>prev===livePid?prev:livePid),7_000)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[liveVoice,livePid,!!liveTurn?.blocks.length])
   const earlyFor=(id:string)=>!!earlyStarted&&!!playbackKeys.get(id)?.startsWith(`${earlyStarted}:`)
   const arrivedIds=new Set(arrived.map(m=>m.id))
   const held=(id:string)=>liveVoice&&voiceAtSend.current&&arrivedIds.has(id)&&!skipped.has(id)&&!released.has(id)&&!earlyFor(id)
@@ -236,7 +253,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,markSend,live:liveVoice&&!(earlyStarted&&livePid===earlyStarted) }}>
+    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,markSend,wake,live:liveVoice&&!(earlyStarted&&livePid===earlyStarted) }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}

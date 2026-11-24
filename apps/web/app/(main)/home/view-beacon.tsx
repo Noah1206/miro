@@ -1,6 +1,5 @@
 'use client'
 import { useEffect } from 'react'
-import { usedVoice } from '@/lib/voice-used'
 
 /**
  * 홈 방문 기록(11/8 퍼널) — 탭을 열어 둔 동안 로그인 상태마다 한 번. 화면엔 아무것도 그리지 않는다.
@@ -25,6 +24,8 @@ export function HomeViewBeacon({ signedIn }: { signedIn: boolean }) {
  */
 
 export function HomeVoiceWake() {
-  useEffect(() => { if (usedVoice()) void fetch('/api/tts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wake: true }), keepalive: true }).catch(() => {}) }, [])
+  // 11/24 사용자(Modal 비용을 최대한 아끼기): 홈에서는 더 깨우지 않는다 — 홈을 지날 때마다 GPU 가 30분씩 켜졌고(11/23 하루 13번), 그 뒤 음성을 쓰지 않은 경우가 대부분이었다.
+  // 이제 음성이 켜진 방에 들어올 때·글을 쓰기 시작할 때·보낼 때만 깨운다(chat immersive.tsx). 되살리려면 아래 줄의 주석을 푼다.
+  // useEffect(() => { if (usedVoice()) void fetch('/api/tts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wake: true }), keepalive: true }).catch(() => {}) }, [])
   return null
 }

@@ -422,7 +422,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={awaiting || calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
           <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={awaiting || calendarPending || !ready} rows={1} required={!command} maxLength={2000}
             placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
-            onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
+            onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()); voice.wake() /* 11/24 음성이 켜진 방이면 쓰는 동안 서버를 깨워 둔다(2분에 한 번) */ }}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && slashQuery !== null) { e.preventDefault(); return } if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
             />
         </div>

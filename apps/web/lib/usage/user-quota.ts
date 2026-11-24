@@ -23,5 +23,5 @@ export async function takeUserQuota(userId: string, name: string, windows: { ms:
   } catch (e) { if (e === OVER) return false; throw e }
 }
 
-/** 음성 서버 깨우기 — 서버(합성·목소리 등록)마다 회원당 5분에 한 번. */
-export const takeVoiceWake = (userId: string, server: 'tts' | 'upload' = 'tts') => takeUserQuota(userId, `voice_wake_${server}`, [{ ms: 300_000, max: 1 }])
+/** 음성 서버 깨우기 — 서버(합성·목소리 등록)마다 회원당 2분에 한 번(11/24: 5분 → 2분 — 켜 두는 시간이 3분이라, 5분이면 꺼진 뒤에도 못 깨우는 틈이 있었다). */
+export const takeVoiceWake = (userId: string, server: 'tts' | 'upload' = 'tts') => takeUserQuota(userId, `voice_wake_${server}`, [{ ms: 120_000, max: 1 }])

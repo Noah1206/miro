@@ -33,7 +33,9 @@ export const maxDuration = 600
  */
 const MIN = 60_000
 const voice = { lastUse: 0, lastBeat: 0, lastWarm: 0, homeUntil: 0, released: false }
-const keepVoiceUntil = () => Math.min(Math.max(voice.lastBeat + 3 * MIN, voice.lastUse + 3 * MIN, voice.homeUntil), voice.lastUse + 30 * MIN)
+// 11/24 사용자(Modal 비용): 마지막 실제 사용(깨우기·합성) 뒤 켜 두는 상한을 30분 → 10분 — 음성을 켠 채 화면만 띄워 둔 방이 30분씩 GPU 를 잡았다.
+// 다시 쓰려고 글을 쓰기 시작하면 화면이 깨운다(immersive.tsx wake).
+const keepVoiceUntil = () => Math.min(Math.max(voice.lastBeat + 3 * MIN, voice.lastUse + 3 * MIN, voice.homeUntil), voice.lastUse + 10 * MIN)
 function holdVoice(active: boolean) {
   const url = process.env.MIRO_VOICE_UPLOAD_URL?.replace(/\/$/, ''), key = process.env.MIRO_TTS_API_KEY
   if (!url) return
@@ -44,7 +46,7 @@ function holdVoice(active: boolean) {
 function voiceUsed(home = false) {
   const now = Date.now()
   voice.lastUse = voice.lastWarm = now
-  voice.homeUntil = home ? now + 30 * MIN : 0
+  voice.homeUntil = home ? now + 3 * MIN : 0   // 11/24 방 없이 깨운 것도 3분만(홈 깨우기는 없앴다)
   if (voice.released) holdVoice(true)
 }
 const g = globalThis as { miroVoiceTimer?: ReturnType<typeof setInterval> }
