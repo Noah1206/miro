@@ -331,7 +331,7 @@ async function withChats(cards: HomeCard[]): Promise<HomeCard[]> {
 }
 
 /** 캐릭터별 대화 인원. 한 번의 질의로 모아 카드에 붙인다. */
-async function playCounts(ids: string[], days?: number): Promise<Map<string, number>> {
+export async function playCounts(ids: string[], days?: number): Promise<Map<string, number>> {
   if (ids.length === 0) return new Map()
   const rows = await db.select({ id: roleplaySessions.characterId, n: sql<number>`count(distinct ${roleplaySessions.userId})::int` })
     .from(roleplaySessions)

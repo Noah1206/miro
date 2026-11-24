@@ -2,15 +2,15 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useT } from '@/lib/i18n/client'
-import { DAILY_PULLS, RATES, type Card, type Rarity } from '@/lib/play/cards'
+import type { Asset, Rarity } from '@/lib/play/assets'
 import s from './play.module.css'
 
-export type ClientCard = Omit<Card, 'img'> & { img: string | null }
-export type ClientSet = { key: string; slug: string; title: string; name: string; cover: string; cards: ClientCard[] }
+const RATES: Record<Rarity, number> = { N: 0.55, R: 0.28, SR: 0.12, UR: 0.05 }
+const DAILY_PULLS = 5
 
-/** 브라우저에만 저장 — 로그인 없이 바로 뽑게. ponytail: 지우면 초기화, 보상이 붙으면 서버 저장으로. */
-type Save = { day: string; used: number; bonus: number; owned: Record<string, number[]> }
-const KEY = 'miro_cards_v1'
+/** 브라우저에만 저장(작품 slug → 카드 id). ponytail: 지우면 초기화, 보상이 붙으면 서버 저장으로. */
+type Save = { day: string; used: number; bonus: number; owned: Record<string, string[]> }
+const KEY = 'miro_cards_v2'
 const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
 const load = (): Save => {
   const fresh = { day: today(), used: 0, bonus: 0, owned: {} }
@@ -25,40 +25,40 @@ const roll = (): Rarity => {
   return 'N'
 }
 
-export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: boolean }) {
+export function CardGame({ tabs, set, signedIn }: { tabs: { slug: string; title: string }[]; set: { slug: string; title: string; cover: string; cards: Asset[] }; signedIn: boolean }) {
   const t = useT()
   const [save, setSave] = useState<Save | null>(null)
-  const [tab, setTab] = useState(0)
-  const [drawn, setDrawn] = useState<{ card: ClientCard; isNew: boolean } | null>(null)
+  const [drawn, setDrawn] = useState<{ card: Asset; isNew: boolean } | null>(null)
   const [flipped, setFlipped] = useState(false)
   const [copied, setCopied] = useState(false)
   useEffect(() => setSave(load()), [])
+  useEffect(() => setDrawn(null), [set.slug])
   const write = (v: Save) => { setSave(v); try { localStorage.setItem(KEY, JSON.stringify(v)) } catch {} }
 
-  const set = sets[tab]!
-  const owned = new Set(save?.owned[set.key] ?? [])
+  const owned = new Set(save?.owned[set.slug] ?? [])
   const left = save ? DAILY_PULLS + save.bonus - save.used : 0
+  const got = set.cards.filter(c => owned.has(c.id)).length
 
   const pull = () => {
-    if (!save || left <= 0) return
+    if (!save || left <= 0 || !set.cards.length) return
     const rarity = roll()
-    const pool = set.cards.map((c, i) => [c, i] as const).filter(([c]) => c.rarity === rarity)
-    const [card, idx] = pool[Math.floor(Math.random() * pool.length)]!
-    const isNew = !owned.has(idx)
-    write({ ...save, used: save.used + 1, owned: { ...save.owned, [set.key]: isNew ? [...owned, idx] : [...owned] } })
+    const pool = set.cards.filter(c => c.rarity === rarity)
+    const from = pool.length ? pool : set.cards
+    const card = from[Math.floor(Math.random() * from.length)]!
+    const isNew = !owned.has(card.id)
+    write({ ...save, used: save.used + 1, owned: { ...save.owned, [set.slug]: isNew ? [...owned, card.id] : [...owned] } })
     setFlipped(false); setDrawn({ card, isNew })
     setTimeout(() => setFlipped(true), 350)
   }
   const share = async () => {
-    const url = `${location.origin}/play?utm_source=play_share`
-    const text = `${set.title} ${t('사진 카드')} ${owned.size}/${set.cards.length}`
+    const url = `${location.origin}/play?w=${encodeURIComponent(set.slug)}&utm_source=play_share`
+    const text = `${set.title} ${t('사진 카드')} ${got}/${set.cards.length}`
     const shared = navigator.share ? await navigator.share({ title: t('캐릭터 사진 카드 뽑기'), text, url }).then(() => true, () => false)
       : await navigator.clipboard.writeText(`${text}\n${url}`).then(() => { setCopied(true); return true }, () => false)
     // 공유하면 하루 한 번 +1 뽑기
     if (shared && save && save.bonus === 0) write({ ...save, bonus: 1 })
   }
-  const done = owned.size === set.cards.length
-  const unveilHref = signedIn ? '/home' : '/login?next=/play'
+  const unveilHref = `/character/${set.slug}?unveil=enable`
 
   return (
     <main className={s.page}>
@@ -68,7 +68,7 @@ export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: bool
         <p className={s.sub}>{t('매일 무료 {n}번 · 공유하면 +1', { n: DAILY_PULLS })}</p>
       </header>
       <nav className={s.tabs}>
-        {sets.map((x, i) => <button key={x.key} type="button" aria-pressed={i === tab} onClick={() => { setTab(i); setDrawn(null) }}>{x.title}</button>)}
+        {tabs.map(x => <Link key={x.slug} href={`/play?w=${encodeURIComponent(x.slug)}`} aria-current={x.slug === set.slug ? 'page' : undefined} scroll={false}>{x.title}</Link>)}
       </nav>
 
       <section className={s.stage}>
@@ -81,7 +81,7 @@ export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: bool
             </div>
           </div>
         ) : (
-          <div className={s.coverCard}><img src={set.cover} alt="" /><span>{set.name}</span></div>
+          <div className={s.coverCard}><img src={set.cover} alt="" /><span>{set.title}</span></div>
         )}
         {signedIn ? (
           <button type="button" className={s.primary} disabled={!save || left <= 0} onClick={pull}>
@@ -90,18 +90,18 @@ export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: bool
         ) : <Link className={s.primary} href="/login?next=/play">{t('로그인하고 카드 뽑기')}</Link>}
         <div className={s.row}>
           <button type="button" onClick={share}>{copied ? t('링크를 복사했어요') : save?.bonus ? t('결과 공유하기') : t('공유하고 +1 뽑기')}</button>
-          <Link href={`/character/${set.slug}?utm_source=play&utm_campaign=${set.key}`}>{t('{name} 만나러 가기', { name: set.name })}</Link>
+          <Link href={`/character/${set.slug}?utm_source=play&utm_campaign=${encodeURIComponent(set.slug)}`}>{t('대화하러 가기')}</Link>
         </div>
         <p className={s.rates}>N 55% · R 28% · SR 12% · UR 5%</p>
       </section>
 
       <section className={s.book}>
-        <h2>{t('도감')} <small>{owned.size}/{set.cards.length}</small></h2>
-        {done && <p className={s.done}>{t('도감 완성! 이 다음 이야기는 미로에서.')}</p>}
+        <h2>{t('도감')} <small>{got}/{set.cards.length}</small></h2>
+        {got === set.cards.length && got > 0 && <p className={s.done}>{t('도감 완성! 이 다음 이야기는 미로에서.')}</p>}
         <ul>
-          {set.cards.map((c, i) => (
-            <li key={i} className={`${s[c.rarity]} ${owned.has(i) ? '' : s.missing}`}>
-              {owned.has(i) ? (c.img ? <img src={c.img} alt="" /> : <Locked cover={set.cover} href={unveilHref} t={t} small />) : <span>?</span>}
+          {set.cards.map(c => (
+            <li key={c.id} className={`${s[c.rarity]} ${owned.has(c.id) ? '' : s.missing}`}>
+              {owned.has(c.id) ? (c.img ? <img src={c.img} alt="" loading="lazy" /> : <Locked cover={set.cover} href={unveilHref} t={t} small />) : <span>?</span>}
               <em>{c.rarity}</em>
             </li>
           ))}
@@ -111,7 +111,7 @@ export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: bool
   )
 }
 
-function Locked({ cover, href, t, small }: { cover: string; href: string; t: ReturnType<typeof useT>; small?: boolean }) {
+export function Locked({ cover, href, t, small }: { cover: string; href: string; t: ReturnType<typeof useT>; small?: boolean }) {
   return (
     <Link href={href} className={s.locked}>
       <img src={cover} alt="" />

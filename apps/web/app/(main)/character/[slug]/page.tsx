@@ -29,7 +29,9 @@ import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import { hasActiveRun, reachedEndings } from '@/lib/ending-collection'
-import { db, users } from '@miro/db'
+import { characters, db, users } from '@miro/db'
+import { workAssets } from '@/lib/play/assets'
+import { AssetGallery } from './assets'
 import { eq } from 'drizzle-orm'
 import { fillCharacterMacros } from '@miro/domain'
 
@@ -51,7 +53,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   // 11/12 크리에이터 이름 — 해시태그 아래와 응원 버튼에 같이 쓴다(운영 작품은 그림체별 필명, lib/creator-name).
   const creator = creatorName(c, c.ownerId ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId)).limit(1))[0]?.name : null)
   const creatorKey = creatorKeyOf(c)
-  const [comments, commentCount, similar, likes, reached, running, creatorInfo] = await Promise.all([
+  const [comments, commentCount, similar, likes, reached, running, creatorInfo, situation] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType, unveil),
@@ -60,7 +62,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
     // 11/20 사용자: 이미 대화한 방이 있으면 '이어서 대화 · 새로 대화' 두 버튼(엔딩 작품만이 아니라 전부).
     user ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
     creatorKey ? creatorOf(creatorKey, user?.id ?? null) : Promise.resolve(null),
+    // 11/25 '에셋' 칸 — 상황 사진은 커서 기본 조회(getOne)에 안 싣고 상세에서만 따로 읽는다.
+    db.select({ images: characters.situationImages }).from(characters).where(eq(characters.id, c.id)).then(r => r[0]?.images ?? []),
   ])
+  const assets = workAssets(situation, unveil)
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
   // 11/18 붙여 넣은 바베챗식 설정의 {{char}}·{{user}} — 소개 화면에선 캐릭터 이름·'당신'.
   const me = (text: string | null) => fillCharacterMacros(text ?? '', c.name, '당신')
@@ -230,6 +235,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             : <StartWithLogin slug={slug} label={t('대화 바로 시작하기')} />}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
       </div>
+
+      <AssetGallery assets={assets} cover={assets.find(a => a.img)?.img ?? null} unlockHref={unlockAt.signedIn ? unlockAt.returnTo : `/login?next=${encodeURIComponent(unlockAt.returnTo)}`} />
 
       {/* 엔딩 도감(11/10, 크랙) — 닿은 엔딩은 이름·그림, 아직인 엔딩은 등급과 힌트만. */}
       {c.endings.length > 0 && (

@@ -1,0 +1,16 @@
+/* 11/25 상세 '에셋' 칸 */
+.wrap { margin-top: var(--space-7); padding: 0 var(--gutter); }
+.wrap h2 { margin: 0 0 12px; font-weight: var(--weight-semibold); }
+.wrap h2 small { font-size: 14px; font-weight: 400; color: var(--color-text-secondary); }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
+.grid li { position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; background: var(--color-surface-2); }
+.grid a { display: block; width: 100%; height: 100%; }
+.grid img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.locked { display: grid !important; place-items: center; }
+.locked img { position: absolute; inset: 0; filter: blur(14px) brightness(.5); transform: scale(1.2); }
+.locked i { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 3px solid #e5262c; background: #fff; color: #e5262c; font-style: normal; font-size: 14px; font-weight: 900; }
+.more { margin-top: 10px; }
+.more summary { display: flex; align-items: center; justify-content: center; min-height: 44px; margin-bottom: 10px; border: 1px solid var(--color-border-strong); border-radius: 12px; color: var(--color-text-primary); font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; }
+.more summary::-webkit-details-marker { display: none; }
+.more[open] summary { display: none; }
+.grid a:focus-visible, .more summary:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }

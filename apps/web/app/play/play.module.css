@@ -5,8 +5,8 @@
 .kicker { margin: 0; color: var(--color-accent-text); font-size: 12px; font-weight: 700; letter-spacing: .1em; }
 .sub { margin: 0; color: var(--color-text-secondary); font-size: 14px; }
 .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 4px; scrollbar-width: none; }
-.tabs button { flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.tabs button[aria-pressed="true"] { background: #fff; color: #111; border-color: #fff; }
+.tabs a { display: flex; align-items: center; text-decoration: none; flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.tabs a[aria-current="page"] { background: #fff; color: #111; border-color: #fff; }
 .stage { display: grid; justify-items: center; gap: 12px; padding: 18px 0 8px; }
 .coverCard, .flip { width: 240px; aspect-ratio: 3 / 4; border-radius: 18px; position: relative; }
 .coverCard { overflow: hidden; border: 1px solid var(--color-border); }
@@ -47,4 +47,4 @@
 .book .nineteen { width: 26px; height: 26px; border-width: 2px; font-size: 11px; }
 .primary { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .locked small { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
-.tabs button:focus-visible, .primary:focus-visible, .row > *:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
+.tabs a:focus-visible, .primary:focus-visible, .row > *:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
