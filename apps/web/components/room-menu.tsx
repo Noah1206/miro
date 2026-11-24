@@ -22,11 +22,12 @@ import { RoomVoicePanel, type RoomVoice } from '@/components/room-voice'
 import { RoomGallery } from '@/components/room-gallery'
 import { ReplyLengthPanel } from '@/components/reply-length-sheet'
 import { PacePanel } from '@/components/chat-pace'
+import { DisplayPanel } from '@/components/chat-display'
 import styles from './room-menu.module.css'
 import sheetStyles from './push-subscribe.module.css'
 
 type Panel = 'persona' | 'theme' | 'model' | 'memory' | 'note'
-type IconName = Panel | 'length' | 'pace' | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
+type IconName = Panel | 'length' | 'pace' | 'display' | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
 function MenuIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
     persona: <><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></>,
@@ -36,6 +37,7 @@ function MenuIcon({ name }: { name: IconName }) {
     note: <><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="M13.5 6.5l4 4"/></>,
     length: <><path d="M4 6h16M4 10h12M4 14h16M4 18h9"/></>,
     pace: <><path d="m5 6 6 6-6 6"/><path d="m13 6 6 6-6 6"/></>,
+    display: <><path d="M4 7h9M19 7h1M4 17h3M13 17h7"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></>,
     message: <path d="M21 11a8 8 0 0 1-8 8H8l-5 3v-6a8 8 0 0 1 0-10A8 8 0 0 1 9 3h4a8 8 0 0 1 8 8Z"/>,
     archive: <><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></>,
     character: <><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="9" r="3"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></>,
@@ -47,8 +49,8 @@ function MenuIcon({ name }: { name: IconName }) {
 }
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
-type Screen = 'main' | 'persona' | 'model' | 'length' | 'pace'
-const SCREENS = new Set<string>(['main', 'persona', 'model', 'length', 'pace'])
+type Screen = 'main' | 'persona' | 'model' | 'length' | 'pace' | 'display'
+const SCREENS = new Set<string>(['main', 'persona', 'model', 'length', 'pace', 'display'])
 
 /**
  * 11/21 사용자: ☰ 를 누르면 서랍 대신 화면 전체가 '채팅방 설정' 페이지로 — 머리의 < 로 바로 채팅방으로 돌아온다.
@@ -175,6 +177,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     {screen === 'model' && <RoomPage title={titles.model} onBack={back}><ChatModelOptions choices={choices}/></RoomPage>}
     {screen === 'length' && <RoomPage title={t('출력량 설정')} onBack={back}><ReplyLengthPanel open onClose={back} choices={choices}/></RoomPage>}
     {screen === 'pace' && <RoomPage title={t('전개 설정')} onBack={back}><PacePanel onClose={back}/></RoomPage>}
+    {screen === 'display' && <RoomPage title={t('화면 설정')} onBack={back}><DisplayPanel onClose={back}/></RoomPage>}
     {screen === 'main' && <RoomPage title={t('채팅방 설정')} onBack={back} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       {/* 11/19 사용자: 채팅방 메뉴에서는 갤러리를 뺀다 — 문자방 메뉴에는 그대로. */}
       {messenger && <RoomGallery sessionId={sessionId} open={open}/>}
@@ -202,6 +205,8 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {choices.length > 0 && <button type="button" className={styles.row} onClick={() => go('length')}><MenuIcon name="length"/><span>{t('출력량 설정')}</span><Chevron/></button>}
         {/* 11/24 사용자: 전개 설정 — 누가 이야기를 끌고 갈지·늘어지는 시간 건너뛰기 */}
         <button type="button" className={styles.row} onClick={() => go('pace')}><MenuIcon name="pace"/><span>{t('전개 설정')}</span><Chevron/></button>
+        {/* 11/24 사용자: 화면 설정 — 글자 크기·글씨체·사진 크기·대화창 넓이(이 기기에만) */}
+        <button type="button" className={styles.row} onClick={() => go('display')}><MenuIcon name="display"/><span>{t('화면 설정')}</span><Chevron/></button>
       </section>
       {/* 11/21 사용자: 캐릭터 정보·이전 대화 보기·대화 내려받기·알림·접근 권한 줄은 지웠다. */}
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>

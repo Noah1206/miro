@@ -6,6 +6,7 @@ import { useT } from '@/lib/i18n/client'
 import styles from './chat-theme.module.css'
 import { bindChatViewport } from './chat-viewport'
 import { CharacterPhoto } from './character-visual'
+import { chatDisplayAttrs, useChatDisplay } from './chat-display'
 
 type Theme = 'miro' | 'dm-light' | 'dm' | 'talk'
 const DEFAULT_THEME: Theme = 'miro'
@@ -25,6 +26,7 @@ export function ChatTheme({ sessionId, children }: { sessionId?: string; childre
   const key = sessionId ? `miro:chat-theme:${sessionId}` : DEFAULT_THEME_KEY
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME)
   const root = useRef<HTMLDivElement>(null)
+  const [display] = useChatDisplay()   // 11/24 화면 설정(글자 크기·글씨체·사진 크기·넓이)
   useEffect(() => {
     const read = () => {
       try {
@@ -42,7 +44,7 @@ export function ChatTheme({ sessionId, children }: { sessionId?: string; childre
     if (root.current) return bindChatViewport(root.current)
   }, [])
   const select = (next: Theme) => { setTheme(next); rememberForPush(sessionId, next); try { localStorage.setItem(key, next); localStorage.setItem(`${key}:at`, String(Date.now())) } catch { /* Private storage can be unavailable; selection still works. */ } }
-  return <Context.Provider value={{ theme, select }}>{sessionId ? <div ref={root} className={styles.root} data-chat-theme={theme}>{children}</div> : children}</Context.Provider>
+  return <Context.Provider value={{ theme, select }}>{sessionId ? <div ref={root} className={styles.root} data-chat-theme={theme} {...chatDisplayAttrs(display)}>{children}</div> : children}</Context.Provider>
 }
 
 export function DefaultChatAvatar({ theme: previewTheme }: { theme?: Theme } = {}) {

@@ -873,3 +873,14 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/23 사용자: 스크롤할 때 입력창이 내려가며 사라지던 것(11/22)을 없앰 — 헤더가 접혀도 입력창은 그대로 남는다. */
 /* 11/22 사용자: 대화 끝 자리로 옮긴 추천 답변이 위 카드에 붙어 보였다 — 메시지 사이만큼 띄운다. */
 :global(#suggest-slot) > .suggest { margin-top: 16px; }
+
+/* ── 11/24 사용자: 화면 설정(채팅방 설정 → 화면 설정) — 글자 크기·글씨체·사진 크기. 이 기기에 저장되고 대화 영역(.messages)에만 걸린다.
+   값은 채팅방 뿌리(components/chat-theme.tsx)의 data-chat-* 속성. 글자 크기는 화면별 기본값(--font-body-size)에 배수를 곱한다. ── */
+:global([data-chat-font]) { --chat-font-base: var(--font-body-size); }
+:global([data-chat-font='small']) .messages { --font-body-size: calc(var(--chat-font-base) * .9); }
+:global([data-chat-font='large']) .messages { --font-body-size: calc(var(--chat-font-base) * 1.13); }
+:global([data-chat-font='xlarge']) .messages { --font-body-size: calc(var(--chat-font-base) * 1.27); }
+:global([data-chat-serif]) .messages { font-family: 'Noto Serif KR', 'Noto Serif CJK KR', AppleMyungjo, 'Nanum Myeongjo', Batang, serif; }
+:global([data-chat-photo='small']) .messages .photo { max-width: 240px; }
+:global([data-chat-photo='medium']) .messages .photo { max-width: 420px; }
+:global([data-chat-photo='off']) .messages .photo, :global([data-chat-photo='off']) .messages .inlinePhotos { display: none; }
