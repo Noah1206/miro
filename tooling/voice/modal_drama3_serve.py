@@ -1058,9 +1058,10 @@ class Voices:
 
         @api.post('/hold')
         def hold(request: Request, active: int = 1):
-            """11/19 웹 서버가 부른다 — 듣는 방이 있으면 음성 서버 대기 20분, 없으면 1분(서버가 스스로 꺼진다). 서버를 켜지 않는다."""
+            """11/19 웹 서버가 부른다 — 듣는 방이 있으면 음성 서버 대기 20분, 없으면 곧바로 꺼지게(서버를 켜지 않는다).
+            11/24 사용자: 토글을 끄거나 브라우저를 닫은 뒤의 1분도 줄인다 — 없을 때 대기 60초 → 2초(Modal 이 받는 가장 짧은 값)."""
             if not authed(request): return Response(status_code=401)
-            Speaker().update_autoscaler(scaledown_window=1200 if active else 60)
+            Speaker().update_autoscaler(scaledown_window=1200 if active else 2)
             return {'ok': True}
 
         @api.post('/voices')
