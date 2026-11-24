@@ -25,6 +25,7 @@ import { conversationVariationDirective, repeatedConversationBlock, snapshotUser
 import { resolveChatModel } from '@/lib/ai/chat-models'
 import { castNames } from '@miro/engine'
 import { createAIWithAdultFallback } from '@/lib/ai/adult-fallback'
+import { roomAdult } from '@/lib/simulation/room-adult'
 
 type RealityRow = {
   session: typeof roleplaySessions.$inferSelect
@@ -69,11 +70,12 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
   const sessionId = row.session.id, userId = row.session.userId
   const requestedMode = characterAgencyMode(sessionId, row.session.policyVersion)
   if (requestedMode === 'off') return null
-  const replyModel = opts.inbox?.chatModel ? await resolveChatModel(userId, opts.inbox.chatModel, row.session.adultSince !== null) : undefined
+  const adult = await roomAdult({ userId, characterId: row.character.id, sessionId, adultSince: row.session.adultSince })   // 11/24 대화 턴과 같은 판정 — 언베일이면 처음부터 OpenRouter
+  const replyModel = opts.inbox?.chatModel ? await resolveChatModel(userId, opts.inbox.chatModel, adult) : undefined
   installAIUsageSink()
   const llm = createAIWithAdultFallback({ mock: req => buildMockRealityContent(req.prompt), context: {
     userId, sessionId, workload: opts.background ? 'background' : 'interactive', shadow: requestedMode === 'shadow',
-    origin: 'reality:agency:reality:miro:background', adult: row.session.adultSince !== null,
+    origin: 'reality:agency:reality:miro:background', adult,
     dialogueModelId: replyModel?.modelId,
   } })
   try {

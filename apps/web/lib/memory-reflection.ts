@@ -3,6 +3,7 @@ import { and, asc, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { characters, db, memories, relationships, roleplaySessions } from '@miro/db'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
+import { roomAdult } from '@/lib/simulation/room-adult'
 import { leadName } from '@/lib/editorial/heroine-name'
 
 /**
@@ -28,7 +29,7 @@ export const reflectionKey = (rows: Array<{ createdAt: Date }>) => `${rows.lengt
 /** 저장된 생각이 지금 기억과 맞으면 그대로, 아니면 새로 써서 저장한다. 기억이 없으면 null. */
 export async function reflectOnUser(sessionId: string, userId: string): Promise<MemoryReflection | null> {
   const [room] = await db.select({ name: characters.name, secret: characters.secret, cast: characters.ensembleCast, personality: characters.personality, speechStyle: characters.speechStyle, values: characters.values,
-    persona: roleplaySessions.userPersona, adultSince: roleplaySessions.adultSince, stored: roleplaySessions.memoryReflection })
+    persona: roleplaySessions.userPersona, adultSince: roleplaySessions.adultSince, characterId: roleplaySessions.characterId, stored: roleplaySessions.memoryReflection })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).where(roomScope(sessionId, userId)).limit(1)
   if (!room) return null
   const rows = await db.select({ type: memories.type, content: memories.content, createdAt: memories.createdAt }).from(memories)
@@ -38,7 +39,7 @@ export async function reflectOnUser(sessionId: string, userId: string): Promise<
   if (room.stored?.key === key) return room.stored
   const [rel] = await db.select({ stage: relationships.stage, trust: relationships.trust, attraction: relationships.attraction, distance: relationships.emotionalDistance })
     .from(relationships).where(eq(relationships.sessionId, sessionId)).limit(1)
-  const llm = auxiliaryLLM(room.name, { userId, sessionId, requestId: randomUUID(), workload: 'background', origin: 'memory:reflection', adult: room.adultSince !== null })
+  const llm = auxiliaryLLM(room.name, { userId, sessionId, requestId: randomUUID(), workload: 'background', origin: 'memory:reflection', adult: await roomAdult({ userId, characterId: room.characterId, sessionId, adultSince: room.adultSince }) })
   const out = await llm.generateStructured({ schema: Reflection, task: 'memory_summary', promptVersion: 'memory-reflection:v1', maxTokens: 2048, system: SYSTEM,
     prompt: JSON.stringify({
       // 11/17 작품명 대신 대표 인물로 쓴다(다인 작품은 첫 인물, 공식 작품은 설정 글의 히로인).

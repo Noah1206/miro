@@ -31,6 +31,7 @@ import { translateTo } from '@/lib/i18n/server'
 import { adoptRelationshipPolicy } from '@/lib/agency/session-policy'
 import { characterPushIcon } from '@/lib/push/character-icon'
 import { castOf } from '@/lib/editorial/heroine-name'
+import { roomAdult } from '@/lib/simulation/room-adult'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -282,13 +283,14 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
 
   // ---- 내용 생성 (Provider 미구성 시 Mock, 숨기지 않음) ----
   installAIUsageSink()
-  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId, workload: opts.background ? 'background' : 'interactive', origin: 'reality:legacy:reality:miro:background', adult: row.session.adultSince !== null } })
+  const roomIsAdult = await roomAdult({ userId: row.session.userId, characterId: row.character.id, sessionId, adultSince: row.session.adultSince })
+  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId, workload: opts.background ? 'background' : 'interactive', origin: 'reality:legacy:reality:miro:background', adult: roomIsAdult } })
 
   const grounding = await loadRealityContext(sessionId, row.session.userId, intent.reason)
   if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }
   const contentInput = {
     allowAbstain: !intent.answers && !intent.momentKey && !intent.promise,
-    adult: row.session.adultSince !== null,   // 11/23 언베일이 꺼진 방의 문자에는 청소년 안전 문장이 실린다
+    adult: roomIsAdult,   // 11/23 언베일이 꺼진 방의 문자에는 청소년 안전 문장이 실린다
     characterName: row.character.name,
     // 11/17 다인 작품: 이 문자를 보낸 인물을 고르게 한다(저장 블록의 speaker → 문자방 이름·알림 제목).
     cast: castOf(row.character),

@@ -8,6 +8,7 @@ import { afterResponse } from '@/lib/defer'
 import { observe } from '@/lib/observe'
 import { characterContext } from '@/lib/simulation/character-context'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
+import { userAdult } from '@/lib/simulation/room-adult'
 import { authoredDocument } from './authored'
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
@@ -96,7 +97,7 @@ export async function precompileAgencyRevisions(limit = 2): Promise<number> {
   const { compileAgencyRevision } = await import('./runtime')
   let compiled = 0
   for (const revision of pending) {
-    const llm = resolveRpLLM('캐릭터 설정', { userId: revision.ownerId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0 }, true)
+    const llm = resolveRpLLM('캐릭터 설정', { userId: revision.ownerId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0, adult: await userAdult(revision.ownerId) }, true)
     if (await compileAgencyRevision(revision.id, llm)) compiled++
   }
   return compiled
@@ -111,7 +112,7 @@ export async function scheduleAgencyCompilation(revisionId: string | null | unde
       const { compileAgencyRevision } = await import('./runtime')
       // ai_usage.request_id is a uuid column: a composite key here made every compile fail.
       const llm = resolveRpLLM('캐릭터 설정', {
-        userId, requestId: randomUUID(), workload: 'background', usageUnits: 0,
+        userId, requestId: randomUUID(), workload: 'background', usageUnits: 0, adult: await userAdult(userId),   // 11/24 언베일을 켠 계정의 설정은 처음부터 OpenRouter
         shadow: characterAgencyMode() === 'shadow',
       }, true) // 11/18 수위 높은 설정이 Gemini 안전 필터에 막혀 3회 한도를 다 쓰고 영영 정리되지 않았다(스키장에서 생긴 일 등)
       await compileAgencyRevision(revisionId, llm)

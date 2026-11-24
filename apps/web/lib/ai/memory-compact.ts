@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { characters, db, memories, roleplaySessions } from '@miro/db'
 import { tagsOf } from '@miro/domain'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
+import { roomAdult } from '@/lib/simulation/room-adult'
 
 /** 지난 이야기가 이보다 많아지면 요약 작업 뒤에 자동으로 정리한다. */
 export const CHAPTER_LIMIT = 8
@@ -28,7 +29,7 @@ export async function compactChapters(sessionId: string, userId: string): Promis
     .where(and(eq(memories.sessionId, sessionId), eq(memories.type, 'chapter'))).orderBy(asc(memories.createdAt))
   if (chapters.length < 2) return 'nothing'
   // 언베일을 켠 적 있는 방의 이야기는 언베일 전용 모델이 묶는다(기억 추출과 같은 기준).
-  const llm = auxiliaryLLM(room.name, { userId, sessionId, requestId: randomUUID(), workload: 'background', origin: 'memory:compact', adult: room.adultSince !== null })
+  const llm = auxiliaryLLM(room.name, { userId, sessionId, requestId: randomUUID(), workload: 'background', origin: 'memory:compact', adult: await roomAdult({ userId, characterId: room.characterId, sessionId, adultSince: room.adultSince }) })
   const { summary } = await llm.generateStructured({ schema: z.object({ summary: z.string().min(2) }), task: 'memory_summary', system: SYSTEM,
     prompt: JSON.stringify({ chapters: chapters.map((c, i) => ({ order: i + 1, content: c.content })) }), promptVersion: 'chapter-compact:v2', maxTokens: 6144 })
   // 11/16 묶은 지난 이야기 1500 → 4000자: 긴 방의 먼 과거 전체가 1500자 한 편에 눌렸다(커뮤니티 조사: 장기기억 크기가 플랫폼을 고르는 이유).

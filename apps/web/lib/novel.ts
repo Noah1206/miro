@@ -8,6 +8,7 @@ import { resolveChatModel } from '@/lib/ai/chat-models'
 import { commit, reserve, rollback } from '@/lib/usage/guard'
 import { sceneMessages } from '@/lib/messenger'
 import { endingTitle } from '@/lib/novel-ending'
+import { roomAdult } from '@/lib/simulation/room-adult'
 
 /** 한 화에 담는 턴 수(11/9) — 300초 함수 한도 안에서 한 화씩 쓴다. */
 const TURNS_PER_CHAPTER = 30
@@ -27,12 +28,12 @@ export type NovelView = { title: string; endingTitle: string | null; chapters: N
 
 /** 읽는 화면용 — 방 주인만. 없으면 null. */
 export async function loadNovel(sessionId: string, userId: string): Promise<NovelView | null> {
-  const [room] = await db.select({ title: characters.name, adultSince: roleplaySessions.adultSince, novel: sessionNovels })
+  const [room] = await db.select({ title: characters.name, adultSince: roleplaySessions.adultSince, characterId: roleplaySessions.characterId, novel: sessionNovels })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .leftJoin(sessionNovels, eq(sessionNovels.sessionId, roleplaySessions.id))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))).limit(1)
   if (!room) return null
-  const adult = room.adultSince !== null
+  const adult = await roomAdult({ userId, characterId: room.characterId, sessionId, adultSince: room.adultSince })
   const price = (await resolveChatModel(userId, 'miro', adult)).quote.maximumTokens
   const n = room.novel
   return { title: room.title, endingTitle: n?.endingTitle ?? null, chapters: n?.chapters ?? [], status: n?.status ?? 'idle',
@@ -65,7 +66,7 @@ const SYSTEM = `당신은 한국 웹소설 작가입니다. 주어진 역할극 
  * 잔액이 모자라면 reserve 가 UsageExceededError 를 던진다 — 호출자가 충전 시트를 연다.
  */
 export async function writeNextChapter(sessionId: string, userId: string): Promise<{ chapter: NovelChapter | null; done: boolean }> {
-  const [room] = await db.select({ name: characters.name, adultSince: roleplaySessions.adultSince, persona: roleplaySessions.userPersona, world: worlds.worldSetting })
+  const [room] = await db.select({ name: characters.name, adultSince: roleplaySessions.adultSince, characterId: roleplaySessions.characterId, persona: roleplaySessions.userPersona, world: worlds.worldSetting })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).leftJoin(worlds, eq(worlds.id, roleplaySessions.worldId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!room) throw new NovelError('not_found')
@@ -101,7 +102,7 @@ export async function writeNextChapter(sessionId: string, userId: string): Promi
     const lines = rows.filter(m => m.turnIndex <= through).map(m => m.kind === 'live_scene' ? `[장면] ${m.content}`
       : m.role === 'user' ? `${persona}: ${m.content}` : said(m))
     const free = !!novel.endingTitle && !novel.freeUsed
-    const adult = room.adultSince !== null
+    const adult = await roomAdult({ userId, characterId: room.characterId, sessionId, adultSince: room.adultSince })
     if (!free) {
       const quote = (await resolveChatModel(userId, 'miro', adult)).quote
       reservationId = (await reserve({ userId, kind: 'textRP', tokenAmount: quote.maximumTokens, idempotencyKey: `novel:${sessionId}:${randomUUID()}` })).reservationId
