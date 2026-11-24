@@ -15,7 +15,9 @@ import { SuggestButton, SuggestList, type SuggestState } from './suggest-replies
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { ENDING_VIEW, REROLL, UNDO, useTurns, type LiveTurn } from './turns'
+import { CONTINUE, ENDING_VIEW, REROLL, UNDO, useTurns, type LiveTurn } from './turns'
+import { CONTINUE_INPUT } from '@/lib/simulation/pace'
+import { useChatPace } from '@/components/chat-pace'
 import { undoTurn } from './actions'
 import { useChosenThinking } from '@/components/reply-length-sheet'
 import { streamTurn } from './stream-turn'
@@ -128,6 +130,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   // 11/10 생각 강도 — 서버가 강도만큼 턴 한도를 늘리므로(turn.ts thinkScale) 보내는 상한도 같이 늘린다.
   // 11/10: 고른 적이 없으면 보내지 않는다 — 전엔 화면 기본값(high)이 매 턴 실려 모든 턴이 깊은 생각(느림·비용)으로 돌았다.
   const thinking = useChosenThinking()
+  const [pacing] = useChatPace()   // 11/24 전개 설정 — 이 기기에서 고른 값을 턴마다 싣는다
   const thinkScale = thinking ? ({ low: 1, medium: 2, high: 3, xhigh: 4, max: 5 } as const)[thinking] : 1
   const tokenCeiling = choice ? Math.min(choice.maximumTokens * thinkScale, wallet?.available ?? choice.maximumTokens * thinkScale) : undefined
   const previousModel = useRef(model)
@@ -280,7 +283,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         const { remove: drop, router: nav, toast: say } = undoLatest.current
         if (!r.ok) { say(t(r.error), 'error'); return }
         drop(r.messageIds)
-        if (!draftNow.current.trim()) setDraft(r.input)
+        if (!draftNow.current.trim() && r.input !== CONTINUE_INPUT) setDraft(r.input)
         startRefresh(() => nav.refresh())
       } catch { undoLatest.current.toast(t('이 답은 지금 되돌릴 수 없어요.'), 'error') }
       finally { sending.current = false }
@@ -290,8 +293,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }, [sessionId, t])
 
   // 리롤(10/27): 마지막 답 아래 '다시 받기' — 지금 고른 모델로 같은 말을 다시 보낸다. 보낼 말·명령어는 서버가 되돌리기 기록에서 꺼낸다.
-  const latest = useRef({ action, ready, calendarPending })
-  latest.current = { action, ready, calendarPending }
+  const latest = useRef({ action, ready, calendarPending, lowBalance, lowBalanceToast })
+  latest.current = { action, ready, calendarPending, lowBalance, lowBalanceToast }
   useEffect(() => {
     const onReroll = (event: Event) => {
       const { replyId, input } = (event as CustomEvent<{ replyId: string; input: string }>).detail
@@ -309,9 +312,19 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       form.set('input', msg('엔딩 보기')); form.set('ending', name); form.set('requestId', crypto.randomUUID()); form.delete('command'); form.delete('commandId')
       void send(form, true)   // 쓰던 글은 그대로 둔다
     }
+    // 11/24 이어서 받기 — 입력 없이 다음 장면을 받는다. 쓰던 글·고른 명령어는 그대로 둔다.
+    const onContinue = () => {
+      const { action: send, ready: canSend, calendarPending: busy, lowBalance: low, lowBalanceToast: warn } = latest.current
+      if (sending.current || !canSend || busy || !ref.current) return
+      if (low) { warn(); return }
+      const form = new FormData(ref.current)
+      form.set('input', CONTINUE_INPUT); form.set('requestId', crypto.randomUUID()); form.delete('command'); form.delete('commandId')
+      void send(form, true)
+    }
     window.addEventListener(REROLL, onReroll)
     window.addEventListener(ENDING_VIEW, onEnding)
-    return () => { window.removeEventListener(REROLL, onReroll); window.removeEventListener(ENDING_VIEW, onEnding) }
+    window.addEventListener(CONTINUE, onContinue)
+    return () => { window.removeEventListener(REROLL, onReroll); window.removeEventListener(ENDING_VIEW, onEnding); window.removeEventListener(CONTINUE, onContinue) }
   }, [])
   useEffect(() => {
     if (refreshing) { hadRefresh.current = true; return }
@@ -403,6 +416,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="command" value={command?.name ?? ''} />
         {thinking && <input type="hidden" name="thinking" value={thinking} />}
+        {pacing.pace !== 'balanced' && <input type="hidden" name="pace" value={pacing.pace} />}
+        {pacing.timeSkip && <input type="hidden" name="timeSkip" value="1" />}
         <input type="hidden" name="commandId" value={command?.sourceId ?? ''} />
         {/* 고른 명령어(10/19) — 이번 턴만 이 지시대로. 글을 덧붙이지 않아도 보낼 수 있다. */}
         {command && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>

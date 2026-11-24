@@ -7,6 +7,9 @@ export const REROLL = 'miro:reroll'
 /** 11/19 마지막 턴 되돌리기 — 입력창이 서버에 되돌리고 보낸 말을 입력칸에 돌려놓는다. detail = { replyId }. */
 export const UNDO = 'miro:undo'
 
+/** 11/24 이어서 받기 — 마지막 답 카드의 버튼이 입력창에 보내는 신호. 입력 없이 다음 장면을 받는 턴을 보낸다. */
+export const CONTINUE = 'miro:continue'
+
 /** 11/10 엔딩 분기점의 '엔딩 보기' — 입력창이 그 엔딩의 에필로그를 받는 턴을 보낸다. detail = { name }. */
 export const ENDING_VIEW = 'miro:ending-view'
 

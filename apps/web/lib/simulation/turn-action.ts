@@ -9,6 +9,7 @@ import { clientIp } from '@/lib/alpha/session'
 import { type UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
+import { PACES } from '@/lib/simulation/pace'
 
 export type TurnMsg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
@@ -74,7 +75,10 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
   const ending = !resend && opts.mode === 'chat' ? String(form.get('ending') ?? '').trim().slice(0, 40) || undefined : undefined
   const thinkingRaw = String(form.get('thinking') ?? '')
   const thinking = (['low', 'medium', 'high', 'xhigh', 'max'] as const).find(v => v === thinkingRaw)
-  const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ending, thinking, voice: form.get('voice') === '1', ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
+  // 11/24 전개 설정(캐릭터챗만) — 이 기기에서 고른 값을 입력창이 턴마다 싣는다.
+  const pace = opts.mode === 'chat' ? PACES.find(v => v === String(form.get('pace') ?? '')) : undefined
+  const timeSkip = opts.mode === 'chat' && form.get('timeSkip') === '1'
+  const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ending, thinking, pace, timeSkip, voice: form.get('voice') === '1', ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {
     switch (r.reason) {
       case 'command_unavailable': return fail(msg('명령어를 사용할 수 없어요. 다시 선택해 주세요.'))

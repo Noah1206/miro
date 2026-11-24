@@ -8,6 +8,7 @@ import { resolveChatModel } from '@/lib/ai/chat-models'
 import { commit, reserve, rollback } from '@/lib/usage/guard'
 import { sceneMessages } from '@/lib/messenger'
 import { endingTitle } from '@/lib/novel-ending'
+import { CONTINUE_INPUT } from '@/lib/simulation/pace'
 import { roomAdult } from '@/lib/simulation/room-adult'
 
 /** 한 화에 담는 턴 수(11/9) — 300초 함수 한도 안에서 한 화씩 쓴다. */
@@ -99,7 +100,8 @@ export async function writeNextChapter(sessionId: string, userId: string): Promi
       return blocks.map(b => b.type === 'thought' ? `(${b.speaker ?? room.name} 속마음) ${b.text}`
         : b.type === 'dialogue' || b.type === 'npc' ? `${b.speaker ?? room.name}: ${b.text}` : String(b.text)).join('\n')
     }
-    const lines = rows.filter(m => m.turnIndex <= through).map(m => m.kind === 'live_scene' ? `[장면] ${m.content}`
+    // 11/24 이어서 받기로 보낸 턴의 표식은 사용자가 한 말이 아니다 — 소설 재료에서 뺀다.
+    const lines = rows.filter(m => m.turnIndex <= through && !(m.role === 'user' && m.content === CONTINUE_INPUT)).map(m => m.kind === 'live_scene' ? `[장면] ${m.content}`
       : m.role === 'user' ? `${persona}: ${m.content}` : said(m))
     const free = !!novel.endingTitle && !novel.freeUsed
     const adult = await roomAdult({ userId, characterId: room.characterId, sessionId, adultSince: room.adultSince })

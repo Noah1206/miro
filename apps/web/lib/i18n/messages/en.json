@@ -2573,5 +2573,17 @@
   "명령어 만들기": "Create a command",
   "AI에게 줄 프롬프트": "Prompt for the AI",
   "한 줄 설명": "One-line description",
-  "채팅순": "By chats"
+  "채팅순": "By chats",
+  "이어서 받기": "Continue",
+  "이어서": "Continue",
+  "전개 설정": "Story pacing",
+  "전개 속도": "Pacing",
+  "이야기를 누가 얼마나 끌고 갈지 정해요. 토큰은 더 들지 않아요.": "Choose who drives the story and how hard. It doesn't cost extra tokens.",
+  "늘어지는 시간 건너뛰기": "Skip slow stretches",
+  "이동·기다림처럼 아무 일 없는 시간은 짧게 넘기고 다음 장면으로 가요.": "Uneventful time such as travel or waiting is passed over briefly, moving on to the next scene.",
+  "내가 이끌기": "I lead",
+  "캐릭터가 이끌기": "Character leads",
+  "캐릭터는 내 말과 행동에 반응만 해요. 다음에 무슨 일이 일어날지는 내가 정해요.": "The character only reacts to what I say and do. I decide what happens next.",
+  "지금까지와 같아요. 따로 지시를 더하지 않아요.": "Same as before. No extra instruction is added.",
+  "캐릭터가 사건을 일으키고 이야기를 앞으로 끌고 가요.": "The character starts events and pushes the story forward."
 }
