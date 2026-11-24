@@ -2,7 +2,7 @@ import { officialDescription, officialEntry, officialIntro, officialSamples } fr
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
-import { isUnveilPhoto } from '@/lib/unveil-photo'
+import { isUnveilPhoto, veilSrc, VEILED_SRC } from '@/lib/unveil-photo'
 import { creatorName } from '@/lib/creator-name'
 import { RichText } from '@/components/scene/rich-text'
 import { characterEditorial } from '@/components/scene/character-editorial'
@@ -45,6 +45,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null
   if (!c) notFound()
   const unveil = await homeUnveilEnabled(user?.id ?? null)
+  // 11/25: 언베일을 안 켠 사람에겐 표지·인트로의 언베일 사진 주소를 자리표시로 바꿔 보낸다(전엔 주소를 보내고 화면에서만 흐렸다).
+  if (!unveil) {
+    c.images = c.images.map((src, i) => i === 0 && (c.coverUnveil || c.adultOnly) ? VEILED_SRC : veilSrc(src, false))
+    c.sampleDialogue = c.sampleDialogue.map(d => d.image ? { ...d, image: veilSrc(d.image, false) } : d)
+  }
   // 11/12 사용자: 성인 전용 작품도 상세는 보인다(표지·인트로는 흐림). 언베일을 안 켰으면 '대화하기'가 본인인증·언베일 켜기로 바뀐다.
   const locked = !!user && c.adultOnly && !unveil && c.ownerId !== user.id
   const can = features()
@@ -267,7 +272,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             {t('{subject} 마음에 들었다면', { subject: subject(c.name), name: c.name })}
           </h2>
           {/* 11/6: 언베일을 안 켠 사람에겐 언베일 표지 카드를 흐린다(홈과 같은 규칙). */}
-          <SimilarRow items={similar.map(s => ({ ...s, veiled: !unveil }))} />
+          <SimilarRow items={similar.map(s => ({ ...s, veiled: !unveil, images: unveil ? s.images : s.coverUnveil ? [VEILED_SRC] : s.images.map(src => veilSrc(src, false)) }))} />
         </section>
       )}
 

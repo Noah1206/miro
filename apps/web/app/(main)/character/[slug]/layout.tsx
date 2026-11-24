@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getT } from '@/lib/i18n/server'
 import { getCharacterByKey } from '@/lib/characters'
 import { coverTitle } from '@/lib/editorial/cover-title'
+import { isUnveilPhoto } from '@/lib/unveil-photo'
 
 /**
  * 11/13 검색 노출(베이비챗식): 탭 제목 고정 규칙(9/30)의 예외 — 캐릭터 상세만 '작품 제목 | MIRO'.
@@ -12,10 +13,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const c = await getCharacterByKey(slug, null)
   if (!c) { const t = await getT(); return { title: t('캐릭터') } }
   const title = `${coverTitle(c)} | 미로 AI 캐릭터챗`
+  // 11/25: 공유 미리보기에 언베일 표지가 실리지 않게 — 언베일 아닌 첫 사진(언베일 표지 작품이면 없음).
+  const og = c.coverUnveil ? undefined : c.images.find(src => src && !isUnveilPhoto(src))
   return {
     title: { absolute: title },
     alternates: { canonical: `/character/${slug}` },
-    openGraph: { title, url: `/character/${slug}`, siteName: '미로 AI 캐릭터챗', locale: 'ko_KR', ...(c.images[0] ? { images: [c.images[0]] } : {}) },
+    openGraph: { title, url: `/character/${slug}`, siteName: '미로 AI 캐릭터챗', locale: 'ko_KR', ...(og ? { images: [og] } : {}) },
     ...(c.adultOnly ? { other: { rating: 'adult' } } : {}),
   }
 }

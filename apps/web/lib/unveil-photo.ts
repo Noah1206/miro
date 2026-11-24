@@ -6,6 +6,9 @@
 const EXPLICIT_FILES = /\/official\/(official-m-only-me\/(03|32|33)|official-m-baby-contract\/03|official-m-others-gf\/intro\.[2456]|official-m-wall-friend\/intro(\.2)?)\.jpg(\?|$)/
 /** 언베일 수위 갤러리 사진(11/4) — 올릴 때 파일 이름을 `unveil-…` 로 붙인다(upload-bl-photos u1.jpg…). 언베일을 안 켠 사람에겐 이 사진만 흐린다. */
 export const isUnveilPhoto = (src: string | null | undefined) => !!src && (/\/unveil-[^/?]+(\?|$)/.test(src) || EXPLICIT_FILES.test(src))
+/** 11/25: 언베일을 안 켠 사람에겐 언베일 사진 주소를 아예 보내지 않는다 — 이 자리표시(이름이 unveil- 라 기존 흐림·잠금 표시는 그대로 뜬다). */
+export const VEILED_SRC = '/unveil-veiled.jpg'
+export const veilSrc = <T extends string | null | undefined>(src: T, unveil: boolean): T | typeof VEILED_SRC => !unveil && isUnveilPhoto(src) ? VEILED_SRC : src
 
 if (process.argv[1]?.endsWith('unveil-photo.ts')) {
   const u = (f: string) => `https://x.supabase.co/storage/v1/object/public/character-images/o/official/${f}?v=1`
