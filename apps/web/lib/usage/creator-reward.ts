@@ -1,6 +1,6 @@
 import { and, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import { characters, db, officialVoices, rechargeGrants, rechargeLedger, turnUndos, usageLedger, users } from '@miro/db'
-import { commit, reserve, type UsageTransaction } from './guard'
+import { commit, grantRecharge, reserve, type UsageTransaction } from './guard'
 import { revisionEffective } from '@/lib/legal/revisions'
 
 /**
@@ -169,4 +169,15 @@ export async function creatorRewardByCharacter(userId: string): Promise<Map<stri
       and created_at >= ${monthStart} and external_ref like '%|%'
     group by 1`)
   return new Map([...rows].map(r => [r.character, { reward: r.reward, cheer: r.cheer }]))
+}
+
+/**
+ * 11/25 사용자: 창작자 이벤트 — 11/27~12/7(KST)에 작품을 처음 공개하면 한 번만 7,000 미로(30일 유효).
+ * (provider, 사용자 id) UNIQUE 라 여러 작품을 공개하거나 다시 저장해도 한 번이다. 실패해도 저장은 그대로 둔다. ponytail: 날짜 고정.
+ */
+const FIRST_WORK_GIFT = { units: 7_000, validDays: 30, from: Date.parse('2026-11-27T00:00:00+09:00'), until: Date.parse('2026-12-08T00:00:00+09:00') }
+export async function giveFirstWorkGift(userId: string, now = Date.now()) {
+  if (now < FIRST_WORK_GIFT.from || now >= FIRST_WORK_GIFT.until) return
+  await grantRecharge({ userId, amount: FIRST_WORK_GIFT.units, source: 'grant', provider: 'first_work_gift', externalRef: userId,
+    expiresAt: new Date(now + FIRST_WORK_GIFT.validDays * 86_400_000) }).catch(e => console.error('first_work_gift failed', userId, e))
 }

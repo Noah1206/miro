@@ -17,6 +17,7 @@ import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableEnsemble, selectableVoice } from '@/lib/voice'
 import { scheduleRelationshipProfile } from '@/lib/relationship-profile'
 import { scheduleVoiceCast } from '@/lib/voice-cast'
+import { giveFirstWorkGift } from '@/lib/usage/creator-reward'
 
 /**
  * 편집 저장. 만들기와 같은 폼, 같은 읽는 법(parse.ts).
@@ -87,6 +88,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   if (result.revisionId) await scheduleAgencyCompilation(result.revisionId, user.id)
   if (owned.character.experienceType === 'reality') await scheduleRelationshipProfile(characterId, user.id)
   await scheduleVoiceCast(characterId, user.id)   // 11/10 등장인물 목소리 칸 — 설정이 바뀌면 새 인물만 더한다
+  if (!stillDraft && p.isPublicOn) await giveFirstWorkGift(user.id)   // 11/25 창작자 이벤트(비공개→공개 포함)
   const sessionId = result.sessionId
 
   revalidatePath(`/character/${characterId}`)

@@ -22,6 +22,7 @@ import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableEnsemble, selectableVoice } from '@/lib/voice'
 import { scheduleRelationshipProfile } from '@/lib/relationship-profile'
 import { scheduleVoiceCast } from '@/lib/voice-cast'
+import { giveFirstWorkGift } from '@/lib/usage/creator-reward'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -99,6 +100,7 @@ export async function saveCharacter(form: FormData): Promise<string> {
   // 관계 성격표는 저장 뒤에 성격 설명에서 만든다 — 편집기에서 확인하고 고친다(설정이 그대로면 모델을 부르지 않는다).
   if (!result.duplicate) await scheduleRelationshipProfile(result.characterId, user.id)
   if (!result.duplicate) await scheduleVoiceCast(result.characterId, user.id)   // 11/10 등장인물 목소리 칸
+  if (!result.duplicate && p.publish && p.isPublicOn) await giveFirstWorkGift(user.id)   // 11/25 창작자 이벤트
 
   revalidatePath('/home')
   revalidatePath('/miro')
