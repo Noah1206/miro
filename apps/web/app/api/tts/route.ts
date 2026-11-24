@@ -49,6 +49,23 @@ function voiceUsed(home = false) {
   voice.homeUntil = home ? now + 3 * MIN : 0   // 11/24 방 없이 깨운 것도 3분만(홈 깨우기는 없앴다)
   if (voice.released) holdVoice(true)
 }
+/**
+ * 11/24 사용자: 음성 토글을 끄거나 브라우저를 닫으면 Modal 을 유지하지 않는다 — 전엔 신호가 끊긴 뒤 3분을 더 기다렸다.
+ * 화면이 leave 를 보내면(토글 끔·방 나감·탭 닫음) 다른 사람이 듣는 중이 아닐 때 바로 대기를 1분으로 낮춘다(Modal 이 1분 안에 스스로 꺼진다).
+ * listeners = 회원 → 마지막 음성 요청·신호 시각(다른 사람이 듣는 서버를 끄지 않게). 방을 옮길 땐 곧바로 다음 방의 깨우기가 오므로 2초 뒤에 판단한다.
+ * ponytail: 맥 한 대 프로세스 메모리 — 탭이 죽어 leave 가 못 온 경우는 예전처럼 신호 끊김 3분 뒤에 꺼진다.
+ */
+const listeners = new Map<string, number>()
+function leaveVoice(userId: string) {
+  listeners.delete(userId)
+  setTimeout(() => {
+    const now = Date.now()
+    for (const [id, at] of listeners) if (now - at > 10 * MIN) listeners.delete(id)
+    if (voiceInflight > 0 || [...listeners.values()].some(at => now - at < 3 * MIN)) return
+    voice.lastBeat = 0; voice.lastUse = 0; voice.homeUntil = 0
+    holdVoice(false)
+  }, 2000).unref?.()
+}
 const g = globalThis as { miroVoiceTimer?: ReturnType<typeof setInterval> }
 g.miroVoiceTimer ??= setInterval(() => {
   const now = Date.now()
@@ -107,7 +124,7 @@ function releasing(stream: ReadableStream<Uint8Array>, release: () => void, gone
 export async function POST(req: Request) {
   const started = Date.now()
   const b = await req.clone().json().catch(() => null) as Record<string, unknown> | null
-  const kind = b?.played ? 'played' : b?.beat ? 'beat' : b?.wake ? 'wake' : b?.early ? 'early' : b?.turn ? 'turn' : b?.part !== undefined ? 'part' : 'other'
+  const kind = b?.played ? 'played' : b?.leave ? 'leave' : b?.beat ? 'beat' : b?.wake ? 'wake' : b?.early ? 'early' : b?.turn ? 'turn' : b?.part !== undefined ? 'part' : 'other'
   const res = await handle(req)
   // played(11/24): 기기에서 소리가 재생 줄에 올라갔다는 알림 — of = 어떤 요청의 소리(early·turn·part), audio = 소리판 상태(running 이면 실제로 나는 상태, suspended 면 잠겨 무음).
   if (kind === 'played') observe('tts.played', { sessionId: typeof b?.sessionId === 'string' ? b.sessionId : null, of: typeof b?.of === 'string' ? b.of.slice(0, 10) : null, audio: typeof b?.audio === 'string' ? b.audio.slice(0, 12) : null })
@@ -120,16 +137,20 @@ async function handle(req: Request) {
   if (!user) return new Response(null, { status: 401 })
   const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; beat?: unknown; stream?: unknown; turn?: unknown; oral?: unknown; early?: unknown } | null
   if ((body as { played?: unknown } | null)?.played === true) return new Response(null, { status: 204 })   // 11/24 재생 시작 알림 — 기록만(위 POST 가 남긴다)
+  // 11/24 토글 끔·방 나감·탭 닫음 — 듣는 사람이 더 없으면 음성 서버를 바로 놓는다.
+  if ((body as { leave?: unknown } | null)?.leave === true) { leaveVoice(user.id); return new Response(null, { status: 204 }) }
+  listeners.set(user.id, Date.now())
   // 11/19 음성 모드가 켜진 방이 보이는 동안 1분마다 — '아직 듣고 있다'는 신호(서버를 깨우지 않는다, 대기 판단만).
   if (body?.beat === true) {
     voice.lastBeat = Date.now()
-    if (voice.released && Date.now() < voice.lastUse + 30 * MIN) holdVoice(true)
+    if (voice.released && Date.now() < voice.lastUse + 10 * MIN) holdVoice(true)
     return new Response(null, { status: 204 })
   }
   // 11/6: 음성 모드를 켜면 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간(24~33초)을 기다리지 않게. 글·대화 없이 상태 확인만.
   // 11/10 깨우기는 회원당 5분에 한 번(GPU 를 계속 켜 두지 못하게).
   if (body?.wake === true) {
-    if (!(await takeVoiceWake(user.id))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
+    // 11/24 서버를 놓은 상태(토글을 껐다 다시 켬 등)에서는 2분 한도에 걸려도 깨운다 — 안 그러면 다시 켠 직후 첫 대사가 꺼진 서버를 기다린다.
+    if (!(await takeVoiceWake(user.id)) && !voice.released) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
     // 11/12 방을 함께 주면 그 방의 목소리 기억도 미리 불러온다(본인 방인지는 따로 보지 않는다 — 기억을 읽어 둘 뿐 아무것도 돌려주지 않는다).
     const room = typeof body.sessionId === 'string' && /^[0-9a-f-]{36}$/i.test(body.sessionId) ? body.sessionId : undefined
     voiceUsed(!room)

@@ -170,6 +170,16 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const lastWake=useRef(0)
   const sendWake=()=>{lastWake.current=Date.now();void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true,sessionId}),keepalive:true}).catch(()=>{})}
   const wake=()=>{if(on&&!soon&&Date.now()-lastWake.current>120_000)sendWake()}
+  // 11/24 사용자: 토글을 끄거나 브라우저를 닫으면 Modal 을 유지하지 않는다 — 끌 때·방을 나갈 때·탭을 닫을 때 서버에 알린다(탭이 닫히는 중에도 가도록 sendBeacon).
+  const leave=()=>{lastWake.current=0;const body=JSON.stringify({leave:true})
+    try{if(!navigator.sendBeacon('/api/tts',new Blob([body],{type:'application/json'})))throw new Error('beacon')}
+    catch{void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body,keepalive:true}).catch(()=>{})}}
+  useEffect(()=>{
+    if(!on)return
+    window.addEventListener('pagehide',leave)
+    return()=>{window.removeEventListener('pagehide',leave);leave()}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[on,sessionId])
   useEffect(()=>{if(on&&!soon)sendWake()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[on,sessionId,soon])
