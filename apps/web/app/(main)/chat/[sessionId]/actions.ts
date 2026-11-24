@@ -100,3 +100,19 @@ export async function roomGallery(sessionId: string): Promise<{ items: Array<{ i
     .map(m => base(m.content)))
   return { items: s.images.map(e => shown.has(base(e.image)) ? { image: e.image, blurred: !!e.adult && !s.adultSince } : { image: null, blurred: false }) }
 }
+
+/**
+ * 11/24 사용자: 같은 캐릭터로 새 대화방 — 지금 방은 지우지 않고 대화 목록에 남긴 채(보관) 처음부터 새 방을 연다.
+ * 캐릭터 상세의 '새로 대화'와 같은 길(createRoleplaySession fresh). 언베일 여부는 방이 아니라 턴마다 정하므로 여기서 가리지 않는다.
+ */
+export async function startNewRoom(sessionId: string): Promise<{ sessionId: string } | { error: string }> {
+  const user = await requireUser()
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) return { error: msg('대화방을 찾을 수 없어요.') }
+  const [room] = await db.select({ characterId: roleplaySessions.characterId }).from(roleplaySessions)
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt))).limit(1)
+  if (!room) return { error: msg('대화방을 찾을 수 없어요.') }
+  try {
+    const started = await createRoleplaySession(user.id, room.characterId, { fresh: true, unveil: false })
+    return { sessionId: started.sessionId }
+  } catch { return { error: msg('지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.') } }
+}

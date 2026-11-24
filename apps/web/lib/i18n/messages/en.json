@@ -2595,5 +2595,12 @@
   "사진 크기": "Photo size",
   "대화창 넓게": "Wider chat",
   "컴퓨터 화면에서만 달라져요.": "Only changes on a computer screen.",
-  "“오늘은 조금 늦었네.” 그녀가 창가에서 돌아보며 웃었다.": "“You're a little late today.” She turned from the window and smiled."
+  "“오늘은 조금 늦었네.” 그녀가 창가에서 돌아보며 웃었다.": "“You're a little late today.” She turned from the window and smiled.",
+  "새 대화방": "New chat room",
+  "새 대화방 시작": "Start a new room",
+  "같은 캐릭터와 처음부터 새로 시작해요.": "Start over from the beginning with the same character.",
+  "지금 대화방은 지워지지 않아요. 대화 목록에서 언제든 다시 열 수 있어요.": "This room isn't deleted. You can reopen it from your chat list anytime.",
+  "기억 노트와 유저노트는 대화방마다 따로예요.": "Memory notes and user notes are separate for each room.",
+  "대화방을 찾을 수 없어요.": "Chat room not found.",
+  "지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.": "Can't open a new room right now. Please try again shortly."
 }

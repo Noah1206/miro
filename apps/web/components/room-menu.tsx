@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useRoomControls } from '@/components/room-controls'
 import type { UserPersona } from '@miro/domain'
 import type { CharacterEntry } from '@/lib/character-entry'
@@ -23,11 +23,12 @@ import { RoomGallery } from '@/components/room-gallery'
 import { ReplyLengthPanel } from '@/components/reply-length-sheet'
 import { PacePanel } from '@/components/chat-pace'
 import { DisplayPanel } from '@/components/chat-display'
+import { startNewRoom } from '@/app/(main)/chat/[sessionId]/actions'
 import styles from './room-menu.module.css'
 import sheetStyles from './push-subscribe.module.css'
 
 type Panel = 'persona' | 'theme' | 'model' | 'memory' | 'note'
-type IconName = Panel | 'length' | 'pace' | 'display' | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
+type IconName = Panel | 'length' | 'pace' | 'display' | 'fresh' | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
 function MenuIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
     persona: <><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></>,
@@ -37,6 +38,7 @@ function MenuIcon({ name }: { name: IconName }) {
     note: <><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="M13.5 6.5l4 4"/></>,
     length: <><path d="M4 6h16M4 10h12M4 14h16M4 18h9"/></>,
     pace: <><path d="m5 6 6 6-6 6"/><path d="m13 6 6 6-6 6"/></>,
+    fresh: <><path d="M12 5v14M5 12h14"/></>,
     display: <><path d="M4 7h9M19 7h1M4 17h3M13 17h7"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></>,
     message: <path d="M21 11a8 8 0 0 1-8 8H8l-5 3v-6a8 8 0 0 1 0-10A8 8 0 0 1 9 3h4a8 8 0 0 1 8 8Z"/>,
     archive: <><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></>,
@@ -49,8 +51,8 @@ function MenuIcon({ name }: { name: IconName }) {
 }
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
-type Screen = 'main' | 'persona' | 'model' | 'length' | 'pace' | 'display'
-const SCREENS = new Set<string>(['main', 'persona', 'model', 'length', 'pace', 'display'])
+type Screen = 'main' | 'persona' | 'model' | 'length' | 'pace' | 'display' | 'fresh'
+const SCREENS = new Set<string>(['main', 'persona', 'model', 'length', 'pace', 'display', 'fresh'])
 
 /**
  * 11/21 사용자: ☰ 를 누르면 서랍 대신 화면 전체가 '채팅방 설정' 페이지로 — 머리의 < 로 바로 채팅방으로 돌아온다.
@@ -87,6 +89,33 @@ function RoomPage({ title, onBack, children, footer, action }: { title: string; 
     <div className={styles.pageBody}>{children}</div>
     {footer && <div className={styles.pageFoot}>{footer}</div>}
   </div>, document.body)
+}
+
+/** 11/24 '새 대화방' 화면 — 같은 캐릭터와 처음부터. 지금 방은 지우지 않는다(대화 목록에 남는다). */
+function NewRoomPanel({ sessionId }: { sessionId: string }) {
+  const t = useT()
+  const router = useRouter()
+  const toast = useToast()
+  const [pending, setPending] = useState(false)
+  const start = async () => {
+    if (pending) return
+    setPending(true)
+    try {
+      const r = await startNewRoom(sessionId)
+      if ('error' in r) { toast(t(r.error), 'error'); setPending(false); return }
+      router.push(`/chat/${r.sessionId}`)
+    } catch { toast(t('지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.'), 'error'); setPending(false) }
+  }
+  return (
+    <div className="stack" style={{ gap: 12, padding: '4px 0 var(--space-5)' }}>
+      <div style={{ padding: '14px', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)', display: 'grid', gap: 6, fontSize: 14, lineHeight: 1.55 }}>
+        <span>{t('같은 캐릭터와 처음부터 새로 시작해요.')}</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>{t('지금 대화방은 지워지지 않아요. 대화 목록에서 언제든 다시 열 수 있어요.')}</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>{t('기억 노트와 유저노트는 대화방마다 따로예요.')}</span>
+      </div>
+      <Button variant="primary" full onClick={start} status={pending ? 'loading' : 'idle'} disabled={pending}>{t('새 대화방 시작')}</Button>
+    </div>
+  )
 }
 
 /** Existing room controls share one drawer; detail panels expand in place. */
@@ -178,6 +207,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     {screen === 'length' && <RoomPage title={t('출력량 설정')} onBack={back}><ReplyLengthPanel open onClose={back} choices={choices}/></RoomPage>}
     {screen === 'pace' && <RoomPage title={t('전개 설정')} onBack={back}><PacePanel onClose={back}/></RoomPage>}
     {screen === 'display' && <RoomPage title={t('화면 설정')} onBack={back}><DisplayPanel onClose={back}/></RoomPage>}
+    {screen === 'fresh' && <RoomPage title={t('새 대화방')} onBack={back}><NewRoomPanel sessionId={sessionId}/></RoomPage>}
     {screen === 'main' && <RoomPage title={t('채팅방 설정')} onBack={back} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       {/* 11/19 사용자: 채팅방 메뉴에서는 갤러리를 뺀다 — 문자방 메뉴에는 그대로. */}
       {messenger && <RoomGallery sessionId={sessionId} open={open}/>}
@@ -211,6 +241,8 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       {/* 11/21 사용자: 캐릭터 정보·이전 대화 보기·대화 내려받기·알림·접근 권한 줄은 지웠다. */}
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
+        {/* 11/24 사용자: 같은 캐릭터로 새 대화방 — 지금 방은 대화 목록에 남는다 */}
+        {!messenger && <button type="button" className={styles.row} onClick={() => go('fresh')}><MenuIcon name="fresh"/><span>{t('새 대화방')}</span><Chevron/></button>}
         {row(`/chat/${sessionId}/novel`, 'download', t('웹소설로 만들기'))}
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>
