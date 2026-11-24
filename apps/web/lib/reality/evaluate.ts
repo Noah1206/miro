@@ -48,6 +48,19 @@ export type EvaluateOutcome =
  * 이 함수가 현재 상태(관계·사건·성향·설정·시각)로 결정한다.
  * 가입 후 경과 시간 같은 값은 입력에 없다.
  */
+/**
+ * 11/24 사용자(비용): 오래 비운 방의 일상 안부 기회(아침·점심·저녁 안부·침묵)는 한 기회로 묶어 묻는다 — 기회마다 계획 모델을 한 번씩 불러서,
+ * 며칠째 답이 없는 방도 하루 세 번씩 끝없이 물었다(7일간 계획 비용 $20 중 $12 가 3일 넘게 비운 방). 대화가 없은 지 3일 넘으면 하루 한 번,
+ * 7일 넘으면 사흘에 한 번, 14일 넘으면 한 주에 한 번, 30일 넘으면 한 달에 한 번. 보낼지는 여전히 캐릭터가 정한다.
+ * 답장·사용자 일정·약속·첫 연락·사건은 날짜 묶음 키(채널:날짜:이유)가 아니라서 그대로다.
+ */
+export function idleOpportunityKey(key: string, idleMinutes: number, now: Date): string {
+  const idleDays = idleMinutes / 1440
+  const period = idleDays >= 30 ? 30 : idleDays >= 14 ? 7 : idleDays >= 7 ? 3 : idleDays >= 3 ? 1 : 0
+  const routine = /^([a-z_]+):\d{4}-\d{2}-\d{2}:/.exec(key)
+  return period && routine ? `${routine[1]}:idle${period}:${Math.floor(now.getTime() / (period * 86_400_000))}` : key
+}
+
 export async function evaluateSession(
   sessionId: string, now = new Date(),
   /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 활동 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
@@ -195,7 +208,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   // 꺼져 있거나(off) 판이 아직 준비되지 않았으면 null 이고 아래 기존 경로가 그대로 맡는다.
   // 기존 사건(events)은 넘기지 않는다 — 자율성 경로에서 사건은 관측 근거가 없는 옛 기록이라 연락 근거가 되지 않는다(loadAgencyEvidence).
   const opportunity = intent?.eventKey ? null : intent
-  const agency = await evaluateAgencyReality(row, now, opts, { opportunity, opportunityKey: opportunity ? contactDedupeKey(opportunity, now, timeZone) : null })
+  const agency = await evaluateAgencyReality(row, now, opts, { opportunity, opportunityKey: opportunity ? idleOpportunityKey(contactDedupeKey(opportunity, now, timeZone), idleMinutes, now) : null })
   if (agency) return agency
   if (!intent) return { outcome: 'no_intent' }
 

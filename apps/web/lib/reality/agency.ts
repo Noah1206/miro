@@ -207,7 +207,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         worldSetting: snapshot.worldSetting, worldGenre: snapshot.worldGenre,
         userPersona: snapshot.userPersona ? personaLines(snapshot.userPersona) : null,
         languageRule: languageRule(snapshot.userLanguage),
-        adult: row.session.adultSince !== null,   // 11/23 언베일이 꺼진 방의 문자에는 청소년 안전 문장이 실린다
+        adult,   // 11/23 언베일이 꺼진 방의 문자에는 청소년 안전 문장이 실린다
         characterName: identity.name, personality: personality.personality, speechStyle: personality.speechStyle,
         // 11/17 다인 작품: 이 문자를 보낸 인물을 고르게 한다(저장 블록의 speaker → 문자방 이름·알림 제목).
         cast: castNames(snapshot.character),

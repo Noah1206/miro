@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { and, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { characterAgencyCohort, characterAgencyMode } from '@miro/config'
-import { authoredCharacter, createAgencyState } from '@miro/domain'
+import { authoredCharacter, createAgencyState, type AuthoredDocument } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
 import { db, characters, worlds, characterVisualIdentities, characterRevisions, characterRuntimeStates, roleplaySessions } from '@miro/db'
 import { afterResponse } from '@/lib/defer'
@@ -14,6 +14,15 @@ import { authoredDocument } from './authored'
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 export type CharacterRevision = typeof characterRevisions.$inferSelect
 const NUMERIC_TRAITS = new Set(['personality.jealousy', 'personality.initiative', 'personality.emotionalExpression'])
+// 11/24 예전 판의 문서에는 사진 목록이 들어 있다 — 그걸 뺀 내용이 지금 설정과 같으면 같은 판이다(다시 정리하지 않는다).
+const PHOTO_FIELD = 'worldRole.situationImages'
+const withoutPhotos = (d: AuthoredDocument): AuthoredDocument => ({
+  fields: Object.fromEntries(Object.entries(d.fields).filter(([k]) => !k.startsWith(PHOTO_FIELD))),
+  explicitFields: d.explicitFields.filter(k => !k.startsWith(PHOTO_FIELD)),
+})
+// jsonb 는 키 순서를 바꿔 돌려준다 — 키를 정렬해 비교한다.
+const stable = (v: unknown) => JSON.stringify(v, (_k, x) => x && typeof x === 'object' && !Array.isArray(x)
+  ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a < b ? -1 : 1)) : x)
 
 /**
  * 세션: 그 세션의 자율성이 켜져 있을 때. 저장(세션 없음): 자율성이 live 이면 언제나(또는 운영 밖 '*' 코호트) —
@@ -46,6 +55,13 @@ export async function captureAgencyRevision(
   const profile = { character: authoredCharacter(characterContext(character, visual)), worldSetting: world?.worldSetting ?? null, worldGenre: world?.genre ?? null }
   const authored = authoredDocument(profile.character, profile.worldSetting, explicitFields, profile.worldGenre)
   const sourceHash = hashAuthoredCharacter(authored)
+  if (previous && previous.sourceHash !== sourceHash && previous.status !== 'failed' && hashAuthoredCharacter(withoutPhotos(previous.authored)) === sourceHash) {
+    // 사진 목록만 지금 것으로 맞춘다(문서·해시 밖이라 정리 결과와 무관) — 바뀌었을 때만 쓴다.
+    if (stable(previous.profile.character.worldRole.situationImages) !== stable(profile.character.worldRole.situationImages)) {
+      await tx.update(characterRevisions).set({ profile }).where(eq(characterRevisions.id, previous.id))
+    }
+    return { ...previous, profile }
+  }
   const [inserted] = await tx.insert(characterRevisions).values({ characterId, sourceHash, authored, profile })
     .onConflictDoNothing({ target: [characterRevisions.characterId, characterRevisions.sourceHash] }).returning()
   if (inserted) return inserted
@@ -90,7 +106,10 @@ export async function precompileAgencyRevisions(limit = 2): Promise<number> {
   const pending = await db.select({ id: characterRevisions.id, ownerId: characters.ownerId }).from(characterRevisions)
     .innerJoin(characters, eq(characters.id, characterRevisions.characterId))
     .where(and(isNull(characters.deletedAt), or(eq(characterRevisions.status, 'pending'),
-      and(inArray(characterRevisions.status, ['compiling', 'failed']), lt(characterRevisions.attempts, 3), lt(characterRevisions.leaseUntil, new Date())))))
+      and(inArray(characterRevisions.status, ['compiling', 'failed']), lt(characterRevisions.attempts, 3), lt(characterRevisions.leaseUntil, new Date()))),
+      // 11/24 비용: 그 캐릭터의 가장 새 판이거나 어느 방이 쓰고 있는 판만 정리한다 — 설정을 하루에 여러 번 고치면 이미 대체된 판까지 하나씩 다 정리했다.
+      sql`(${characterRevisions.createdAt} = (select max(r2.created_at) from character_revisions r2 where r2.character_id = ${characterRevisions.characterId})
+        or exists (select 1 from character_runtime_states rs where rs.revision_id = ${characterRevisions.id}))`))
     // 공개 캐릭터 여럿이 한 번에 바뀌면(10/17: 7명) 한 번에 2개씩으로는 정리가 몇 시간 밀렸다 — 4개까지(같은 정리 함수의 300초 안에서 다른 단계 몫을 남긴다). 배경 호출은 서버마다
     // 한 번에 하나만 허용되므로(acquireProvider) 차례로 한다(하나 약 17초).
     .orderBy(desc(characterRevisions.createdAt)).limit(Math.max(limit, 4))

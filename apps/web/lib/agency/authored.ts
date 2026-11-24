@@ -19,7 +19,10 @@ export function authoredDocument(character: CharacterCore, worldSetting: string 
   add('identity', character.identity)
   // 관계 성격표는 AI 가 설정에서 만든 파생 값이다 — 작성자 원문이 아니므로 싣지 않는다(실으면 표가 바뀔 때마다 판이 새로 생긴다).
   add('personality', authoredCharacter(character).personality)
-  add('worldRole', character.worldRole)
+  // 11/24 비용: 사진 목록(situationImages)은 성격 규칙의 재료가 아니다 — 실으면 사진 설명·태그를 고칠 때마다 판이 새로 생겨
+  // 설정 전체를 다시 정리했다(8일간 새 판 357개 중 242개가 사진만 바뀐 것). 문서 글자의 평균 26%(많게는 93%)도 이 목록이었다.
+  const { situationImages: _photos, ...worldRole } = character.worldRole
+  add('worldRole', worldRole)
   add('appearance', character.appearance)
   add('worldSetting', worldSetting)
   add('worldGenre', worldGenre)
