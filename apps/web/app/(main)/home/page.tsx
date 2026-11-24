@@ -40,8 +40,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const user = await currentUser()
   // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
   const raw = (await searchParams).audience
-  // 11/20 사용자: 여성향(남자 캐릭터)은 다시 홈에서 뺀다(11/13 뺌 → 11/15 되살림 → 11/20 뺌) — 공식 여성향 38개 비공개(목록 output/ads/hidden-female-2026-11-20.txt). 유저는 여성향을 계속 만들어 올릴 수 있다.
-  const audience = raw === 'male' ? raw : undefined
+  // 11/24 사용자: 여성향(남자 캐릭터)을 다시 올린다(11/13 뺌 → 11/15 되살림 → 11/20 뺌 → 11/24 되살림) — 공식 여성향 38개 재공개(목록 output/ads/hidden-female-2026-11-20.txt).
+  const audience = raw === 'male' || raw === 'female' ? raw : undefined
   // 11/20 사용자: 알림 종을 뺐다 — 안 읽은 연락 수도 더는 읽지 않는다.
   const [sections, unveil, profile] = await Promise.all([
     measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),  // 11/12: 로그인 전에도 이름·소개 그대로(19세 막 시절의 글자 비우기 삭제)
@@ -96,6 +96,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
       {sections.rising.length > 0 && <Row index={0} row={{ key: 'rising', title: t('🆕 지금 뜨는 신작'), subtitle: t('최근 3주 안에 나온 이야기 중 요즘 대화가 몰리는 순서'), items: sections.rising }} href="/explore" />}
       {sections.popularMale.length > 0 && <Row index={1} row={{ key: 'popular-male', title: t('🔥 남심 저격! 인기 남성향 TOP 10'), items: sections.popularMale }} href="/explore" />}
+      {sections.popularFemale.length > 0 && <Row index={2} row={{ key: 'popular-female', title: t('💗 여심 저격! 인기 여성향 TOP 10'), items: sections.popularFemale }} href="/explore" />}
       {sections.originals.length > 0 && <Row index={3} row={{ key: 'originals', title: t('⭐ 미로 오리지널 신작'), items: sections.originals }} href="/explore" />}
       {sections.forYou.length > 0 && <Row index={4} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
       {sections.fresh.length > 0 && <Row index={5} row={{ key: 'fresh', title: t('🌱 따끈따끈한 유저 신작'), items: sections.fresh }} href="/explore" />}
