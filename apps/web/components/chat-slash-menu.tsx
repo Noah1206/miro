@@ -25,7 +25,7 @@ const icons = {
 }
 
 /** The slash palette exposes existing room controls and selectable server-owned commands. */
-export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null, onSlash, hideTrigger = false, adultAllowed = false }: {
+export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null, onSlash, onOoc, hideTrigger = false, adultAllowed = false }: {
   /** 11/22 직접 만들기의 '언베일 전용' 스위치 — 만들기 화면과 같은 기준(만 19세 이상). 서버도 미성년이면 [언베일] 을 뗀다. */
   adultAllowed?: boolean
   /** 11/6 사용자: 도구 줄의 '/' 버튼은 지운다 — 입력칸에 '/' 를 치면 뜨는 목록은 그대로. */
@@ -36,6 +36,8 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
   typed?: string | null
   /** 11/3: 있으면 '/' 버튼이 입력칸에 '/' 를 넣는다(그러면 라이브러리 목록이 위로 뜬다) — 이미 쓴 글이 있어 넣지 못하면 false, 그때는 라이브러리 창을 연다. */
   onSlash?: () => boolean
+  /** 11/24 OOC(역할 밖 지시) — 고르면 입력칸에 `(OOC: )` 를 넣는다. 없으면 줄을 띄우지 않는다. */
+  onOoc?: () => void
 }) {
   const t = useT()
   const { openRoomPanel, setPickerOpen } = useRoomControls()
@@ -64,6 +66,8 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
   // 입력칸에서 '/' 로 시작하면 라이브러리를 그 글자로 바로 연다. '/' 를 지우면 닫는다.
   const typing = typed !== null
   const own = typing ? commands.filter(c => c.name.toLowerCase().startsWith((typed ?? '').toLowerCase())) : []
+  // OOC 줄은 목록 맨 앞(방향키 순서 0번) — 뒤의 줄들은 그만큼 밀린다.
+  const ooc = !!onOoc && 'ooc'.startsWith(query.trim().toLowerCase()) ? 1 : 0
   useEffect(() => {
     if (typed === null) { setOpen(false); return }
     setLibrary(true); setQuery(typed); setActive(0); setOpen(true)
@@ -116,7 +120,10 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
         <button type="button" className={styles.row} onClick={() => { setMakingName(query); setOpen(false); setMaking(true) }}>
           {icons.create}<span className={styles.name}>{query.trim() ? t("'/{name}' 만들기", { name: query.trim().replace(/^\//, '') }) : t('명령어 만들기')}</span><span className={styles.description}>{t('새 명령어를 만들어 바로 적용')}</span>
         </button>
-        {own.map((command, i) => <button key={`own-${command.name}`} type="button" role="menuitem" className={styles.row} data-active={i === active || undefined} onClick={() => pick({ name: command.name })}>
+        {ooc > 0 && <button type="button" role="menuitem" className={styles.row} data-active={typing && active === 0 || undefined} onClick={() => act(onOoc!)}>
+          <span className={styles.slash} aria-hidden>/</span><span className={styles.name}>/ooc</span><span className={styles.description}>{t('캐릭터에게 하는 말이 아니라 진행을 지시해요')}</span>
+        </button>}
+        {own.map((command, i) => <button key={`own-${command.name}`} type="button" role="menuitem" className={styles.row} data-active={i + ooc === active || undefined} onClick={() => pick({ name: command.name })}>
           <span className={styles.slash} aria-hidden>/</span><span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint}</span>
         </button>)}
         {!typing && <div className={styles.search}>
@@ -125,7 +132,7 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
         {failed ? <button type="button" role="menuitem" className={styles.row} onClick={() => setRetry(value => value + 1)}>{t('다시 불러오기')}</button>
           : rows === null ? <p className={styles.status}>{t('불러오는 중…')}</p>
           : rows.length === 0 ? <p className={styles.status}>{t('명령어가 없어요.')}</p>
-          : rows.map((command, i) => <button key={command.id} type="button" role="menuitem" className={styles.row} data-active={typing && own.length + i === active || undefined} onClick={() => pick({ name: command.name, sourceId: command.id })}>
+          : rows.map((command, i) => <button key={command.id} type="button" role="menuitem" className={styles.row} data-active={typing && own.length + i + ooc === active || undefined} onClick={() => pick({ name: command.name, sourceId: command.id })}>
             {icons.library}<span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint || command.prompt}</span>
           </button>)}
         <TransitionLink href="/my/commands" role="menuitem" className={styles.row} onClick={() => setOpen(false)}>

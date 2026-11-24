@@ -2608,5 +2608,6 @@
   "기억은 300자까지 적을 수 있어요.": "A memory can be up to 300 characters.",
   "기억을 고칠 수 없어요.": "Couldn't edit this memory.",
   "기억을 지울 수 없어요.": "Couldn't delete this memory.",
-  "이 기억을 지울까요? 되돌릴 수 없어요.": "Delete this memory? This can't be undone."
+  "이 기억을 지울까요? 되돌릴 수 없어요.": "Delete this memory? This can't be undone.",
+  "캐릭터에게 하는 말이 아니라 진행을 지시해요": "Not said to the character — a note on how the story should go"
 }
