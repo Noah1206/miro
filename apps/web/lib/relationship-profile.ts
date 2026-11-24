@@ -7,6 +7,7 @@ import { createAI } from '@miro/providers'
 import { afterResponse } from '@/lib/defer'
 import { observe } from '@/lib/observe'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
+import { userAdult } from '@/lib/simulation/room-adult'
 
 type CharacterRow = typeof characters.$inferSelect
 /** none: 아직 만들지 않음 · stale: 설정이 바뀌어 다시 만들 차례 · ready: 지금 설정으로 만든 표. */
@@ -31,7 +32,7 @@ export async function refreshRelationshipProfile(characterId: string, userId: st
   installAIUsageSink()
   // 사용자의 월 사용량은 차감하지 않는다(usageUnits 0) — 캐릭터를 저장한 대가가 아니라 서비스가 치르는 준비 비용이다.
   const llm = createAI({ mock: () => ({ reactions: [], grows: [], pace: [], moods: [], reachOut: [] }), context: {
-    userId: userId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0, origin: 'character:relationship-profile',
+    userId: userId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0, origin: 'character:relationship-profile', adult: await userAdult(userId),   // 11/24 언베일을 켠 계정은 OpenRouter 로
   } })
   const next = await compileRelationshipProfile(llm, source)
   return db.transaction(async (tx) => {

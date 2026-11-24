@@ -54,7 +54,8 @@ export function lookFor(look: string, sceneTags: string): string {
 export async function toImageTags(text: string, fallback?: Pick<LLMProvider, 'generateStructured'>): Promise<string> {
   // 11/9 운영 원인: 성인 외형 문장은 Gemini 가 content_blocked 로 막아 한국어 원문이 그림 모델로 갔다(머리·눈 색이 안 맞음).
   // 언베일 방이면 두 번째 시도를 언베일 모델(fallback)로, 아니면 같은 모델로 한 번 더. 원인은 로그에.
-  const llms = [resolveLLM(), fallback ?? resolveLLM()]
+  // 11/24 사용자: 언베일이면 처음부터 언베일 모델(OpenRouter)로 — 첫 시도를 메인 키로 보내 막힌 뒤에야 넘겼다.
+  const llms = fallback ? [fallback, fallback] : [resolveLLM(), resolveLLM()]
   for (const [i, llm] of llms.entries()) {
     try {
       const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: LOOK_VERSION, maxTokens: 2048, schema: Tags, system: SYSTEM, prompt: text })

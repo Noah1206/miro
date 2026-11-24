@@ -7,6 +7,7 @@ import { availabilityAt, defaultRoutine, localClock, normalizeActiveHours, parse
 import { createAI } from '@miro/providers'
 import { observe } from '@/lib/observe'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
+import { userAdult } from '@/lib/simulation/room-adult'
 
 /**
  * 캐릭터의 생활 리듬을 한 번 만들어 contact_profiles.routine 에 둔다.
@@ -76,7 +77,7 @@ async function generateRoutine(characterId: string): Promise<Routine> {
     const c = row.character
     // 운영 오케스트레이터는 예산 가드 없이는 부르지 않는다(production_guard_required) — 다른 Reality 경로처럼 먼저 설치한다. 9/26 운영에서 이것 때문에 전부 기본 리듬이 됐다.
     installAIUsageSink()
-    const llm = createAI({ mock: () => ({ blocks: [], note: null }), context: { userId: c.ownerId ?? undefined, workload: 'background' } })
+    const llm = createAI({ mock: () => ({ blocks: [], note: null }), context: { userId: c.ownerId ?? undefined, workload: 'background', adult: await userAdult(c.ownerId) } })   // 11/24 언베일을 켠 계정은 OpenRouter 로
     const answer = await llm.generateStructured({
       // 운영 모델 레지스트리에는 world_update 담당 모델이 없다(9/26 확인) — 캐릭터를 쓰는 dialogue 모델이 짓는다. 캐릭터당 한 번.
       schema: RoutineAnswer, task: 'dialogue', promptVersion: 'routine:v1', system: SYSTEM, maxTokens: 900,

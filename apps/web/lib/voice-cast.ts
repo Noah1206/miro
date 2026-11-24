@@ -8,6 +8,7 @@ import { observe } from '@/lib/observe'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { matchSpeaker } from '@/lib/voice-text'
 import { voiceGender } from '@/lib/voice'
+import { userAdult } from '@/lib/simulation/room-adult'
 
 /**
  * 등장인물 목소리 칸 채우기(11/10 사용자: "유저가 설정한 캐릭터들이 전부 미리 음성을 넣어서 안 끊기게").
@@ -32,7 +33,7 @@ export async function refreshVoiceCast(characterId: string, userId: string | nul
   if (!row) return 'skipped'
   installAIUsageSink()
   // 사용자 월 사용량은 차감하지 않는다 — 관계 성격표처럼 저장에 딸린 서비스 준비 비용.
-  const llm = createAI({ mock: () => ({ people: [] }), context: { userId: userId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0, origin: 'character:voice-cast' } })
+  const llm = createAI({ mock: () => ({ people: [] }), context: { userId: userId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0, origin: 'character:voice-cast', adult: await userAdult(userId) } })   // 11/24 언베일을 켠 계정은 OpenRouter 로
   const answer = await llm.generateStructured({ schema: Cast, task: 'dialogue', promptVersion: 'voice-cast:v1', system: SYSTEM, temperature: 0.2, maxTokens: 2048,
     prompt: JSON.stringify({ cardName: row.name, settings: [row.personality, row.startingContext, row.secret].filter(Boolean).join('\n\n').slice(0, 14000) }) })
   const pool = await db.select({ id: officialVoices.id, label: officialVoices.label }).from(officialVoices).where(and(eq(officialVoices.status, 'active'), isNull(officialVoices.ownerId)))

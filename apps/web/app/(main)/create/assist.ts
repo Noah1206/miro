@@ -11,6 +11,7 @@ import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { parseCharacterForm, TEST_CHAT_LIMIT } from './parse'
 import { takeUserQuota } from '@/lib/usage/user-quota'
+import { userAdult } from '@/lib/simulation/room-adult'
 
 /** 자동 채우기 결과 — 만들기 폼의 칸 이름 그대로. 화면은 비어 있는 칸에만 넣는다. */
 export type QuickFill = {
@@ -44,7 +45,7 @@ export async function quickFill(description: string, known: Partial<Record<(type
   if (!(await takeUserQuota(user.id, 'quick_fill', [{ ms: 86_400_000, max: 30 }]))) throw new Error('QUICK_FILL_LIMIT')
   installAIUsageSink()
   const llm = createAI({ mock: req => buildMockDraft(req.prompt), context: {
-    userId: user.id, requestId: randomUUID(), workload: 'interactive', usageUnits: 0, origin: 'character:quick-fill',
+    userId: user.id, requestId: randomUUID(), workload: 'interactive', usageUnits: 0, origin: 'character:quick-fill', adult: await userAdult(user.id),   // 11/24 언베일을 켠 계정은 OpenRouter 로
   } })
   const d = await generateCharacterDraft(llm, [text || '아래 정해진 내용에 어울리는 인물', ...facts].join('\n'), { responseSchema: responseJsonSchema(CharacterDraft) })
   return {
@@ -111,7 +112,7 @@ export async function testTurn(entries: Array<[string, string]>, history: TestTu
     activeEvents: [], recentlyResolvedEvents: [], activeNpcs: [], recentRealityContacts: [], turnCount: history.filter(m => m.role === 'user').length,
     experienceType: p.experienceType, characterState: DEFAULT_CHARACTER_STATE, clock: localClock(now, POLICY.reality.defaultTimeZone),
   }
-  const llm = resolveRpLLM(name, { userId: user.id, requestId: randomUUID(), workload: 'interactive', usageUnits: 0, origin: 'character:test-chat' })
+  const llm = resolveRpLLM(name, { userId: user.id, requestId: randomUUID(), workload: 'interactive', usageUnits: 0, origin: 'character:test-chat', adult: await userAdult(user.id) })
   try {
     const result = await runTurn({ llm, snapshot, userInput: text })
     const blocks = result.transition.blocks.filter(b => b.type !== 'thought').map(b => ({ type: String(b.type), text: b.text }))
