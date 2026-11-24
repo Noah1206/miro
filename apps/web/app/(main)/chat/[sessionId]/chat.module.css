@@ -876,7 +876,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* ── 11/24 사용자: 화면 설정(채팅방 설정 → 화면 설정) — 글자 크기·글씨체·사진 크기. 이 기기에 저장되고 대화 영역(.messages)에만 걸린다.
    값은 채팅방 뿌리(components/chat-theme.tsx)의 data-chat-* 속성. 글자 크기는 화면별 기본값(--font-body-size)에 배수를 곱한다. ── */
-:global([data-chat-font]) { --chat-font-base: var(--font-body-size); }
+/* --chat-font-base(화면별 기본 글자 크기)는 globals.css 에서 채팅방 뿌리에 잡아 둔다 — 모듈 CSS 는 클래스 없는 선택자를 못 쓴다. */
 :global([data-chat-font='small']) .messages { --font-body-size: calc(var(--chat-font-base) * .9); }
 :global([data-chat-font='large']) .messages { --font-body-size: calc(var(--chat-font-base) * 1.13); }
 :global([data-chat-font='xlarge']) .messages { --font-body-size: calc(var(--chat-font-base) * 1.27); }
