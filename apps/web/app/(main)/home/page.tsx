@@ -20,6 +20,8 @@ import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 import { AfterMount } from '@/components/after-mount'
+import { headers } from 'next/headers'
+import Explore from '../explore/page'
 
 const SITE = 'https://miroapp.app'
 const homeJsonLd = {
@@ -38,6 +40,12 @@ const homeJsonLd = {
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
+  // 11/25 사용자: 핸드폰에서는 홈이 탐색 탭 화면과 같게(검색엔진용 이름·구조화 데이터는 유지).
+  if (/iPhone|iPod|Mobile/i.test((await headers()).get('user-agent') ?? '')) return <>
+    <h1 className="sr-only">미로 AI 캐릭터챗</h1>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
+    <Explore />
+  </>
   const user = await currentUser()
   // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
   const raw = (await searchParams).audience
