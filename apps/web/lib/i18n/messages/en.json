@@ -2610,8 +2610,17 @@
   "기억을 지울 수 없어요.": "Couldn't delete this memory.",
   "이 기억을 지울까요? 되돌릴 수 없어요.": "Delete this memory? This can't be undone.",
   "캐릭터에게 하는 말이 아니라 진행을 지시해요": "Not said to the character — a note on how the story should go",
- "호감도": "Affection",
- "이 다음 이야기, 미로에서 이어서": "Continue the story on Miro",
- "링크를 복사했어요": "Link copied",
- "결과 공유하기": "Share result"
+ "사진 카드": "photo cards",
+ "캐릭터 사진 카드 뽑기": "Character Photo Card Draw",
+ "매일 무료 {n}번 · 공유하면 +1": "{n} free draws daily · +1 when you share",
+ "오늘 뽑기를 다 썼어요": "You've used today's draws",
+ "카드 뽑기": "Draw a card",
+ "공유하고 +1 뽑기": "Share for +1 draw",
+ "{name}와 대화하기": "Chat with {name}",
+ "도감": "Collection",
+ "도감 완성! 이 다음 이야기는 미로에서.": "Collection complete! The rest of the story is on Miro.",
+ "언베일 카드": "Unveil card",
+ "성인 인증 후 언베일을 켜면 공개": "Revealed after adult verification with Unveil on",
+ "결과 공유하기": "Share result",
+ "링크를 복사했어요": "Link copied"
 }
