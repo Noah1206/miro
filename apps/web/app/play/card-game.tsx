@@ -88,7 +88,7 @@ export function CardGame({ sets, signedIn }: { sets: ClientSet[]; signedIn: bool
         </button>
         <div className={s.row}>
           <button type="button" onClick={share}>{copied ? t('링크를 복사했어요') : save?.bonus ? t('결과 공유하기') : t('공유하고 +1 뽑기')}</button>
-          <Link href={`/character/${set.slug}?utm_source=play&utm_campaign=${set.key}`}>{t('{name}와 대화하기', { name: set.name })}</Link>
+          <Link href={`/character/${set.slug}?utm_source=play&utm_campaign=${set.key}`}>{t('{name} 만나러 가기', { name: set.name })}</Link>
         </div>
         <p className={s.rates}>N 55% · R 28% · SR 12% · UR 5%</p>
       </section>
