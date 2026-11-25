@@ -1,6 +1,6 @@
 import { and, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import { characters, db, officialVoices, rechargeGrants, rechargeLedger, turnUndos, usageLedger, users } from '@miro/db'
-import { commit, grantRecharge, reserve, type UsageTransaction } from './guard'
+import { commit, reserve, type UsageTransaction } from './guard'
 import { revisionEffective } from '@/lib/legal/revisions'
 
 /**
@@ -172,12 +172,15 @@ export async function creatorRewardByCharacter(userId: string): Promise<Map<stri
 }
 
 /**
- * 11/25 사용자: 창작자 이벤트 — 11/27~12/7(KST)에 작품을 처음 공개하면 한 번만 7,000 미로(30일 유효).
- * (provider, 사용자 id) UNIQUE 라 여러 작품을 공개하거나 다시 저장해도 한 번이다. 실패해도 저장은 그대로 둔다. ponytail: 날짜 고정.
+ * 11/25 사용자: 창작자 이벤트 — 11/27~12/7(KST)에 작품을 만들어(이식 포함) 공개한 사람은 그 기간 아르곤 무료. 미로는 주지 않는다.
+ * 하루 150턴(아르곤 대화 호출 수)을 넘으면 그날만 일반 차감. ponytail: 날짜·상한 고정, 기간 전에 만든 작품을 기간 중 공개로 바꾼 건 안 셈.
  */
-const FIRST_WORK_GIFT = { units: 7_000, validDays: 30, from: Date.parse('2026-11-27T00:00:00+09:00'), until: Date.parse('2026-12-08T00:00:00+09:00') }
-export async function giveFirstWorkGift(userId: string, now = Date.now()) {
-  if (now < FIRST_WORK_GIFT.from || now >= FIRST_WORK_GIFT.until) return
-  await grantRecharge({ userId, amount: FIRST_WORK_GIFT.units, source: 'grant', provider: 'first_work_gift', externalRef: userId,
-    expiresAt: new Date(now + FIRST_WORK_GIFT.validDays * 86_400_000) }).catch(e => console.error('first_work_gift failed', userId, e))
+const ARGON_PASS = { modelId: 'gemini-argon', dailyTurns: 150, from: Date.parse('2026-11-27T00:00:00+09:00'), until: Date.parse('2026-12-08T00:00:00+09:00') }
+export async function argonPassTurn(userId: string, modelId: string, now = Date.now()): Promise<boolean> {
+  if (modelId !== ARGON_PASS.modelId || now < ARGON_PASS.from || now >= ARGON_PASS.until) return false
+  const rows = await db.execute<{ ok: boolean }>(sql`select exists(select 1 from ${characters} where owner_id = ${userId} and is_public and not is_draft
+        and deleted_at is null and created_at >= ${new Date(ARGON_PASS.from)})
+      and (select count(*) from ai_usage where user_id = ${userId} and model_id = ${modelId} and task = 'dialogue'
+        and created_at >= date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul') < ${ARGON_PASS.dailyTurns} as ok`)
+  return !![...rows][0]?.ok
 }

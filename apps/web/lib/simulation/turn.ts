@@ -1,6 +1,7 @@
 import { DEFAULT_CHARACTER_STATE, recalledFor, visibleStatValues } from '@miro/domain'
 import { receiveMessenger, MessengerError } from '@/lib/messenger/inbox'
 import { freeChatTurn, resolveChatModel } from '@/lib/ai/chat-models'
+import { argonPassTurn } from '@/lib/usage/creator-reward'
 import { rankSituationImages } from '@/lib/situation-ranking'
 import { eq, and, sql } from 'drizzle-orm'
 import { db, conversationRequests, characters, messages, memories, roleplaySessions } from '@miro/db'
@@ -159,7 +160,7 @@ async function executeTurn(opts: {
     // 11/16 음성 모드 턴은 읽는 대사만큼 더 받는다 — 모델 몫(maximumTokens) 위에 음성 몫을 따로 예약한다.
     const voiceOn = !!opts.voice && feature('characterVoice') && !voicePaused()
     // 11/19 오픈 이벤트 무료 턴 — 잔액 검사·예약·차감 없이(잔액 0 이어도 대화). 사용자별 하루 AI 호출 한도(AI_USER_DAILY_LIMIT)는 그대로 걸린다.
-    const free = !voiceOn && freeChatTurn(dialogueModelId, now.getTime())
+    const free = !voiceOn && (freeChatTurn(dialogueModelId, now.getTime()) || await argonPassTurn(userId, dialogueModelId, now.getTime()))   // 11/25 창작자 아르곤 무료
     // 11/10 사용자: 잔액이 500 미만이면 대화를 시작하지 않는다(하루 무료 1,500 은 자정에 다시 채워진다).
     if (!free && availableTokens < MIN_TURN_BALANCE && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
     // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
