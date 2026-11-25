@@ -47,7 +47,7 @@ export type CardCharacter = {
  * 마크업을 한 곳에 두어야 홈과 상세가 어긋나지 않는다 (실제로 어긋났었다).
  */
 /** 11/7: 카드 소개 2줄 = 상세 화면 소개 글의 앞부분([프로필] 같은 머리말은 뺀다). 없으면 한 줄 대사. */
-const cardBlurb = (c: CardCharacter) => c.blurb?.replace(/\[[^\]\n]*\]/g, ' ').replace(/[*_#]/g, '').replace(/\s+/g, ' ').trim() || (c.tagline ? `“${c.tagline}”` : '')
+export const cardBlurb = (c: CardCharacter) => c.blurb?.replace(/\[[^\]\n]*\]/g, ' ').replace(/[*_#]/g, '').replace(/\s+/g, ' ').trim() || (c.tagline ? `“${c.tagline}”` : '')
 
 export function CharacterCard({ c, still, ratio = '1 / 1' }: { c: CardCharacter; tagsBelow?: boolean; /** 11/10: 표지에 고정(홈 '미로 오리지널' 줄) */ still?: boolean; /** 11/20 사용자: 카드 사진은 어디서나 정사각형이 기본(그 전 4 / 5) */ ratio?: string }) {
   const reduce = useReducedMotion()

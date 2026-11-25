@@ -2,7 +2,8 @@ import { HomeUnveilToggle } from './unveil-toggle'
 import { HeaderSearch } from './header-search'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
-import { homeSections } from '@/lib/home'
+import { homeSections, hotCounts, type HomeCard } from '@/lib/home'
+import { HotRanking, type HotTab } from './hot-ranking'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { Row } from './row'
@@ -54,6 +55,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     user ? accountProfile(user) : null,
   ])
   const [t, language] = await Promise.all([getT(), getLanguage()])
+  // 11/25 사용자: 배너 아래 '지금 가장 핫한' — 기간별 대화한 사람 수 순, 탭마다 12개.
+  const pool = sections.all.filter(c => c.isPublic || c.isOfficial)
+  const hot = await hotCounts(pool.map(c => c.id))
+  const cutoff = new Date(Date.now() - 21 * 864e5).toISOString()
+  const rank = (key: 'live' | 'day' | 'month' | 'all', pick: (c: HomeCard) => boolean = c => (hot.get(c.id)?.[key] ?? 0) > 0) =>
+    pool.filter(pick).sort((a, b) => (hot.get(b.id)?.[key] ?? 0) - (hot.get(a.id)?.[key] ?? 0) || (hot.get(b.id)?.all ?? 0) - (hot.get(a.id)?.all ?? 0) || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 12)
+  const hotLists: Record<HotTab, HomeCard[]> = { new: rank('live', c => (c.createdAt ?? '') >= cutoff), live: rank('live'), day: rank('day'), month: rank('month'), all: rank('all') }
   // 11/13 사용자: 인증 직후(하루)와 로그인 전에는 안내 시트(음성 예고·제작자 모집)를 띄우지 않는다 — 인증한 10명 중 9명이 홈에서 대화를 시작하지 않았다.
   const settled = !!user && (!user.adultVerifiedAt || Date.now() - new Date(user.adultVerifiedAt).getTime() > 86_400_000)
 
@@ -90,6 +98,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
           .filter(c => c.images.length > 0 && !c.coverUnveil && (c.isPublic || c.isOfficial)).sort(() => Math.random() - 0.5)  /* 11/21 사용자: 내 비공개 작품은 추천 배너에서 뺀다 */
         return all.filter(c => c.audience === 'male').slice(0, 6)
       })()} />}
+      <HotRanking lists={hotLists} />
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       {mobile ? <>
         <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>

@@ -331,6 +331,15 @@ async function withChats(cards: HomeCard[]): Promise<HomeCard[]> {
 }
 
 /** 캐릭터별 대화 인원. 한 번의 질의로 모아 카드에 붙인다. */
+/** 11/25 홈 '지금 가장 핫한' — 기간별 대화한 사람 수(실시간 6시간·일간 1일·월간 30일·전체). */
+export async function hotCounts(ids: string[]): Promise<Map<string, { live: number; day: number; month: number; all: number }>> {
+  if (ids.length === 0) return new Map()
+  const n = (w: string) => sql<number>`(count(distinct ${roleplaySessions.userId}) filter (where ${roleplaySessions.lastInteractionAt} > now() - ${w}::interval))::int`
+  const rows = await db.select({ id: roleplaySessions.characterId, live: n('6 hours'), day: n('1 day'), month: n('30 days'), all: sql<number>`count(distinct ${roleplaySessions.userId})::int` })
+    .from(roleplaySessions).where(and(inArray(roleplaySessions.characterId, ids), isNull(roleplaySessions.deletedAt))).groupBy(roleplaySessions.characterId)
+  return new Map(rows.map(({ id, ...r }) => [id, r]))
+}
+
 export async function playCounts(ids: string[], days?: number): Promise<Map<string, number>> {
   if (ids.length === 0) return new Map()
   const rows = await db.select({ id: roleplaySessions.characterId, n: sql<number>`count(distinct ${roleplaySessions.userId})::int` })
