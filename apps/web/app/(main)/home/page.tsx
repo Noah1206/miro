@@ -6,7 +6,6 @@ import { homeSections, hotCounts, type HomeCard } from '@/lib/home'
 import { HotRanking, type HotTab } from './hot-ranking'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
-import { Row } from './row'
 import { AllCharacters } from './all-characters'
 import { HomeHero } from './hero'
 import { SiteFooter } from '@/components/site-footer'
@@ -19,8 +18,6 @@ import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon, HomeVoiceWake } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
-import { discoveryTagLabel } from '@/lib/discovery-filters'
-import { AfterMount } from '@/components/after-mount'
 import { headers } from 'next/headers'
 import { CharacterCard } from '@/components/character-card'
 
@@ -61,7 +58,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const cutoff = new Date(Date.now() - 21 * 864e5).toISOString()
   const rank = (key: 'live' | 'day' | 'month' | 'all', pick: (c: HomeCard) => boolean = c => (hot.get(c.id)?.[key] ?? 0) > 0) =>
     pool.filter(pick).sort((a, b) => (hot.get(b.id)?.[key] ?? 0) - (hot.get(a.id)?.[key] ?? 0) || (hot.get(b.id)?.all ?? 0) - (hot.get(a.id)?.all ?? 0) || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 12)
-  const hotLists: Record<HotTab, HomeCard[]> = { new: rank('live', c => (c.createdAt ?? '') >= cutoff), live: rank('live'), day: rank('day'), month: rank('month'), all: rank('all') }
+  const hotLists: Record<HotTab, HomeCard[]> = { live: rank('live'), day: rank('day'), month: rank('month'), all: rank('all') }
+  const newList = rank('day', c => (c.createdAt ?? '') >= cutoff)   // 신작: 최근 3주 작품을 하루 대화 인원 순
   // 11/13 사용자: 인증 직후(하루)와 로그인 전에는 안내 시트(음성 예고·제작자 모집)를 띄우지 않는다 — 인증한 10명 중 9명이 홈에서 대화를 시작하지 않았다.
   const settled = !!user && (!user.adultVerifiedAt || Date.now() - new Date(user.adultVerifiedAt).getTime() > 86_400_000)
 
@@ -98,7 +96,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
           .filter(c => c.images.length > 0 && !c.coverUnveil && (c.isPublic || c.isOfficial)).sort(() => Math.random() - 0.5)  /* 11/21 사용자: 내 비공개 작품은 추천 배너에서 뺀다 */
         return all.filter(c => c.audience === 'male').slice(0, 6)
       })()} />}
-      <HotRanking lists={hotLists} />
+      <HotRanking id="hot-now" title="지금 가장 핫한" lists={hotLists} />
+      <HotRanking id="hot-new" title="신작" lists={{ live: newList }} />
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       {mobile ? <>
         <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
@@ -118,20 +117,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
-      {sections.rising.length > 0 && <Row index={0} row={{ key: 'rising', title: t('🆕 지금 뜨는 신작'), subtitle: t('최근 3주 안에 나온 이야기 중 요즘 대화가 몰리는 순서'), items: sections.rising }} href="/explore" />}
-      {sections.popularMale.length > 0 && <Row index={1} row={{ key: 'popular-male', title: t('🔥 남심 저격! 인기 남성향 TOP 10'), items: sections.popularMale }} href="/explore" />}
-      {sections.originals.length > 0 && <Row index={3} row={{ key: 'originals', title: t('⭐ 미로 오리지널 신작'), items: sections.originals }} href="/explore" />}
-      {sections.forYou.length > 0 && <Row index={4} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
-      {sections.fresh.length > 0 && <Row index={5} row={{ key: 'fresh', title: t('🌱 따끈따끈한 유저 신작'), items: sections.fresh }} href="/explore" />}
-      {sections.tags.length > 0 && <section aria-labelledby="row-tags" style={{ marginBottom: 'var(--space-7)', padding: '0 var(--gutter)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-          <h2 id="row-tags" className="t-title-3">{t('🏷️ 취향은 숨겨도 태그는 못 숨겨')}</h2>
-          <TransitionLink href="/explore" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
-        </div>
-        {/* 11/13 베이비챗식: 태그 글자(유부녀·NTR 등)는 브라우저에서만 그려 검색엔진이 사이트를 성인물로 분류하지 않게. */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, minHeight: 30 }}><AfterMount>{sections.tags.map(tag => <TransitionLink key={tag} href={`/explore?tag=${encodeURIComponent(tag)}`} className="t-caption" style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--color-surface-2, rgba(255,255,255,.06))', color: 'var(--color-text-primary)' }}>#{discoveryTagLabel(tag)}</TransitionLink>)}</AfterMount></div>
-      </section>}
-      {sections.safety.length > 0 && <Row index={6} row={{ key: 'safety', title: t('🛡️ 놓치면 아쉬운 세이프티 인기 TOP 10'), subtitle: t('언베일 없이도 재밌는 이야기'), items: sections.safety }} href="/explore" />}
+      {/* 11/25 사용자: 배너 아래는 '지금 가장 핫한'·'신작' 두 줄만 — 예전 섹션 줄(신작 상승·인기 TOP·오리지널·맞춤·유저 신작·태그·세이프티)은 뺐다. */}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.all.length > 0 && <AllCharacters items={sections.all} />}
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
