@@ -21,7 +21,7 @@ import { feature, voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 import { AfterMount } from '@/components/after-mount'
 import { headers } from 'next/headers'
-import Explore from '../explore/page'
+import { CharacterCard } from '@/components/character-card'
 
 const SITE = 'https://miroapp.app'
 const homeJsonLd = {
@@ -40,12 +40,8 @@ const homeJsonLd = {
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
-  // 11/25 사용자: 핸드폰에서는 홈이 탐색 탭 화면과 같게(검색엔진용 이름·구조화 데이터는 유지).
-  if (/iPhone|iPod|Mobile/i.test((await headers()).get('user-agent') ?? '')) return <>
-    <h1 className="sr-only">미로 AI 캐릭터챗</h1>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
-    <Explore />
-  </>
+  // 11/25 사용자: 핸드폰 홈 = 헤더·배너 + 탐색 탭과 같은 격자만(전체·검색칸·섹션 없음, 필터는 탐색 탭에서).
+  const mobile = /iPhone|iPod|Mobile/i.test((await headers()).get('user-agent') ?? '')
   const user = await currentUser()
   // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
   const raw = (await searchParams).audience
@@ -95,7 +91,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
         return all.filter(c => c.audience === 'male').slice(0, 6)
       })()} />}
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
-      {(() => { const content = <>
+      {mobile ? <>
+        <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
+        <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{[...sections.all].sort((a, b) => b.plays - a.plays).map(c => <CharacterCard key={c.id} c={c} />)}</div>
+      </> : (() => { const content = <>
       <div className={styles.searchRow}>
         <AudienceSelect groups={sections.filters} audience={audience} />
         <TransitionLink href="/search" prefetch={true} aria-label={t('검색')} className={styles.searchBar}>
