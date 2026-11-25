@@ -4,6 +4,7 @@ import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
 import { homeSections, hotCounts, type HomeCard } from '@/lib/home'
 import { HotRanking, type HotTab } from './hot-ranking'
+import { CharacterCard } from '@/components/character-card'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { SiteFooter } from '@/components/site-footer'
@@ -51,8 +52,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const cutoff = new Date(Date.now() - 21 * 864e5).toISOString()
   const rank = (key: 'live' | 'day' | 'month' | 'all', pick: (c: HomeCard) => boolean = c => (hot.get(c.id)?.[key] ?? 0) > 0) =>
     pool.filter(pick).sort((a, b) => (hot.get(b.id)?.[key] ?? 0) - (hot.get(a.id)?.[key] ?? 0) || (hot.get(b.id)?.all ?? 0) - (hot.get(a.id)?.all ?? 0) || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 12)
-  const hotLists: Record<HotTab, HomeCard[]> = { live: rank('live'), day: rank('day'), month: rank('month'), all: rank('all') }
-  const newList = rank('day', c => (c.createdAt ?? '') >= cutoff)   // 신작: 최근 3주 작품을 하루 대화 인원 순
+  // 11/26 사용자: 탭은 신작·전체 두 개만. 신작 = 최근 3주 작품을 하루 대화 인원 순, 전체 = 누적 인원 순.
+  const hotLists: Record<HotTab, HomeCard[]> = { new: rank('day', c => (c.createdAt ?? '') >= cutoff), all: rank('all') }
   // 11/13 사용자: 인증 직후(하루)와 로그인 전에는 안내 시트(음성 예고·제작자 모집)를 띄우지 않는다 — 인증한 10명 중 9명이 홈에서 대화를 시작하지 않았다.
   const settled = !!user && (!user.adultVerifiedAt || Date.now() - new Date(user.adultVerifiedAt).getTime() > 86_400_000)
 
@@ -87,8 +88,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       <TransitionLink href="/create" aria-label={t('제작자 이벤트: 작품을 공개하면 아르곤 무료')} style={{ display: 'block', margin: '0 var(--gutter) var(--space-2)', borderRadius: 14, overflow: 'hidden', aspectRatio: '3600 / 1020', background: '#1a1a1f' }}>
         <img src="/events/creator-argon.webp" alt="" width={1800} height={510} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
       </TransitionLink>
-      <HotRanking id="hot-now" title="지금 가장 핫한" lists={hotLists} />
-      <HotRanking id="hot-new" title="신작" lists={{ live: newList }} />
+      <HotRanking lists={hotLists} />
+      {/* 11/26 사용자: 그 밑은 탐색 탭처럼 작품 카드 격자(대화량 순). */}
+      <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{[...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays).map(c => <CharacterCard key={c.id} c={c} />)}</div>
       {/* 11/25 사용자: 휴대폰·컴퓨터 모두 검색칸·전체 버튼·섹션 줄·작품 격자 없이 배너·지금 가장 핫한·신작만. 검색은 헤더 아이콘, 전체 목록은 탐색 탭. */}
       <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}
