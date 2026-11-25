@@ -6,7 +6,6 @@ import { homeSections, hotCounts, type HomeCard } from '@/lib/home'
 import { HotRanking, type HotTab } from './hot-ranking'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
-import { AllCharacters } from './all-characters'
 import { SiteFooter } from '@/components/site-footer'
 import styles from './home.module.css'
 import { getLanguage, getT } from '@/lib/i18n/server'
@@ -18,7 +17,6 @@ import { HomeViewBeacon, HomeVoiceWake } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
 import { headers } from 'next/headers'
-import { CharacterCard } from '@/components/character-card'
 
 const SITE = 'https://miroapp.app'
 const homeJsonLd = {
@@ -99,7 +97,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {mobile ? <>
         <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
-        <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{[...sections.all].sort((a, b) => b.plays - a.plays).map(c => <CharacterCard key={c.id} c={c} />)}</div>
+        {/* 11/25 사용자: 처음엔 작품 카드 격자를 안 보인다(배너·핫한·신작만). 전체 목록은 탐색 탭. */}
       </> : (() => { const content = <>
       <div className={styles.searchRow}>
         <AudienceSelect groups={sections.filters} audience={audience} />
@@ -116,7 +114,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
       {/* 11/25 사용자: 배너 아래는 '지금 가장 핫한'·'신작' 두 줄만 — 예전 섹션 줄(신작 상승·인기 TOP·오리지널·맞춤·유저 신작·태그·세이프티)은 뺐다. */}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
-      {sections.all.length > 0 && <AllCharacters items={sections.all} />}
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 11/13 처음 온 사람에게 제작자 모집을 한 번 알린다(브라우저당 한 번, 다른 시트가 닫힌 뒤). */}
       {/* 11/21 사용자: 제작자 모집 시트(CreatorInvite)는 띄우지 않는다. */}
