@@ -9,14 +9,12 @@ import { measured } from '@/lib/observe'
 import { SiteFooter } from '@/components/site-footer'
 import styles from './home.module.css'
 import { getLanguage, getT } from '@/lib/i18n/server'
-import { AudienceSelect } from './audience-select'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile, HeaderProfileGuest } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon, HomeVoiceWake } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
-import { headers } from 'next/headers'
 
 const SITE = 'https://miroapp.app'
 const homeJsonLd = {
@@ -35,8 +33,6 @@ const homeJsonLd = {
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
-  // 11/25 사용자: 핸드폰 홈 = 헤더·배너 + 탐색 탭과 같은 격자만(전체·검색칸·섹션 없음, 필터는 탐색 탭에서).
-  const mobile = /iPhone|iPod|Mobile/i.test((await headers()).get('user-agent') ?? '')
   const user = await currentUser()
   // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
   const raw = (await searchParams).audience
@@ -93,28 +89,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </TransitionLink>
       <HotRanking id="hot-now" title="지금 가장 핫한" lists={hotLists} />
       <HotRanking id="hot-new" title="신작" lists={{ live: newList }} />
-      {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
-      {mobile ? <>
-        <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
-        {/* 11/25 사용자: 처음엔 작품 카드 격자를 안 보인다(배너·핫한·신작만). 전체 목록은 탐색 탭. */}
-      </> : (() => { const content = <>
-      <div className={styles.searchRow}>
-        <AudienceSelect groups={sections.filters} audience={audience} />
-        <TransitionLink href="/search" prefetch={true} aria-label={t('검색')} className={styles.searchBar}>
-          <span>{t('이름이나 키워드로 검색')}</span>
-          <span className={styles.searchIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg></span>
-        </TransitionLink>
-      </div>
-      {/* 10/28: 오리지널 작품 줄은 일단 가린다(사용자 요청). 다시 보이려면 <OriginalStoriesRow /> 를 되살린다. */}
-      {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
+      {/* 11/25 사용자: 휴대폰·컴퓨터 모두 검색칸·전체 버튼·섹션 줄·작품 격자 없이 배너·지금 가장 핫한·신작만. 검색은 헤더 아이콘, 전체 목록은 탐색 탭. */}
       <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
-      {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
-      {/* 11/25 사용자: 배너 아래는 '지금 가장 핫한'·'신작' 두 줄만 — 예전 섹션 줄(신작 상승·인기 TOP·오리지널·맞춤·유저 신작·태그·세이프티)은 뺐다. */}
-      {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
-      </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 11/13 처음 온 사람에게 제작자 모집을 한 번 알린다(브라우저당 한 번, 다른 시트가 닫힌 뒤). */}
       {/* 11/21 사용자: 제작자 모집 시트(CreatorInvite)는 띄우지 않는다. */}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
