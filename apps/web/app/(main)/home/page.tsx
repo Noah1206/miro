@@ -7,7 +7,6 @@ import { HotRanking, type HotTab } from './hot-ranking'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { AllCharacters } from './all-characters'
-import { HomeHero } from './hero'
 import { SiteFooter } from '@/components/site-footer'
 import styles from './home.module.css'
 import { getLanguage, getT } from '@/lib/i18n/server'
@@ -90,12 +89,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/10 사용자: 로그인한 사람에겐 배너 대신 크랙식 추천(들어올 때마다 랜덤 6작품, 표지가 언베일인 작품은 뺀다). 로그인 전엔 가입 선물 배너 그대로. */}
       {/* 11/12 사용자: 로그인 전에도 크랙식 추천(데스크톱 소개 카드의 흐린 배경 포함) — 가입 선물 안내는 로그인 팝업의 선물 카드가 맡는다. */}
       {/* 11/23 뺐다가 11/24 사용자 "배너 있어야 해" 로 되살림 — 좌우로 넘기는 작품 카드(휴대폰은 가운데 카드만). */}
-      {<HomeHero items={(() => {
-        // 11/13 사용자: 여성향을 빼서 남성향 6, 순서는 섞는다.
-        const all = [...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
-          .filter(c => c.images.length > 0 && !c.coverUnveil && (c.isPublic || c.isOfficial)).sort(() => Math.random() - 0.5)  /* 11/21 사용자: 내 비공개 작품은 추천 배너에서 뺀다 */
-        return all.filter(c => c.audience === 'male').slice(0, 6)
-      })()} />}
+      {/* 11/25 사용자: 배너는 한 장 — 창작자 아르곤 무료 이벤트(11/27~12/7). 누르면 만들기. 예전 작품 카드 배너(HomeHero)는 hero.tsx 에 그대로 있다. */}
+      <TransitionLink href="/create" aria-label={t('제작자 이벤트: 작품을 공개하면 아르곤 무료')} style={{ display: 'block', margin: '0 var(--gutter) var(--space-2)', borderRadius: 14, overflow: 'hidden', aspectRatio: '3600 / 1020', background: '#1a1a1f' }}>
+        <img src="/events/creator-argon.webp" alt="" width={1800} height={510} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
+      </TransitionLink>
       <HotRanking id="hot-now" title="지금 가장 핫한" lists={hotLists} />
       <HotRanking id="hot-new" title="신작" lists={{ live: newList }} />
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
