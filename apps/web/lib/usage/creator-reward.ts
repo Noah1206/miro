@@ -175,7 +175,7 @@ export async function creatorRewardByCharacter(userId: string): Promise<Map<stri
  * 11/25 사용자: 창작자 이벤트 — 11/27~12/4(KST)에 작품을 만들어(이식 포함) 공개한 사람은 그 기간 아르곤 무료. 미로는 주지 않는다.
  * 하루 150턴(아르곤 대화 호출 수)을 넘으면 그날만 일반 차감. ponytail: 날짜·상한 고정, 기간 전에 만든 작품을 기간 중 공개로 바꾼 건 안 셈.
  */
-const ARGON_PASS = { modelId: 'gemini-argon', dailyTurns: 150, from: Date.parse('2099-01-01T00:00:00+09:00'), until: Date.parse('2026-12-05T00:00:00+09:00') }   // 11/27 사용자: 일단 닫음(홍보글 올릴 때 from 을 그 시각으로). 원래 11/27 00:00 ~ 12/4
+const ARGON_PASS = { modelId: 'gemini-carbon',   /* 11/27 사용자: 아르곤 대신 카본 */ dailyTurns: 150, from: Date.parse('2099-01-01T00:00:00+09:00'), until: Date.parse('2026-12-05T00:00:00+09:00') }   // 11/27 사용자: 일단 닫음(홍보글 올릴 때 from 을 그 시각으로). 원래 11/27 00:00 ~ 12/4
 export async function argonPassTurn(userId: string, modelId: string, now = Date.now()): Promise<boolean> {
   if (modelId !== ARGON_PASS.modelId || now < ARGON_PASS.from || now >= ARGON_PASS.until) return false
   const rows = await db.execute<{ ok: boolean }>(sql`select exists(select 1 from ${characters} where owner_id = ${userId} and is_public and not is_draft
