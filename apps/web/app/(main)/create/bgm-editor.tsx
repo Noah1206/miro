@@ -49,7 +49,6 @@ export function BgmEditor({ defaultValue }: { defaultValue: Bgm[] }) {
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
           {t('BGM 추가 ({n}/{max})', { n: rows.length, max: BGM_LIMITS.entries })}
         </label>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('mp3·m4a·ogg·wav, 한 곡 8MB까지. 저작권이 있는 음악은 올리지 마세요.')}</p>
       </>}
     </div>
   )

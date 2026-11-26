@@ -419,7 +419,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 명령어(10/19, 외형 자리) — 채팅에서 /이름 으로 부르는 한 턴 지시. 라이브러리에서 골라 붙이거나 직접 만들어 공개한다. ── */}
         <Panel id="commands" show={tab === 'advanced'}>
-          <Section title={t('명령어')} subtitle={t('대화 중 /이름 으로 불러 쓰는 한 턴 지시예요. 다른 사람이 공개한 것을 그대로 붙이거나, 직접 만들어 공개할 수 있어요.')}>
+          <Section title={t('명령어')}>
             <Card>
               <CommandEditor name="commands" defaultValue={i.commands} adultAllowed={adultAllowed} />
             </Card>
@@ -433,7 +433,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <LoreEditor name="lore" defaultValue={i.lore} defaultLimit={i.loreLimit ?? 6} scenes={introScenes(i.sampleDialogue).slice(1)} />
           </Section>
           {/* 11/13 성적 설정(아카 설계탭 BP 성적 설정) — 언베일이 켜진 대화에서만 AI 에 실린다. 상세 화면엔 안 보인다. */}
-          {adultAllowed ? <Section title={t('성적 설정 · 선택')} subtitle={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.')}>
+          {adultAllowed ? <Section title={t('성적 설정 · 선택')}>
             <CountedTextArea name="intimacy" max={INTIMACY_LIMIT} rows={7} defaultValue={i.intimacy ?? ''} ariaLabel={t('성적 설정')}
               placeholder={t('예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척')} />
           </Section>
@@ -498,7 +498,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
           </Section>
           {/* 플레이 가이드(11/10) — 11/20 사용자: 다시 보이게, 선택. 적으면 대화방 인트로 바로 밑에 나온다. */}
-          <Section title={t('플레이 가이드 · 선택')} subtitle={t('대화방 인트로 바로 밑에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
+          <Section title={t('플레이 가이드 · 선택')}>
             <CountedTextArea name="playGuide" ariaLabel={t('플레이 가이드')} max={500} rows={3} defaultValue={i.playGuide ?? ''}
               placeholder={t('예) 매일 해 질 녘에 습격이 와요. 죽으면 같은 날 아침으로 돌아가니, 무엇이 달라졌는지 살펴보세요.')} />
           </Section>
@@ -511,7 +511,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section></div>
         </Panel>
         <Panel id="intro-dialogue" show={tab === 'intro'}>
-          <Section title={t('인트로 대화')} subtitle={t('새 채팅이 열릴 때 캐릭터가 먼저 건네는 말이에요. 비워 두면 사용자가 먼저 말을 걸어요.')}>
+          <Section title={t('인트로 대화')}>
             <div className="create-intro-editor">
               <DialogueEditor intro fill name="introDialogue" characterName={name} defaultValue={genIntro ?? introDialogue(i.sampleDialogue)} />
             </div>
@@ -525,7 +525,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
         <Panel id="status" show={tab === 'lore'}>
-          <Section title={t('상태창 · 선택')} subtitle={t('매 답변 끝에 붙는 상태 정보의 틀이에요. 날짜·장소·스탯·아이템처럼 이야기가 어디까지 왔는지 보여 줘요. 대화 화면에선 접었다 펼 수 있는 카드로 나와요.')}>
+          <Section title={t('상태창 · 선택')}>
             <StatusEditor showStats={false} defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} defaultIntroStatus={(introDialogue(i.sampleDialogue) as Array<{ status?: string }>).find(e => e.status)?.status ?? ''} />
           </Section>
         </Panel>

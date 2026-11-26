@@ -447,11 +447,6 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
       <div style={fill ? { flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', paddingBottom: 8 } : undefined}>
       {header}
 
-      {turns.length === 0 && (
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', textAlign: 'center', padding: '14px 0' }}>
-          {t('아래에서 누가 말할지 고르고 첫 마디를 적어 보세요.')}
-        </p>
-      )}
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 12 }}>
         {turns.map((turn, i) => {
           const isEditing = editing === i
@@ -537,14 +532,12 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
           </button>
         </div>
-        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{t('엔터로 줄바꿈하고, ↑ 버튼을 눌러 올려 주세요.')}</p>
         {role !== 'narrator' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
             <button type="button" onClick={wrapNarration} disabled={full} aria-label={t('서술 별표 넣기')} onMouseDown={keepFocus} className="hit"
               style={{ padding: '3px 9px', borderRadius: 'var(--radius-sm)', border: 0, cursor: full ? 'default' : 'pointer', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
               {t('*서술*')}
             </button>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>{t('별표 안은 옅은 서술로 보여요. 예)')} <em style={{ color: 'var(--color-text-tertiary)' }}>{t('손을 흔들며')}</em> {t('하이~')}</span>
           </div>
         )}
       </div>
@@ -773,7 +766,6 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
         {t('한 턴에 전달할 항목 수')}
         <input name="loreLimit" type="number" min={1} max={20} value={limit} onChange={e => setLimit(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} aria-label={t('한 턴에 전달할 항목 수')}
           style={{ ...box(false), width: 64, minHeight: 36, padding: '0 10px', borderRadius: 8, fontSize: 14, outline: 'none' }} />
-        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t('위에 있는 항목이 먼저 들어가요')}</span>
       </label>
       <div className="stack" style={{ gap: 8 }}>
         <button type="button" onClick={openSources} aria-expanded={!!sources}

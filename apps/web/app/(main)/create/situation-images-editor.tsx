@@ -119,7 +119,6 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
           <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3M12 4v12M7 9l5-5 5 5" /></svg>
           {t('여러 장 한 번에 올리기')}
         </label>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('파일 이름이 상황 설명으로 미리 들어가요. 예) "비 맞고 돌아온 장면.png"')}</p>
       </>}
       {notice && <p role="status" className="t-caption" style={{ color: 'var(--color-danger)' }}>{notice}</p>}
     </div>
