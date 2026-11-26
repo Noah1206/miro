@@ -127,15 +127,16 @@ export function CastProfiles({ cast, onChange, heading, adultAllowed = false }: 
             {c.photo ? <img src={c.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : busy === i ? '…' : '+'}
           </label>
           <input id={`${uid}-${i}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(i, f) }} />
+          <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('PNG·JPG·WebP·HEIC 형식만 올릴 수 있어요')}<br />{t('정사각형(1:1)이 가장 좋고, 장당 5MB까지예요')}</p>
         </div>
         <LabeledField label={t('이름')} required><Field label={t('이름')} value={c.name} max={20} big onChange={v => set(i, { name: v })} /></LabeledField>
-        <LabeledField label={t('캐릭터 소개')} required>
+        <LabeledField label={t('캐릭터 소개')} required hint={t('이 인물의 성격·가치관·말투, 주인공·사용자와의 관계를 적어 주세요.')}>
           <Area label={t('캐릭터 소개')} value={c.intro ?? ''} max={1000} onChange={v => set(i, { intro: v })} />
         </LabeledField>
         {/* 11/20 사용자: 인물마다 있던 반응 성향·고급 설정(나이·MBTI·국적·직업)은 주인공 칸처럼 화면에서 뺐다 — 저장된 값은 castProfilesJson 이 그대로 보낸다.
             인물별 성적 설정은 성인 인증한 사람에게만 바로 보인다(서버도 미성년이면 비운다). */}
         {adultAllowed && <div className="stack" style={{ gap: 18 }}>
-          <LabeledField label={t('성적 설정 · 선택')}>
+          <LabeledField label={t('성적 설정 · 선택')} hint={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 좋아하는 것·싫어하는 것·처음 허용하는 선·잘 넘어가는 계기·끝난 뒤 반응을 적어 주세요.')}>
             <Area label={t('성적 설정')} value={c.intimacy ?? ''} max={800} onChange={v => set(i, { intimacy: v })} />
           </LabeledField>
         </div>}

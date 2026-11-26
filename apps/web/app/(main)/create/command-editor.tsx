@@ -92,8 +92,8 @@ export function NewCommand({ onDone, adultAllowed, initialName = '' }: { onDone:
         placeholder={t('AI에게 줄 프롬프트')} aria-required style={{ ...field, resize: 'none' }} />
       <span aria-hidden style={{ ...REQUIRED_MARK, paddingTop: 4 }}>*</span>
     </div>
-    <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} />
-    {adultAllowed && <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} />}
+    <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} hint={t('켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.')} />
+    {adultAllowed && <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} hint={t('켜면 언베일을 켠 대화방에서만 실행돼요.')} />}
     {error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{error}</p>}
     <button type="button" onClick={() => void submit()} disabled={!ok || pending}
       style={{ minHeight: 44, borderRadius: 'var(--radius-button)', border: 0, cursor: ok ? 'pointer' : 'default', background: ok ? 'var(--color-accent)' : 'var(--color-surface-3)', color: ok ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>

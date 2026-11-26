@@ -242,6 +242,14 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         style={{ alignSelf: 'flex-start', width: '70%', minWidth: 120, minHeight: 48, borderRadius: 12, border: 0, background: '#fff', color: '#16161a', cursor: 'pointer', font: 'inherit', fontSize: 16, fontWeight: 700 }}>{/* 11/21 사용자: 칸 폭 전체 → 오른쪽을 줄여 70%·왼쪽 정렬 */}
         {t('업로드')}
       </button>}
+      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다. */}
+      <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 4, color: 'var(--color-text-tertiary)', fontSize: 'clamp(13px, 3.6cqw, 16px)', lineHeight: 1.45, wordBreak: 'keep-all' }}>
+        {/* 11/21 사용자: 같은 뜻을 다른 말로(조금 더 짧게). */}
+        <li>{t('PNG·JPG·WebP·HEIC 형식만 올릴 수 있어요')}</li>
+        <li>{t('정사각형(1:1)이 가장 좋고, 장당 5MB까지예요')}</li>
+        <li>{t('규정에 맞지 않는 사진은 내려갈 수 있어요')}</li>
+        <li>{t('남의 그림·사진은 허락을 받은 뒤 올려 주세요')}</li>
+      </ul>
       {/* 나머지 사진 줄 — 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
       {items.length > 1 && (
         <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 64px))', gap: 6 }}>
@@ -536,6 +544,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
               style={{ padding: '3px 9px', borderRadius: 'var(--radius-sm)', border: 0, cursor: full ? 'default' : 'pointer', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
               {t('*서술*')}
             </button>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>{t('별표 안은 옅은 서술로 보여요. 예)')} <em style={{ color: 'var(--color-text-tertiary)' }}>{t('손을 흔들며')}</em> {t('하이~')}</span>
           </div>
         )}
       </div>
@@ -578,6 +587,7 @@ export function IntroText({ name, characterName, defaultValue = [] }: { name: st
           style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
         <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}><Counter length={length} max={2000} /></div>
       </div>
+      <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t('*별표*로 감싼 문단은 옅은 서술로 보여요. 예) *비가 내리는 저녁, 문이 열린다.*')}</span>
     </div>
   )
 }
@@ -713,6 +723,7 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
           )
         })}
       </div>
+      <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>{t(current.hint)}</p>
     </fieldset>
   )
 }
@@ -762,6 +773,7 @@ export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes =
         {t('한 턴에 전달할 항목 수')}
         <input name="loreLimit" type="number" min={1} max={20} value={limit} onChange={e => setLimit(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} aria-label={t('한 턴에 전달할 항목 수')}
           style={{ ...box(false), width: 64, minHeight: 36, padding: '0 10px', borderRadius: 8, fontSize: 14, outline: 'none' }} />
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t('위에 있는 항목이 먼저 들어가요')}</span>
       </label>
       <div className="stack" style={{ gap: 8 }}>
         <button type="button" onClick={openSources} aria-expanded={!!sources}
@@ -836,6 +848,7 @@ function LoreRow({ r, index, scenes, patch, move, remove }: {
       <div style={{ borderTop: '1px solid var(--color-border)', padding: '16px 16px 18px' }}>
         <div className="stack" style={{ gap: 6 }}>
           {label(t('내용'), true)}
+          <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('이 키워드가 나오면 캐릭터가 떠올릴 정보를 적어 주세요')}</p>
           <textarea value={r.content} rows={4} maxLength={MAX_LORE_CONTENT} aria-label={t('설정 내용')} onChange={e => patch({ content: e.target.value })}
             placeholder={t('이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다.')}
             style={{ ...box(false), width: '100%', padding: '12px 14px', borderRadius: 10, resize: 'vertical', lineHeight: 1.5, fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />

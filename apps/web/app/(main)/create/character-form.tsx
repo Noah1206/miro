@@ -327,7 +327,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           {/* 유형(10/19): 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx.
               10/31 사용자: 음성 / 음성+영상 두 갈래를 '몰입 모드' 하나로 — 고르면 'video'(사진이 화면 전체). 예전에 'voice'로 저장된 캐릭터도 몰입 모드로 보이고, 고쳐 저장할 때까지 값은 그대로. */}
           {/* 11/12 사용자: 음성 관련 칸은 숨긴다 — 저장값(media)은 그대로 제출된다. */}
-          {can.characterVoice&&experienceType === 'reality' && <div hidden><Section title={t('유형')}>
+          {can.characterVoice&&experienceType === 'reality' && <div hidden><Section title={t('유형')} subtitle={t('더빙은 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.')}>
             <Card>
               <input type="hidden" name="media" value={media} />
               <ChoiceChips value={media === 'text' ? 'text' : 'video'} onChange={v => setMedia(v === 'text' ? 'text' : media === 'text' ? 'video' : media)} columns={2}
@@ -350,9 +350,11 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <div hidden><Section title={t('공개')}>
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
-                label={t('다른 사람에게 공개')} />
+                label={t('다른 사람에게 공개')}
+                hint={t('게시할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다.')} />
               {!isPublic && <Switch name="linkShared" checked={linkShared} onChange={setLinkShared}
-                label={t('링크로만 공유')} />}
+                label={t('링크로만 공유')}
+                hint={t('홈과 검색에는 뜨지 않고, 캐릭터 링크를 받은 사람만 대화를 시작할 수 있습니다.')} />}
             </Card>
           </Section></div>
           <Section title={t('캐릭터')}>
@@ -367,7 +369,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                     {/* 소개(한 줄)와 성격 설명을 한 칸으로(10/19). 서버 칸 이름은 그대로 — 첫 줄이 title, 나머지가 personality. */}
                     <input type="hidden" name="title" value={title} />
                     <input type="hidden" name="personality" value={personality} />
-                    <LabeledField label={t('캐릭터 소개')} required>
+                    <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 외모·성격·말투·가치관·비밀·배경 이야기를 자유롭게 적어 주세요. AI는 여기 적힌 대로 연기해요.')}>
                       <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={10040} rows={10} />
                     </LabeledField>
                     {/* 11/20 사용자: 반응 성향은 화면에서 뺐다 — 저장된 값은 숨은 칸으로 그대로 보낸다. */}
@@ -401,7 +403,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="personality" show={tab === 'personality'}>
           <Section title={t('세계관')}>
             <Card>
-              <LabeledField label="">
+              <LabeledField label="" hint={experienceType === 'chat' ? t('대화에 반영되며 공개 소개에는 표시되지 않아요.') : t('캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.')}>
                 <CountedTextArea name="worldSetting" ariaLabel={t('세계관 설명')} max={600} rows={4} {...g('worldSetting')}
                   placeholder={t('예) 현대 서울. 도심의 경호업체를 중심으로 다양한 사건이 벌어진다.')} />
               </LabeledField>
@@ -409,7 +411,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           {/* 전개 예시(11/10, 크랙 스토리 설정) — 10/28 사용자 요청으로 화면에서 뺐던 상황 예시를 고급 설정 안에 접어서 되살렸다. 이미 적힌 예시는 그대로 이어받는다. */}
           {/* 11/21 사용자(단계 줄이기): '고급 설정' 접기를 빼고 늘 펼쳐 둔다. */}
-          <Section title={t('전개 예시 · 선택')}>
+          <Section title={t('전개 예시 · 선택')} subtitle={t('유저가 이렇게 말하면 캐릭터는 이렇게 답한다는 예시예요. 최대 3쌍. AI가 말투와 분량의 기준으로 삼아요.')}>
             <ExamplesEditor defaultValue={sampleDialogue(i.sampleDialogue)} characterName={name} />
           </Section>
 
@@ -417,7 +419,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 명령어(10/19, 외형 자리) — 채팅에서 /이름 으로 부르는 한 턴 지시. 라이브러리에서 골라 붙이거나 직접 만들어 공개한다. ── */}
         <Panel id="commands" show={tab === 'advanced'}>
-          <Section title={t('명령어')}>
+          <Section title={t('명령어')} subtitle={t('대화 중 /이름 으로 불러 쓰는 한 턴 지시예요. 다른 사람이 공개한 것을 그대로 붙이거나, 직접 만들어 공개할 수 있어요.')}>
             <Card>
               <CommandEditor name="commands" defaultValue={i.commands} adultAllowed={adultAllowed} />
             </Card>
@@ -431,7 +433,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <LoreEditor name="lore" defaultValue={i.lore} defaultLimit={i.loreLimit ?? 6} scenes={introScenes(i.sampleDialogue).slice(1)} />
           </Section>
           {/* 11/13 성적 설정(아카 설계탭 BP 성적 설정) — 언베일이 켜진 대화에서만 AI 에 실린다. 상세 화면엔 안 보인다. */}
-          {adultAllowed ? <Section title={t('성적 설정 · 선택')}>
+          {adultAllowed ? <Section title={t('성적 설정 · 선택')} subtitle={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.')}>
             <CountedTextArea name="intimacy" max={INTIMACY_LIMIT} rows={7} defaultValue={i.intimacy ?? ''} ariaLabel={t('성적 설정')}
               placeholder={t('예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척')} />
           </Section>
@@ -466,7 +468,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title="">
             <Card>
               <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label={t('첫 장면')} required>
+                <LabeledField label={t('첫 장면')} required hint={t('대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.')}>
                   <ControlledArea name="startingContext" label={t('첫 장면')} value={startingContext} onChange={setStartingContext} max={1000} rows={4}
                     placeholder={t('비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다.')} />
                 </LabeledField>
@@ -484,24 +486,24 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* 준비된 페르소나(11/3) — 대화 시작 화면에서 사용자가 골라 쓰는 '나'. 비워 두면 사용자가 직접 적는다. */}
         <Panel id="preset-personas" show={tab === 'intro'}>
           {/* 페르소나 필수(11/6) — 필수면 첫 대화 전 세계관 카드에서 '나'를 정해야 시작, 아니면 바로 시작. */}
-          <Section title={t('대화 전 페르소나')}>
+          <Section title={t('대화 전 페르소나')} subtitle={t('필수로 두면 사용자는 첫 대화 전에 이 세계에서의 나를 정해야 시작할 수 있어요. 선택이면 바로 대화를 시작해요.')}>
             <Segmented name="personaRequired" value={personaRequired} onChange={setPersonaRequired} options={[{ value: '0', label: t('선택') }, { value: '1', label: t('필수') }]} />
           </Section>
           {/* 페르소나 작성 안내(11/4) — 11/20 사용자: 화면에서 뺐다. 저장된 값은 숨은 칸으로 그대로 보낸다. */}
-          <div hidden><Section title={t('페르소나 작성 안내 · 선택')}>
+          <div hidden><Section title={t('페르소나 작성 안내 · 선택')} subtitle={t('첫 대화 전에 사용자는 세계관을 읽고 이 세계에서의 자기 자신을 직접 적어요. 무엇을 적으면 좋을지 알려 주세요.')}>
             <CountedTextArea name="personaGuide" ariaLabel={t('페르소나 작성 안내')} max={300} rows={3} defaultValue={i.personaGuide ?? ''}
               placeholder={t('예) 당신은 어떤 헌터인가요? 이름, 원래 등급, 능력, 지금 처지를 적어 주세요.')} />
           </Section></div>
-          <Section title={t('준비된 페르소나 · 선택')}>
+          <Section title={t('준비된 페르소나 · 선택')} subtitle={t('대화를 시작할 때 사용자가 고를 수 있는 \'나\'예요. 고른 뒤에 고쳐 쓸 수도 있어요.')}>
             <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
           </Section>
           {/* 플레이 가이드(11/10) — 11/20 사용자: 다시 보이게, 선택. 적으면 대화방 인트로 바로 밑에 나온다. */}
-          <Section title={t('플레이 가이드 · 선택')}>
+          <Section title={t('플레이 가이드 · 선택')} subtitle={t('대화방 인트로 바로 밑에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
             <CountedTextArea name="playGuide" ariaLabel={t('플레이 가이드')} max={500} rows={3} defaultValue={i.playGuide ?? ''}
               placeholder={t('예) 매일 해 질 녘에 습격이 와요. 죽으면 같은 날 아침으로 돌아가니, 무엇이 달라졌는지 살펴보세요.')} />
           </Section>
           {/* 추천 첫 답변(11/10) — 11/20 사용자: 화면에서 뺐다. 저장된 값은 숨은 칸으로 그대로 보낸다. */}
-          <div hidden><Section title={t('추천 첫 답변 · 선택')}>
+          <div hidden><Section title={t('추천 첫 답변 · 선택')} subtitle={t('첫 대화에서 입력창 위에 미리 떠 있는 답이에요. 최대 3개, 행동은 *별표* 로 감싸요.')}>
             <div className="stack" style={{ gap: 8 }}>
               {[0, 1, 2].map(n => <CountedInput key={n} name="firstReplies" ariaLabel={t('추천 첫 답변 {n}', { n: n + 1 })} max={200}
                 placeholder={[t('예) *주위를 둘러본다* 여기가… 어디지?'), t('예) 오늘은 정말 일찍 퇴근할 거예요.'), t('예) 처음 뵙겠습니다.')][n]} defaultValue={i.firstReplies?.[n] ?? ''} />)}
@@ -509,7 +511,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section></div>
         </Panel>
         <Panel id="intro-dialogue" show={tab === 'intro'}>
-          <Section title={t('인트로 대화')}>
+          <Section title={t('인트로 대화')} subtitle={t('새 채팅이 열릴 때 캐릭터가 먼저 건네는 말이에요. 비워 두면 사용자가 먼저 말을 걸어요.')}>
             <div className="create-intro-editor">
               <DialogueEditor intro fill name="introDialogue" characterName={name} defaultValue={genIntro ?? introDialogue(i.sampleDialogue)} />
             </div>
@@ -523,13 +525,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
         <Panel id="status" show={tab === 'lore'}>
-          <Section title={t('상태창 · 선택')}>
+          <Section title={t('상태창 · 선택')} subtitle={t('매 답변 끝에 붙는 상태 정보의 틀이에요. 날짜·장소·스탯·아이템처럼 이야기가 어디까지 왔는지 보여 줘요. 대화 화면에선 접었다 펼 수 있는 카드로 나와요.')}>
             <StatusEditor showStats={false} defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} defaultIntroStatus={(introDialogue(i.sampleDialogue) as Array<{ status?: string }>).find(e => e.status)?.status ?? ''} />
           </Section>
         </Panel>
         {/* ── 엔딩(11/10, 크랙 엔딩 설정) — 비워 두면 엔딩 없이 이어진다. ── */}
         <Panel id="endings" show={tab === 'advanced'}>
-          <Section title={t('엔딩 · 선택')}>
+          <Section title={t('엔딩 · 선택')} subtitle={t('최소 턴이 지나고 조건이 이야기 속에서 이뤄지면 엔딩 카드가 떠요. 등급을 달고 힌트를 남기면 사용자가 다른 엔딩도 모으고 싶어져요.')}>
             <EndingsEditor defaultValue={i.endings ?? []} />
           </Section>
         </Panel>
@@ -541,6 +543,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             {/* 기본 목소리(지환)는 늘 있으니 목록은 늘 보인다 */}
             <VoiceList voices={voices} value={voiceId} onChange={setVoiceId} />
             {castMode === 'multi' && <div style={{ marginTop: 'var(--space-5)' }}>
+              <p className="t-caption" style={{ margin: '0 0 8px', color: 'var(--color-text-secondary)' }}>{t('위 목소리는 주인공·내레이션 목소리예요. 아래에서 등장인물마다 목소리를 고정하세요. 같은 목소리를 여러 인물에 써도 돼요.')}</p>
               <CastVoices cast={cast} voices={voices} onChange={setCast} />
             </div>}
             <TransitionLink href="/my/voices" className="t-caption" style={{ display: 'inline-block', marginTop: 16, color: 'var(--color-lavender-200)' }}>{t('내 음성 만들기')} →</TransitionLink>
@@ -548,15 +551,15 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
         <Panel id="situations" show={tab === 'situations'}>
           {/* 상황별 사진(10/28, 위프·베이비챗식) — 사진마다 상황을 적어 두면 대화가 그 상황이 됐을 때 AI 가 골라 채팅에 띄운다(10/31). */}
-          <Section title={t('상황별 사진 · 선택')}>
+          <Section title={t('상황별 사진 · 선택')} subtitle={t('사진마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 AI가 알아서 채팅에 띄워요.')}>
             <SituationImagesEditor defaultValue={i.situationImages ?? []} />
           </Section>
           {/* 11/19 상황별 BGM — 곡마다 상황을 적어 두면 대화가 그 상황일 때 채팅방에서 반복 재생된다. */}
-          <Section title={t('상황별 BGM · 선택')}>
+          <Section title={t('상황별 BGM · 선택')} subtitle={t('곡마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 채팅방에서 그 음악이 흘러요. 상황을 비운 곡은 기본 음악이에요.')}>
             <BgmEditor defaultValue={i.bgm ?? []} />
           </Section>
           {/* 사진 장면(11/3) — 11/20 사용자: 화면에서 뺐다. 저장된 장면은 숨은 칸으로 그대로 보낸다. */}
-          <div hidden><Section title={t('사진 장면 · 선택')}>
+          <div hidden><Section title={t('사진 장면 · 선택')} subtitle={t('채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.')}>
             <PhotoScenesEditor defaultValue={i.photoScenes ?? []} adultAllowed={adultAllowed} />
           </Section></div>
         </Panel>
@@ -640,10 +643,11 @@ function Panel({ id, show, order, children }: { id: string; show: boolean; order
 }
 
 /** 섹션 — 제목은 카드 바깥. */
-function Section({ title, required, children }: { title: string; required?: boolean; children: React.ReactNode }) {   // 11/26 사용자: 섹션 설명글 삭제
+function Section({ title, subtitle, required, children }: { title: string; subtitle?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <section style={{ marginTop: 'var(--space-6)' }}>
-      {title && <h2 className="t-title-3" style={{ marginBottom: 12 }}>{title}{required && <Star />}</h2>}
+      {title && <h2 className="t-title-3" style={{ marginBottom: subtitle ? 4 : 12 }}>{title}{required && <Star />}</h2>}
+      {subtitle && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 12 }}>{subtitle}</p>}
       {children}
     </section>
   )
