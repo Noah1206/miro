@@ -22,7 +22,7 @@ const option = (name: string) => { const i = process.argv.indexOf(name); return 
 const EVALS: Record<string, string> = { reality: 'apps/web/lib/reality/reality-live.eval.ts', compare: 'apps/web/lib/simulation/model-compare.eval.ts', adult: 'apps/web/lib/simulation/adult-compare.eval.ts',
   context: 'apps/web/lib/simulation/context-drift.eval.ts', novel: 'apps/web/lib/simulation/novel-ending.eval.ts', memory: 'apps/web/lib/simulation/memory-photo.eval.ts', creator: 'apps/web/lib/simulation/creator-e2e.eval.ts', ooc: 'apps/web/lib/simulation/ooc.eval.ts' }
 /** 100만 토큰당 USD(입력, 출력). 예산 판정에 가격이 없으면 앱이 호출을 막는다. */
-const PRICES: Record<string, [number, number]> = { 'gemini-3.8-flash': [0.75, 3.75], 'gemini-3.1-pro-preview': [2, 12], 'claude-sonnet-5-5': [2, 10],
+const PRICES: Record<string, [number, number]> = { 'gemini-3.8-flash': [0.75, 3.75], 'claude-opus-5-5': [4, 20], 'gemini-3.1-pro-preview': [2, 12], 'claude-sonnet-5-5': [2, 10],
   // 성인 모드 후보(OpenRouter 목록 가격, 2026-10-02).
   'deepseek/deepseek-v4.1-flash': [0.3, 1.2], 'z-ai/glm-5.3': [1.4, 4.4], 'x-ai/grok-4.3': [1.25, 2.5], 'moonshotai/kimi-k2.6': [0.434, 1.828], 'bytedance-seed/seed-2-1-turbo': [0.5, 2.5] }
 
@@ -61,8 +61,19 @@ if (live && allModel) {
   const provider = allModel.startsWith('claude') ? 'anthropic' : 'gemini'
   registry = JSON.stringify((JSON.parse(registry) as Array<Record<string, unknown>>).map(m => ({ ...m, provider, providerModelId: allModel, inputCost: price[0], outputCost: price[1] })))
 }
+// 11/26 --probe-model: 레지스트리에 비싼 모델 하나(id probe)를 더 — 맥락 실측의 질문 턴만 그 모델로(MIRO_DRIFT_PROBE_MODEL).
+const probeModel = option('--probe-model')
+if (live && probeModel) {
+  const price = PRICES[probeModel]
+  if (!price) throw new Error(`no price for ${probeModel}`)
+  const models = JSON.parse(registry) as Array<Record<string, unknown> & { capabilities?: string[] }>
+  const base = models.find(m => m.capabilities?.includes('dialogue'))
+  if (!base) throw new Error('registry has no dialogue model')
+  models.push({ ...base, id: 'probe', provider: probeModel.startsWith('claude') ? 'anthropic' : 'gemini', providerModelId: probeModel, inputCost: price[0], outputCost: price[1], cachedInputCost: price[0] * 0.1, fallback: false, chatSelectable: true, enabled: true })
+  registry = JSON.stringify(models)
+}
 // 로컬 Gemini 키는 프로젝트 차단(403, 10/9~) — Claude 로 돌릴 때만 Anthropic 키를 넘긴다.
-const anthropicKey = live && allModel?.startsWith('claude') ? env.ANTHROPIC_API_KEY ?? '' : ''
+const anthropicKey = live && (allModel?.startsWith('claude') || probeModel?.startsWith('claude')) ? env.ANTHROPIC_API_KEY ?? '' : ''
 
 // 운영 /api/health 의 2026-10-02 기능 값으로 고정한다.
 const features = { IMAGE_GENERATION: '0', VOICE_CALL: '0', VOICE_CALL_AUDIO: '0', VIDEO_CALL: '0', LIVE_SCENE: '0', RELATIONSHIP_ENGINE: '1', MEMORY_ENGINE: '1',
@@ -79,5 +90,6 @@ const status = spawnSync('pnpm', ['exec', 'vitest', 'run', '--config', 'ai/evals
   AI_DAILY_REQUEST_LIMIT: '100000', AI_USER_DAILY_LIMIT: '100000', MIRO_REQUESTS_PER_MINUTE: live ? '120' : '100000',
   MIRO_REALITY_EVAL_OUT: out, MIRO_REALITY_EVAL_CHARACTERS: option('--characters') ?? 'fdf8aa88-14d2-442f-8eca-03576e3af919,taeyun,thomas',
   MIRO_COMPARE_OUT: out, MIRO_COMPARE_MAX_TOKENS: maxOutput ? String(maxOutput) : '',
+  MIRO_DRIFT_PROBE_MODEL: probeModel ? 'probe' : '',
 } }).status
 process.exit(status ?? 1)

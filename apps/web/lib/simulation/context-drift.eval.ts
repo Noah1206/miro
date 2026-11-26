@@ -70,6 +70,15 @@ const SCENARIOS: Array<{ id: string; lines: Line[]; character?: string }> = [
     23: { input: '회사 동료가 복숭아 타르트를 줬어요. 하나 먹어도 되겠죠?', probe: '복숭아 알레르기 경고' },
     24: { input: '처음에 제가 왜 대표님 회사에 전화했었는지 기억하세요?', probe: '스토커·사진·발신자 표시 제한 전화' },
   }, 24) },
+  // 11/26 압축 맥락 비교: 9·11·12턴에 알린 것을 20~22턴에 묻는다 — 지금 방식(원문 15턴)엔 원문으로 남고, 압축(원문 6턴)엔 요약·기억으로만 남는다.
+  { id: '6-중기억', lines: at({
+    9: { input: '저 다음 주 목요일에 치과 예약 있어요. 사랑니 뽑아요. 그날 저녁엔 아무것도 못 먹을 거예요.' },
+    11: { input: '참, 제 사무실 동료 이름은 하은이에요. 하은이가 대표님 팬이래요. 사진 보여 줬더니 완전 반했어요.' },
+    12: { input: '(퇴근길, 대표님 차 안) 오늘은 한강 쪽으로 돌아가요. 강 보면서 가고 싶어요.' },
+    20: { input: '다음 주에 제가 무슨 일정 있다고 했었죠?', probe: '목요일 치과, 사랑니, 그날 저녁 못 먹음' },
+    21: { input: '제 동료 이름 기억나요? 걔가 대표님을 뭐라고 했는지도요.', probe: '하은, 대표님 팬(사진 보고 반함)' },
+    22: { input: '아까 우리 어느 쪽으로 돌아가기로 했었죠?', probe: '한강 쪽(강 보면서)' },
+  }, 22) },
   // 예산($5)에 맞춰 11/3 축소: 기억 24턴, 나머지 11~12턴.
   { id: '2-설정', lines: at({
     4: { input: '대표님 그냥 저한테 말 편하게 하세요. 반말해도 돼요.', probe: '의뢰인에게 존댓말 유지 또는 성격대로 반응' },
@@ -115,10 +124,13 @@ describe.skipIf(!OUT)('context drift', () => {
         const { sessionId } = await createRoleplaySession(owner!.id, sc.character ?? CHARACTER)
         const turns: Record<string, unknown>[] = []
         for (const [i, line] of sc.lines.slice(0, Number(process.env.MIRO_DRIFT_TURNS) || undefined).entries()) {
-          const r = await runConversationTurn({ userId: owner!.id, sessionId, input: line.input })
+          // 11/26 압축 맥락 비교: 앞 턴은 싼 모델로 대화를 쌓고, MIRO_DRIFT_PROBE_FROM 턴부터 비싼 모델(MIRO_DRIFT_PROBE_MODEL)로.
+          const probeModel = process.env.MIRO_DRIFT_PROBE_MODEL, probeFrom = Number(process.env.MIRO_DRIFT_PROBE_FROM) || Infinity
+          const chatModel = probeModel && i + 1 >= probeFrom ? `model:${encodeURIComponent(probeModel)}:scene` : undefined
+          const r = await runConversationTurn({ userId: owner!.id, sessionId, input: line.input, ...(chatModel ? { chatModel } : {}) })
           const blocks = r.ok ? r.blocks.map(b => ({ type: b.type, speaker: b.speaker ?? null, text: b.text })) : []
           const [w] = await db.select({ loc: worldStates.currentLocation, time: worldStates.currentTime }).from(worldStates).where(eq(worldStates.sessionId, sessionId))
-          turns.push({ n: i + 1, input: line.input, probe: line.probe ?? null, ok: r.ok, reason: r.ok ? null : r.reason, where: w ?? null,
+          turns.push({ n: i + 1, model: chatModel ?? 'base', input: line.input, probe: line.probe ?? null, ok: r.ok, reason: r.ok ? null : r.reason, where: w ?? null,
             ghost: ghostwrite(blocks), speakers: [...new Set(blocks.map(b => b.speaker).filter(Boolean))], blocks })
           if (!r.ok && (r.reason === 'budget' || r.reason === 'usage')) break
         }
