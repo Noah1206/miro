@@ -9,38 +9,54 @@ import styles from './banner-slider.module.css'
 
 /**
  * 11/27 사용자: 홈 배너가 3초마다 옆으로 자동으로 넘어간다 — 첫 장은 이벤트 배너, 그 뒤는 인기 작품.
- * 가로 스크롤 스냅이라 손으로도 넘길 수 있고, 만지는 동안과 화면 밖에서는 멈춘다. 끝에서는 처음으로 돌아간다.
+ * 가운데 배너 양옆으로 이전·다음 배너가 어둡게 걸쳐 보인다(레퍼런스). 끝없이 돌도록 앞뒤에 복제 한 장씩 두고, 복제에 닿으면 소리 없이 진짜 자리로 옮긴다.
+ * 가로 스크롤 스냅이라 손으로도 넘길 수 있고, 만지는 동안과 화면 밖에서는 멈춘다.
  */
 export function BannerSlider({ works, eventLabel }: { works: HomeCard[]; eventLabel: string }) {
   const track = useRef<HTMLDivElement>(null)
+  const n = works.length + 1
   useEffect(() => {
     const el = track.current
-    if (!el || el.children.length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let held = false
+    if (!el || n < 2) return
+    const slides = [...el.children] as HTMLElement[]   // [복제(마지막), 진짜 n장, 복제(첫 장)]
+    const left = (i: number) => slides[i]!.offsetLeft - (el.clientWidth - slides[i]!.offsetWidth) / 2
+    const nearest = () => slides.reduce((best, s, i) => Math.abs(left(i) - el.scrollLeft) < Math.abs(left(best) - el.scrollLeft) ? i : best, 0)
+    const mark = (i: number) => slides.forEach((s, k) => s.toggleAttribute('data-active', k === i))
+    const jump = (i: number) => { el.style.scrollBehavior = 'auto'; el.scrollLeft = left(i); el.style.scrollBehavior = ''; mark(i) }
+    jump(1)
+    let held = false, settle: ReturnType<typeof setTimeout> | undefined
+    const onScroll = () => {
+      mark(nearest())
+      clearTimeout(settle)
+      settle = setTimeout(() => { const i = nearest(); if (i === 0) jump(n); else if (i === n + 1) jump(1) }, 140)
+    }
     const hold = () => { held = true }, release = () => { held = false }
-    el.addEventListener('pointerdown', hold); addEventListener('pointerup', release); addEventListener('pointercancel', release)
-    const id = setInterval(() => {
-      if (held || document.hidden) return
-      const step = (el.children[1] as HTMLElement).offsetLeft - (el.children[0] as HTMLElement).offsetLeft
-      const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4
-      el.scrollTo({ left: end ? 0 : el.scrollLeft + step, behavior: 'smooth' })
-    }, 3000)
-    return () => { clearInterval(id); el.removeEventListener('pointerdown', hold); removeEventListener('pointerup', release); removeEventListener('pointercancel', release) }
-  }, [works.length])
+    el.addEventListener('scroll', onScroll, { passive: true }); el.addEventListener('pointerdown', hold); addEventListener('pointerup', release); addEventListener('pointercancel', release)
+    const auto = matchMedia('(prefers-reduced-motion: reduce)').matches ? undefined
+      : setInterval(() => { if (!held && !document.hidden) el.scrollTo({ left: left(nearest() + 1), behavior: 'smooth' }) }, 3000)
+    return () => { clearInterval(auto); clearTimeout(settle); el.removeEventListener('scroll', onScroll); el.removeEventListener('pointerdown', hold); removeEventListener('pointerup', release); removeEventListener('pointercancel', release) }
+  }, [n])
+  const event = (key: string, clone = false) => (
+    <TransitionLink key={key} href="/create" aria-label={eventLabel} aria-hidden={clone || undefined} tabIndex={clone ? -1 : undefined} className={styles.slide}>
+      <img src="/events/creator-argon.webp" alt="" width={1800} height={510} className={styles.eventImage} />
+    </TransitionLink>
+  )
+  const work = (c: HomeCard, key: string, clone = false) => (
+    <TransitionLink key={key} href={`/character/${c.slug ?? c.id}`} aria-hidden={clone || undefined} tabIndex={clone ? -1 : undefined} className={`${styles.slide} ${styles.work}`}>
+      <div className={styles.copy}>
+        <p className={styles.title}>{coverTitle(c)}</p>
+        <p className={styles.blurb}>{cardBlurb(c)}</p>
+      </div>
+      <div className={styles.cover}><CharacterVisual name={c.name} accent={c.accentA} slug={c.slug ?? c.id} photo={c.images[0]} ratio="1 / 1" scrim={false} /></div>
+    </TransitionLink>
+  )
+  const last = works.at(-1)
   return (
     <div ref={track} className={styles.track}>
-      <TransitionLink href="/create" aria-label={eventLabel} className={styles.slide}>
-        <img src="/events/creator-argon.webp" alt="" width={1800} height={510} className={styles.eventImage} />
-      </TransitionLink>
-      {works.map(c => (
-        <TransitionLink key={c.id} href={`/character/${c.slug ?? c.id}`} className={`${styles.slide} ${styles.work}`}>
-          <div className={styles.copy}>
-            <p className={styles.title}>{coverTitle(c)}</p>
-            <p className={styles.blurb}>{cardBlurb(c)}</p>
-          </div>
-          <div className={styles.cover}><CharacterVisual name={c.name} accent={c.accentA} slug={c.slug ?? c.id} photo={c.images[0]} ratio="1 / 1" scrim={false} /></div>
-        </TransitionLink>
-      ))}
+      {n > 1 && last && work(last, 'clone-last', true)}
+      {event('event')}
+      {works.map(c => work(c, c.id))}
+      {n > 1 && event('clone-first', true)}
     </div>
   )
 }

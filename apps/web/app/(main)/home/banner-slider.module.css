@@ -1,10 +1,12 @@
-.track { display: flex; gap: 10px; margin: 0 0 var(--space-2); padding: 0 var(--gutter); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+/* 가운데 배너(휴대폰 88%·컴퓨터 74%) 양옆으로 이전·다음 배너가 어둡게 걸친다. */
+.track { --slide-w: 88%; display: flex; gap: 8px; margin: 0 0 var(--space-2); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .track::-webkit-scrollbar { display: none; }
-.slide { flex: 0 0 100%; display: block; aspect-ratio: 3600 / 1020; border-radius: 14px; overflow: hidden; background: #1a1a1f; scroll-snap-align: start; color: #fff; }
+.slide { flex: 0 0 var(--slide-w); display: block; aspect-ratio: 3600 / 1020; border-radius: 14px; overflow: hidden; background: #1a1a1f; scroll-snap-align: center; color: #fff; opacity: .35; transition: opacity .3s ease; }
+.slide[data-active] { opacity: 1; }
 .eventImage { display: block; width: 100%; height: 100%; object-fit: cover; }
 .work { display: flex; align-items: stretch; background: linear-gradient(100deg, #26202f 0%, #1a1a1f 70%); }
 .copy { flex: 1; min-width: 0; display: grid; align-content: center; gap: 4px; padding: 0 16px; }
 .title { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .blurb { margin: 0; font-size: 12.5px; line-height: 1.4; color: rgb(255 255 255 / .7); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .cover { flex: none; height: 100%; aspect-ratio: 1 / 1; }
-@media (min-width: 1024px) { .title { font-size: 26px; } .blurb { font-size: 15px; } .copy { padding: 0 32px; gap: 8px; } }
+@media (min-width: 1024px) { .track { --slide-w: 74%; gap: 14px; } .slide { border-radius: 18px; } .title { font-size: 26px; } .blurb { font-size: 15px; } .copy { padding: 0 32px; gap: 8px; } }
