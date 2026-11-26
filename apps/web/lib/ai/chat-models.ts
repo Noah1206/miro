@@ -169,12 +169,13 @@ const pricingFor = (model: ModelDefinition, discounted: boolean, base = tokenPri
  */
 const TYPICAL_INPUT = { normal: 16_000, adult: 30_000 }
 const TYPICAL_OUTPUT: Record<ChatLength, number> = { short: 1700, scene: 2000, plus: 2500, long: 2800, saga: 3000 }
-/** 11/26 Opus·Fable(1시간 캐시)의 '보통 한 턴'은 입력 70% 를 캐시로 읽는다고 본다(11/26 실측: 같은 방 다음 턴 원가가 첫 턴의 절반). 실제 차감은 실제 원가. */
+/** 11/26 Opus·Fable(1시간 캐시)·GPT(자동 캐시)의 '보통 한 턴'은 입력 70% 를 캐시로 읽는다고 본다(11/26 실측: 같은 방 다음 턴 원가가 첫 턴의 절반). 실제 차감은 실제 원가. */
 const LONG_CACHE_HIT = 0.7
 function typicalCostTokens(model: ModelDefinition, length: ChatLength, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {
   const input = adult ? TYPICAL_INPUT.adult : TYPICAL_INPUT.normal
   const rates = tokenRates(model, input)
-  const hit = longCacheModel(model.providerModelId) && rates.cachedInputCost !== undefined ? LONG_CACHE_HIT : 0
+  // 11/26 GPT 도 같은 기준 — OpenAI 는 앞부분이 같으면 자동으로 캐시한다(직결·OpenRouter 실호출: 두 번째 요청 입력 99.9% 캐시, 원가 1/10).
+  const hit = (longCacheModel(model.providerModelId) || /(^|\/)gpt-/.test(model.providerModelId)) && rates.cachedInputCost !== undefined ? LONG_CACHE_HIT : 0
   const inputUSD = input * ((1 - hit) * rates.inputCost + hit * (rates.cachedInputCost ?? rates.inputCost))
   return tokensForCost((inputUSD + TYPICAL_OUTPUT[length] * rates.outputCost) / 1e6, pricing)
 }
