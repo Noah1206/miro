@@ -58,10 +58,14 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   const depositRequest=useRef<{orderId:string;requestId:string}|null>(null)
   const settledSeen = useRef<string | null>(null)
 
+  // 11/26 사용자: 닫으면 고른 금액(입금 확인 요청 전 주문)을 풀어서, 다시 충전을 누르면 금액부터 고르게 한다.
+  const live_ = useRef({ order: wallet?.order, sync }); live_.current = { order: wallet?.order, sync }
   const cancel = useCallback(() => {
     if (executing.current) return
     epoch.current++; pending.current = null; locked.current = false
     setOpen(false); setState('cancelled'); setError(null); setNeeded(null); setCardDone(false)
+    const { order, sync: apply } = live_.current
+    if (order?.status === 'awaiting') void cancelPendingOrder(order.id).then(r => { if (r.ok) { purchase.current = null; depositRequest.current = null; apply(r.wallet); setStage('catalog') } }).catch(() => {})
   }, [])
   useEffect(() => {
     epoch.current++; pending.current = null; locked.current = false
@@ -302,7 +306,6 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
             <Button variant="primary" full data-confirm-deposit onClick={() => order.status==='awaiting'?void requestDeposit():void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
               disabled={state==='loading'||checking}>{t(order.status==='awaiting'?'입금 확인 요청':'입금 확인하기')}</Button>
             {order.status === 'awaiting' && <Button full variant="ghost" size="sm" data-choose-again onClick={() => void chooseAgain()} disabled={state==='loading'||checking} style={{ color: 'var(--color-text-primary)' }}>{t('다른 금액 고르기')}</Button>}
-            <Button full variant="ghost" size="sm" data-later onClick={cancel}>{t('나중에')}</Button>
           </div>
         </section> : done ? <>
           <Notice>{t('지급이 완료됐어요. 잔액에 반영했습니다.')}</Notice>

@@ -13,7 +13,6 @@
 .actions [data-confirm-deposit]:not(:disabled) { background: #3a2a5c; color: #fff; }
 .actions [data-confirm-deposit]:not(:disabled):hover { background: #45336b; }
 .actions [data-choose-again] { background: #ffffff14; border-radius: 10px; color: #fff !important; }
-.actions [data-later] { color: var(--color-text-secondary) !important; }
 .dangerIcon { width: 40px; height: 40px; color: var(--color-danger); }
 /* 설명은 ? 뒤에 둔다 — 화면에는 숫자와 행동만 남긴다. */
 /* 작게. 시트에서는 닫기 왼쪽, 지갑 페이지에서는 라벨 줄 오른쪽. 터치 영역은 padding 으로 44 를 채운다. */
