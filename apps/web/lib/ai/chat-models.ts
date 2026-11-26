@@ -1,4 +1,4 @@
-import { adultRegistry, longCacheModel, registryFromEnv, providerFromEnv, type ModelDefinition } from '@miro/providers'
+import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition } from '@miro/providers'
 import { POLICY, tokenPricing, tokenQuote, tokenRates, tokensForCost, productionRuntime } from '@miro/config'
 import { db, users } from '@miro/db'
 import { eq } from 'drizzle-orm'
@@ -169,13 +169,21 @@ const pricingFor = (model: ModelDefinition, discounted: boolean, base = tokenPri
  */
 const TYPICAL_INPUT = { normal: 16_000, adult: 30_000 }
 const TYPICAL_OUTPUT: Record<ChatLength, number> = { short: 1700, scene: 2000, plus: 2500, long: 2800, saga: 3000 }
-/** 11/26 Opus·Fable(1시간 캐시)·GPT(자동 캐시)의 '보통 한 턴'은 입력 70% 를 캐시로 읽는다고 본다(11/26 실측: 같은 방 다음 턴 원가가 첫 턴의 절반). 실제 차감은 실제 원가. */
+/** 11/26 '보통 한 턴'은 모델별 캐시 적중(cacheHitShare)만큼 입력을 캐시 단가로 본다(11/26 실측: 같은 방 다음 턴 원가가 첫 턴의 절반). 실제 차감은 실제 원가. */
 const LONG_CACHE_HIT = 0.7
+/**
+ * 11/26 목록 가격의 캐시 적중 가정(실호출로 확인한 것만): Claude 전체·GPT(OpenAI 자동 캐시, 두 번째 요청 99.9%) 70%,
+ * Gemini(자동 캐시, 두 번째 요청부터 입력의 약 55%) 50%. 나머지는 캐시 없이.
+ */
+function cacheHitShare(providerModelId: string) {
+  if (/(^|\/)(claude-|gpt-)/.test(providerModelId)) return LONG_CACHE_HIT
+  if (/(^|\/)gemini-/.test(providerModelId)) return 0.5
+  return 0
+}
 function typicalCostTokens(model: ModelDefinition, length: ChatLength, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {
   const input = adult ? TYPICAL_INPUT.adult : TYPICAL_INPUT.normal
   const rates = tokenRates(model, input)
-  // 11/26 GPT 도 같은 기준 — OpenAI 는 앞부분이 같으면 자동으로 캐시한다(직결·OpenRouter 실호출: 두 번째 요청 입력 99.9% 캐시, 원가 1/10).
-  const hit = (longCacheModel(model.providerModelId) || /(^|\/)gpt-/.test(model.providerModelId)) && rates.cachedInputCost !== undefined ? LONG_CACHE_HIT : 0
+  const hit = rates.cachedInputCost === undefined ? 0 : cacheHitShare(model.providerModelId)
   const inputUSD = input * ((1 - hit) * rates.inputCost + hit * (rates.cachedInputCost ?? rates.inputCost))
   return tokensForCost((inputUSD + TYPICAL_OUTPUT[length] * rates.outputCost) / 1e6, pricing)
 }
