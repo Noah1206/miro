@@ -302,7 +302,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
             <Button variant="primary" full data-confirm-deposit onClick={() => order.status==='awaiting'?void requestDeposit():void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
               disabled={state==='loading'||checking}>{t(order.status==='awaiting'?'입금 확인 요청':'입금 확인하기')}</Button>
             {order.status === 'awaiting' && <Button full variant="ghost" size="sm" data-choose-again onClick={() => void chooseAgain()} disabled={state==='loading'||checking} style={{ color: 'var(--color-text-primary)' }}>{t('다른 금액 고르기')}</Button>}
-            <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
+            <Button full variant="ghost" size="sm" data-later onClick={cancel}>{t('나중에')}</Button>
           </div>
         </section> : done ? <>
           <Notice>{t('지급이 완료됐어요. 잔액에 반영했습니다.')}</Notice>
