@@ -10,6 +10,7 @@ import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealizati
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
+import { extendLongReply } from './long-reply'
 import { approveTransition } from './transition'
 import { blockStream, type TurnStream } from './stream-blocks'
 import { terms } from '@miro/domain'
@@ -196,6 +197,8 @@ export async function runAgencyTurn(opts: {
         .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
       // A later check call must not erase the renderer's provenance.
       renderer = agencyProviderTrace(llm, 'agency-dialogue:v8')
+      Object.assign(proposal, await extendLongReply(llm, proposal, policy.generation.replyLength, { task: 'dialogue', promptVersion: 'agency-dialogue:v8', system: context.system, safety: 'relaxed',
+        responseSchema: snapshot.voiceOut ? AGENCY_DIALOGUE_RESPONSE_SCHEMA : AGENCY_DIALOGUE_TEXT_SCHEMA, maxTokens: opts.maxOutputTokens, prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}` }))
       if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
       // 먼저 말한 턴: 여기서 계획을 받아 검증·관계에 쓴다. 다시 쓰게 되면 그때는 계획의 결정을 넣은 맥락으로 쓴다.
       if (!plan) { plan = await planning; settled = settle(plan); context = fit() }

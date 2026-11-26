@@ -1,3 +1,4 @@
+import { voicePaused } from '@miro/config'
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import { and, asc, eq, inArray, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm'
 import { db, officialVoices } from '@miro/db'
@@ -129,6 +130,7 @@ export async function myVoices(userId: string): Promise<MyVoice[]> {
 }
 
 function uploadBase() {
+  if (voicePaused()) throw new Error('voice_paused')   // 11/26 음성을 막은 동안엔 H200 서버를 깨우지 않는다
   const url = process.env.MIRO_VOICE_UPLOAD_URL?.replace(/\/$/, ''), key = process.env.MIRO_TTS_API_KEY
   if (!url || !key) throw new Error('voice_upload_unavailable')
   return { url, headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` } }
@@ -173,6 +175,7 @@ export async function warmVoiceServer(): Promise<void> {
 
 /** 미리 듣기 파일 — 아직 만드는 중이면 'pending'. */
 export async function voicePreview(userId: string, id: string): Promise<ArrayBuffer | 'pending' | null> {
+  if (voicePaused()) return null
   const [row] = await db.select({ file: officialVoices.providerVoiceId }).from(officialVoices)
     .where(and(eq(officialVoices.id, id), eq(officialVoices.ownerId, userId), ne(officialVoices.status, 'retired'))).limit(1)
   if (!row) return null
@@ -187,6 +190,7 @@ export async function voicePreview(userId: string, id: string): Promise<ArrayBuf
  * 회원 목소리는 올릴 때 만든 미리 듣기, 공식 목소리는 처음 누를 때 GPU 가 한 번 만들어 둔 파일. 없으면 만들게 하고 'pending'.
  */
 export async function voiceSample(userId: string, id: string): Promise<ArrayBuffer | 'pending' | null> {
+  if (voicePaused()) return null
   let path: string
   if (!id) path = '/samples/asmr01'
   else {

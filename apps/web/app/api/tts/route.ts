@@ -7,7 +7,7 @@ import { speechQueueEnabled } from '@/lib/speech/policy'
 import { submitSpeech, speechFailure, quoteSpeech } from '@/lib/speech/http'
 import { speechAmount, speechCreditsEnabled } from '@/lib/speech/credits-policy'
 import { spokenSegments, type SpokenSegment } from '@/lib/voice-text'
-import { feature } from '@miro/config'
+import { feature, voicePaused } from '@miro/config'
 import { voiceColumns } from '@/lib/voice'
 import { segmentVoice, speechSource } from '@/lib/speech/access'
 import { takeUserQuota, takeVoiceWake } from '@/lib/usage/user-quota'
@@ -133,6 +133,7 @@ export async function POST(req: Request) {
 }
 async function handle(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
+  if (voicePaused()) return Response.json({ error: 'voice_not_ready' }, { status: 503 })   // 11/26 막은 동안 음성 서버(H200)를 부르지 않는다
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
   const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; beat?: unknown; stream?: unknown; turn?: unknown; oral?: unknown; early?: unknown } | null
