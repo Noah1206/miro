@@ -78,7 +78,8 @@ function useRoomScreen() {
 function RoomPage({ title, onBack, children, footer, action }: { title: string; onBack: () => void; children: ReactNode; footer?: ReactNode; /** 머리 오른쪽(예: 저장). */ action?: ReactNode }) {
   const t = useT()
   // 머리가 숨을 때 움직이는(transform) 조상 밖으로 — 화면 전체를 덮게 body 에 그린다(같은 React 트리라 대화방 상태는 그대로).
-  return createPortal(<div className={styles.page} role="dialog" aria-modal="true" aria-label={title}>
+  // 11/26 사용자: 데스크톱은 오른쪽에서 밀려 나오는 패널 — 뒤 화면은 어둡게, 누르면 닫힌다(휴대폰은 전체 화면 그대로).
+  return createPortal(<><div className={styles.pageScrim} aria-hidden="true" onClick={onBack} /><div className={styles.page} role="dialog" aria-modal="true" aria-label={title}>
     <header className={styles.pageHead}>
       <button type="button" className={`${styles.pageBack} back-press`} aria-label={t('뒤로')} onClick={onBack}>
         <svg aria-hidden width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
@@ -88,7 +89,7 @@ function RoomPage({ title, onBack, children, footer, action }: { title: string; 
     </header>
     <div className={styles.pageBody}>{children}</div>
     {footer && <div className={styles.pageFoot}>{footer}</div>}
-  </div>, document.body)
+  </div></>, document.body)
 }
 
 /** 11/24 '새 대화방' → 11/26 사용자: '대화방' 화면 — 이 캐릭터의 대화방 목록에서 오가고, 맨 아래에서 새로 연다. 대화 목록에는 캐릭터당 한 줄. */

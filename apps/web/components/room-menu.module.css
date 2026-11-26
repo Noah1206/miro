@@ -115,3 +115,14 @@
 .pageBody .voiceRow[aria-checked='true'] { box-shadow: inset 0 0 0 1.5px var(--color-lavender-500); }
 .pageFoot .row { min-height: 52px; padding: 0 16px; border-radius: 12px; background: #333335; color: var(--color-text-primary); font-size: 15px; }
 .pageFoot .row > svg { color: var(--color-text-primary); }
+
+/* 11/26 사용자: 데스크톱은 설정(3선)을 누르면 오른쪽에서 옆으로 밀려 나오는 패널. 휴대폰은 전체 화면 그대로. */
+.pageScrim { display: none; }
+@media (min-width: 1024px) {
+  .pageScrim { display: block; position: fixed; inset: 0; z-index: 79; background: rgb(0 0 0 / .45); animation: roomScrimIn 200ms ease both; }
+  .page { inset: 0 0 0 auto; width: min(440px, 100vw); border-left: 1px solid var(--color-border); box-shadow: -18px 0 40px rgb(0 0 0 / .35); animation: roomDrawerIn 260ms cubic-bezier(.2, .8, .2, 1) both; }
+  .pageBody, .pageHead, .pageFoot { width: 100%; margin-inline: 0; }
+}
+@keyframes roomDrawerIn { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes roomScrimIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .page, .pageScrim { animation: none; } }
