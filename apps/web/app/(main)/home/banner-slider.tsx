@@ -18,7 +18,7 @@ export function BannerSlider({ works, eventLabel }: { works: HomeCard[]; eventLa
   useEffect(() => {
     const el = track.current
     if (!el || n < 2) return
-    const slides = [...el.children] as HTMLElement[]   // [복제(마지막), 진짜 n장, 복제(첫 장)]
+    const slides = Array.from(el.children) as HTMLElement[]   // [복제(마지막), 진짜 n장, 복제(첫 장)]
     const left = (i: number) => slides[i]!.offsetLeft - (el.clientWidth - slides[i]!.offsetWidth) / 2
     const nearest = () => slides.reduce((best, s, i) => Math.abs(left(i) - el.scrollLeft) < Math.abs(left(best) - el.scrollLeft) ? i : best, 0)
     const mark = (i: number) => slides.forEach((s, k) => s.toggleAttribute('data-active', k === i))
