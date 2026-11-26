@@ -49,7 +49,7 @@ export type CardCharacter = {
 /** 11/7: 카드 소개 2줄 = 상세 화면 소개 글의 앞부분([프로필] 같은 머리말은 뺀다). 없으면 한 줄 대사. */
 export const cardBlurb = (c: CardCharacter) => c.blurb?.replace(/\[[^\]\n]*\]/g, ' ').replace(/[*_#]/g, '').replace(/\s+/g, ' ').trim() || (c.tagline ? `“${c.tagline}”` : '')
 
-export function CharacterCard({ c, still, ratio = '1 / 1' }: { c: CardCharacter; tagsBelow?: boolean; /** 11/10: 표지에 고정(홈 '미로 오리지널' 줄) */ still?: boolean; /** 11/20 사용자: 카드 사진은 어디서나 정사각형이 기본(그 전 4 / 5) */ ratio?: string }) {
+export function CharacterCard({ c, still, ratio = '2 / 3' }: { c: CardCharacter; tagsBelow?: boolean; /** 11/10: 표지에 고정(홈 '미로 오리지널' 줄) */ still?: boolean; /** 11/27 사용자: 모든 작품 카드는 세로가 기준(2 / 3 = 표지 원본 비율). 11/20~26 은 정사각형, 그 전 4 / 5 */ ratio?: string }) {
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
