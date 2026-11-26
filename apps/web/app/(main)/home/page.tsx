@@ -2,7 +2,7 @@ import { HomeUnveilToggle } from './unveil-toggle'
 import { HeaderSearch } from './header-search'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
-import { homeSections, hotCounts, type HomeCard } from '@/lib/home'
+import { homeSections, hotCounts, mixAudience, type HomeCard } from '@/lib/home'
 import { HotRanking, type HotTab } from './hot-ranking'
 import { CharacterCard } from '@/components/character-card'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
@@ -55,7 +55,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const rank = (key: 'live' | 'day' | 'month' | 'all', pick: (c: HomeCard) => boolean = c => (hot.get(c.id)?.[key] ?? 0) > 0) =>
     pool.filter(pick).sort((a, b) => (hot.get(b.id)?.[key] ?? 0) - (hot.get(a.id)?.[key] ?? 0) || (hot.get(b.id)?.all ?? 0) - (hot.get(a.id)?.all ?? 0) || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 12)
   // 11/26 사용자: 탭은 신작·전체 두 개만. 신작 = 올리면 바로 1위(최근 3주 작품을 최신순), 전체 = 누적 인원 순.
-  const hotLists: Record<HotTab, HomeCard[]> = { new: pool.filter(c => (c.createdAt ?? '') >= cutoff).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 12), all: rank('all') }
+  const hotLists: Record<HotTab, HomeCard[]> = { new: mixAudience(pool.filter(c => (c.createdAt ?? '') >= cutoff).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))).slice(0, 12), all: rank('all') }
   // 11/13 사용자: 인증 직후(하루)와 로그인 전에는 안내 시트(음성 예고·제작자 모집)를 띄우지 않는다 — 인증한 10명 중 9명이 홈에서 대화를 시작하지 않았다.
   const settled = !!user && (!user.adultVerifiedAt || Date.now() - new Date(user.adultVerifiedAt).getTime() > 86_400_000)
 
@@ -92,7 +92,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       <BannerSlider eventLabel={t('제작자 이벤트: 작품을 공개하면 아르곤 무료')} works={hotLists.all.filter(c => !c.coverUnveil).slice(0, 4)} />
       <HotRanking lists={hotLists} />
       {/* 11/26 사용자: 그 밑은 탐색 탭처럼 작품 카드 격자(대화량 순). */}
-      <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{[...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays).map(c => <CharacterCard key={c.id} c={c} />)}</div>
+      <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{/* 11/27 사용자: 남성향 무리·여성향 무리로 나뉘지 않게 고르게 섞는다(각 쪽 안의 순서는 그대로). */mixAudience([...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays)).map(c => <CharacterCard key={c.id} c={c} />)}</div>
       {/* 11/25 사용자: 휴대폰·컴퓨터 모두 검색칸·전체 버튼·섹션 줄·작품 격자 없이 배너·지금 가장 핫한·신작만. 검색은 헤더 아이콘, 전체 목록은 탐색 탭. */}
       <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}

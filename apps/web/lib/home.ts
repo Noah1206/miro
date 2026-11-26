@@ -191,10 +191,10 @@ export const homePage = (userId: string | null, cursor: string | null = null, fi
 /** 홈·검색은 더 보기 없이, 접근 가능한 캐릭터 전체를 현재 정렬 기준으로 보여준다. */
 export const homeCatalog = async (userId: string | null, filter: CardFilter = {}) => {
   const page = await cardPage('reality', userId, null, true, filter, false, true)
-  return filter.sort === 'ranking' && !filter.audience ? { ...page, items: mixAudience(page.items) } : page
+  return filter.audience ? page : { ...page, items: mixAudience(page.items) }
 }
-/** 11/27 사용자: 탐색(채팅순)에 여성향을 섞는다 — 대화 수가 적어 한 덩어리로 몰리던 여성향을 남성향 사이에 고르게 끼운다. 각 쪽 안의 순서(고정 작품·채팅순)는 그대로. */
-function mixAudience<T extends { audience?: Audience | null }>(items: T[]): T[] {
+/** 11/27 사용자: 홈·탐색에서 남성향 무리·여성향 무리로 나뉘지 않게 — 여성향을 남성향 사이에 고르게 끼운다(어느 정렬이든). 각 쪽 안의 순서(고정 작품·정렬)는 그대로. */
+export function mixAudience<T extends { audience?: Audience | null }>(items: T[]): T[] {
   const female = items.filter(c => c.audience === 'female'), rest = items.filter(c => c.audience !== 'female')
   if (!female.length || !rest.length) return items
   const out: T[] = []
