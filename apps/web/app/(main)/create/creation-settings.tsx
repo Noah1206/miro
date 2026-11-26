@@ -112,8 +112,7 @@ export function ContactSettings({ initial: i, mode, capabilities }: { initial: F
     <input type="hidden" name="replyDelayMinutes" value={i.replyDelayMinutes} />
     <input type="hidden" name="activeHoursStart" value={i.activeHoursStart} />
     <input type="hidden" name="activeHoursEnd" value={i.activeHoursEnd} />
-    <Switch name="contactToggle" checked={enabled} onChange={v => { setEnabled(v); setChanged(true) }} label={t('먼저 연락하기')}
-      hint={t('대화하지 않는 동안에도 성격과 상황에 맞춰 먼저 연락해요.')} />
+    <Switch name="contactToggle" checked={enabled} onChange={v => { setEnabled(v); setChanged(true) }} label={t('먼저 연락하기')} />
     {!capabilities.realityMessage && <p className="t-caption" style={caption}>{t('먼저 연락하기는 현재 준비 중이에요. 설정은 저장됩니다.')}</p>}
     {legacyChat && !changed && <p className="t-caption" style={caption}>{t('켜면 이 캐릭터도 리얼리티로 사용할 수 있어요.')}</p>}
     {/* 10/28: 칸 버튼 대신 단계 막대, 한 카드에 모은다(분류·설정 탭과 같은 꼴). */}
@@ -128,7 +127,7 @@ export function ContactSettings({ initial: i, mode, capabilities }: { initial: F
             <StepSlider name={name} label={t(label)} value={value} onChange={set} steps={steps.map(o => ({ value: String(o.value), label: t(o.label) }))} />
           </div>
         ))}
-        <LabeledField label={t('연락할 때 표시할 이름')} hint={t('캐릭터가 연락할 때 보이는 발신자 이름이에요. 비워 두면 캐릭터 이름을 사용해요.')}><CountedInput name="senderLabel" max={30} defaultValue={i.senderLabel} ariaLabel={t('연락할 때 표시할 이름')} /></LabeledField>
+        <LabeledField label={t('연락할 때 표시할 이름')}><CountedInput name="senderLabel" max={30} defaultValue={i.senderLabel} ariaLabel={t('연락할 때 표시할 이름')} /></LabeledField>
       </div>
     </div>
   </div>

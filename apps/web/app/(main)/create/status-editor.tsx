@@ -58,7 +58,7 @@ export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus =
         <span style={{ alignSelf: 'flex-end', fontSize: 12, color: 'var(--color-text-tertiary, var(--color-text-secondary))' }}>{format.length} / {STATUS_FORMAT_LIMIT}</span>
       </div>
       <div className="stack" style={{ gap: 8 }}>
-        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t('인트로 상태창 — 첫 장면에 보일 상태창을 값까지 채워 적어 주세요. 비우면 인트로엔 상태창이 없어요.')}</span>
+        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t('인트로 상태창')}</span>
         <textarea name="introStatus" defaultValue={defaultIntroStatus} maxLength={STATUS_FORMAT_LIMIT} rows={6} aria-label={t('인트로 상태창')}
           style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: 13, lineHeight: 1.6, resize: 'vertical', outline: 'none', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} />
       </div>
