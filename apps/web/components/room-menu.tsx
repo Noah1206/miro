@@ -49,6 +49,8 @@ function MenuIcon({ name }: { name: IconName }) {
   }
   return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>
 }
+// 11/27 사용자(레퍼런스): 음성 줄 = 얼굴 아이콘 + '보이스 캐스팅'
+function VoiceFace() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.2 11.6c2.7-.4 5-1.9 6.4-4.1 2 2.3 5.6 3.8 11.2 4.1A9 9 0 0 0 3.2 11.6Z" fill="currentColor"/><circle cx="9" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/><path d="M9.8 17c1.4.9 3 .9 4.4 0"/></svg> }
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
 type Screen = 'main' | 'persona' | 'model' | 'length' | 'pace' | 'display' | 'fresh'
@@ -244,9 +246,9 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       {/* 11/21 사용자: 음성 모드는 따로 된 칸 — 켜면 바로 아래 캐릭터별 목소리 고르기. 이 탭이 아이폰 소리 잠금도 푼다. */}
       {(available || soon) && <section className={styles.section} aria-label={t('음성 모드')}>
         <h3>{t('음성')}</h3>
-        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={voiceToggle} data-coach="voice-pick"><span>{t('음성 모드')}</span><i aria-hidden /></button>}
+        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={voiceToggle} data-coach="voice-pick"><VoiceFace/><span>{t('보이스 캐스팅')}</span><i aria-hidden /></button>}
         {/* 11/12 음성 서버가 멈춘 동안: 켤 수 없는 줄로 '곧 열림' 만 알린다. */}
-        {!available && soon && <button type="button" disabled className={styles.voiceRow}><span>{t('음성 모드')}</span><em>{t('곧 열림')}</em></button>}
+        {!available && soon && <button type="button" disabled className={styles.voiceRow}><VoiceFace/><span>{t('보이스 캐스팅')}</span><em>{t('곧 열림')}</em></button>}
         {available && on && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
       </section>}
       {/* 11/21 사용자: 두 줄 칸(타일) 대신 모두 한 줄 — 페르소나·AI 모델·출력량은 따로 된 페이지, 기억 노트·유저노트는 각 페이지로. */}

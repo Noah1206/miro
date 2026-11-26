@@ -46,7 +46,9 @@
 .trigger { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; line-height:1; cursor:pointer; }
 /* 음성 모드 토글(11/3) — 파형 아이콘 + 작은 스위치. 켜면 짙은 라벤더. */
 .voiceRow { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:48px; margin:0 0 10px; padding:0 14px; border:1px solid var(--color-border); border-radius:12px; background:transparent; color:var(--color-text-primary); font-size:15px; font-weight:600; cursor:pointer; }
-.voiceRow i { position:relative; width:38px; height:22px; border-radius:11px; background:var(--color-surface-3); transition:background .18s; }
+.voiceRow > svg { flex:0 0 22px; width:22px; height:22px; margin-right:10px; }
+.voiceRow > span { flex:1; text-align:left; }
+.voiceRow i { position:relative; flex:0 0 38px; width:38px; height:22px; border-radius:11px; background:var(--color-surface-3); transition:background .18s; }
 .voiceRow i::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .18s; }
 .voiceRow[aria-checked='true'] { border-color:var(--color-lavender-500); margin-bottom:6px; }   /* 11/11 켜면 아래 목소리 목록이 바로 붙는다 */
 .voiceRow[aria-checked='true'] i { background:var(--color-lavender-500); }

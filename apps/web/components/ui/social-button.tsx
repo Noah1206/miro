@@ -9,6 +9,7 @@ export type LoginProvider = { id: SocialProviderId; label: string }
 export function SocialButton({ id, label, next, surface }: LoginProvider & { next?: string | null; surface?: 'sheet' }) {
   const t = useT()
   return <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`}
+    onClick={() => { try { navigator.sendBeacon?.(`/api/funnel?e=login_provider_tapped&p=${id}&path=${encodeURIComponent(location.pathname)}`) } catch {} }}
     data-login-provider={id} className={`${styles.button} ${styles[id]} ${surface === 'sheet' ? styles.sheet : ''}`}>
     <span className={styles.icon}><Icon id={id} /></span>
     <span>{id === 'kakao' ? t('카카오 계정으로 계속하기') : t('{label}로 계속하기', { label: t(label) })}</span>

@@ -64,6 +64,8 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
     setNext(to ?? (typeof location === 'undefined' ? null : location.pathname + location.search))
     setNote(why ?? null)
     setOpen(true)
+    // 11/27 가입 퍼널 — 시트가 열린 화면과 돌아갈 곳(대화 시작이면 /character/…)
+    try { navigator.sendBeacon?.(`/api/funnel?e=login_sheet_opened&path=${encodeURIComponent(location.pathname)}${to ? `&next=${encodeURIComponent(to)}` : ''}`) } catch {}
   }, [])
   return (
     <Ctx.Provider value={ask}>

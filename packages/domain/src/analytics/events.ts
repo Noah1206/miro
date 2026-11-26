@@ -11,6 +11,8 @@ export const ANALYTICS_EVENTS = [
   'archive_opened', 'session_archived', 'session_deleted', 'report_submitted', 'account_deleted',
   // 11/18 관리자 실시간 현황 — 로그인·로그아웃, 화면 이동(접속 신호가 주소가 바뀔 때만 남긴다, props: anonId·path·device).
   'login', 'logout', 'page_viewed',
+  // 11/27 가입 퍼널 — 로그인 시트가 열림(props: anonId·path·next), 소셜 버튼을 누름(props: anonId·path·provider). 로그인 완료는 signup·login.
+  'login_sheet_opened', 'login_provider_tapped',
   // Closed Alpha 퍼널 — 로그인 없는 체험. userId 는 null, props.alphaSession 으로 묶는다.
   'landing_view', 'experience_start', 'first_message_sent', 'third_message_sent',
   'wow_event_triggered', 'reality_message_seen', 'waitlist_view', 'waitlist_complete',
