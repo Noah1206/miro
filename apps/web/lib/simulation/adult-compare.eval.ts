@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import { describe, it, vi } from 'vitest'
 import { and, asc, eq, gt, sql } from 'drizzle-orm'
-import { db, aiUsage, relationships, roleplaySessions, userPersonas, userSettings, users } from '@miro/db'
+import { db, aiUsage, relationships, roleplaySessions, usageWindows, userPersonas, userSettings, users } from '@miro/db'
 import { OpenAICompatibleProvider } from '@miro/providers'
 import { createRoleplaySession } from './start'
 import { runConversationTurn } from './turn'
@@ -44,7 +44,8 @@ describe.skipIf(!OUT)('adult mode model comparison', () => {
     })
     const now = new Date()
     const [owner] = await db.insert(users).values({ email: `adult-compare-${Date.now()}@example.test`, adultVerifiedAt: now, maturePolicyAgreedAt: now }).returning()
-    await db.insert(userSettings).values({ userId: owner!.id, timeZone: 'Asia/Seoul' })
+    await db.insert(userSettings).values({ userId: owner!.id, timeZone: 'Asia/Seoul', unveilEnabled: true })   // 11/27 언베일 방은 홈 언베일 스위치가 켜져 있어야 열린다(snapshot.ts)
+    await db.insert(usageWindows).values({ userId: owner!.id, plan: 'pro', startedAt: now, endsAt: new Date(now.getTime() + 30 * 86_400_000), limit: 100_000_000 })
     await db.insert(userPersonas).values({ userId: owner!.id, name: '지민', gender: 'female', description: '서울에 사는 20대 후반 회사원. 권재혁의 경호를 받다 가까워져 석 달째 사귀고 있다.' })
     const { sessionId } = await createRoleplaySession(owner!.id, CHARACTER)
     await db.update(roleplaySessions).set({ adultMode: true, adultSince: now }).where(eq(roleplaySessions.id, sessionId))
@@ -63,7 +64,8 @@ describe.skipIf(!OUT)('adult mode model comparison', () => {
     const turns: Record<string, unknown>[] = []
     for (const line of LINES) {
       const from = await mark(), t0 = performance.now(), rawFrom = raw.length
-      const r = await runConversationTurn({ userId: owner!.id, sessionId, input: line.input })
+      // 11/27 언베일 방은 사용자가 고른 성인 모델로 쓴다(운영 기본: DeepSeek, 조금 길게) — 고르지 않으면 메인 모델(이 실측에선 mock)로 간다.
+      const r = await runConversationTurn({ userId: owner!.id, sessionId, input: line.input, chatModel: `model:${encodeURIComponent(process.env.MIRO_ADULT_PICK || 'adult-deepseek')}:plus` })
       turns.push({ probe: line.probe, input: line.input, ok: r.ok, ...(r.ok ? { blocks: r.blocks.map(b => ({ type: b.type, speaker: b.speaker ?? null, text: b.text })) } : { reason: r.reason }),
         wallMs: Math.round(performance.now() - t0), provider: raw.slice(rawFrom), calls: await since(from) })
       if (!r.ok && (r.reason === 'budget' || r.reason === 'usage')) break

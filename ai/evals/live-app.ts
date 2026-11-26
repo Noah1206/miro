@@ -24,7 +24,7 @@ const EVALS: Record<string, string> = { reality: 'apps/web/lib/reality/reality-l
 /** 100만 토큰당 USD(입력, 출력). 예산 판정에 가격이 없으면 앱이 호출을 막는다. */
 const PRICES: Record<string, [number, number]> = { 'gemini-3.8-flash': [0.75, 3.75], 'claude-opus-5-5': [4, 20], 'gemini-3.1-pro-preview': [2, 12], 'claude-sonnet-5-5': [2, 10],
   // 성인 모드 후보(OpenRouter 목록 가격, 2026-10-02).
-  'deepseek/deepseek-v4.1-flash': [0.3, 1.2], 'z-ai/glm-5.3': [1.4, 4.4], 'x-ai/grok-4.3': [1.25, 2.5], 'moonshotai/kimi-k2.6': [0.434, 1.828], 'bytedance-seed/seed-2-1-turbo': [0.5, 2.5] }
+  'deepseek/deepseek-v4.1-flash': [0.3, 1.2], 'google/gemini-3.8-flash': [0.75, 3.75], 'z-ai/glm-5.3': [1.4, 4.4], 'x-ai/grok-4.3': [1.25, 2.5], 'moonshotai/kimi-k2.6': [0.434, 1.828], 'bytedance-seed/seed-2-1-turbo': [0.5, 2.5] }
 
 const database = testDatabaseUrl(process.env.TEST_DATABASE_URL)
 if (!database) throw new Error('Set TEST_DATABASE_URL to a guarded local test database.')
@@ -39,8 +39,10 @@ const env = live ? parseEnv(readFileSync('.env', 'utf8')) : {}
 const adult = file === EVALS.adult
 if (live && !adult && (!env.GEMINI_API_KEY || !env.MIRO_MODEL_REGISTRY)) throw new Error('--live needs GEMINI_API_KEY and MIRO_MODEL_REGISTRY in the root .env')
 const adultModel = option('--adult-model')
-if (live && adult && (!env.OPENROUTER_API_KEY || !adultModel || !PRICES[adultModel])) throw new Error(`--eval adult --live needs OPENROUTER_API_KEY in the root .env and --adult-model one of ${Object.keys(PRICES).filter(m => m.includes('/')).join(', ')}`)
-const adultRegistry = live && adult ? JSON.stringify([{ id: 'adult', provider: 'openrouter', providerModelId: adultModel, inputCost: PRICES[adultModel!]![0], outputCost: PRICES[adultModel!]![1], maxContextTokens: 128_000, maxOutputTokens: 16_384 }]) : ''
+if (live && adult && !option('--adult-registry') && (!env.OPENROUTER_API_KEY || !adultModel || !PRICES[adultModel])) throw new Error(`--eval adult --live needs OPENROUTER_API_KEY in the root .env and --adult-model one of ${Object.keys(PRICES).filter(m => m.includes('/')).join(', ')}`)
+// 11/27 --adult-registry <파일>: 운영 언베일 모델 목록(JSON)을 그대로 쓴다 — 앱은 adult-deepseek 같은 id 로 고른다.
+const adultRegistryFile = option('--adult-registry')
+const adultRegistry = live && adult && adultRegistryFile ? readFileSync(adultRegistryFile, 'utf8') : live && adult ? JSON.stringify([{ id: 'adult', provider: 'openrouter', providerModelId: adultModel, inputCost: PRICES[adultModel!]![0], outputCost: PRICES[adultModel!]![1], maxContextTokens: 128_000, maxOutputTokens: 16_384 }]) : ''
 
 let registry = env.MIRO_MODEL_REGISTRY ?? ''
 const dialogue = option('--dialogue'), maxOutput = Number(option('--max-output') ?? 0)
