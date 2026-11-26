@@ -104,7 +104,6 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
       </motion.div>
     </AnimatePresence>
     {!choices.length && <p className={sheet.description}>{t('준비 중')}</p>}
-    {choices.some(c => c.listTokens) && <p className={sheet.priceNote}>{t('가입 후 1년 동안 20% 할인된 가격이에요.')}</p>}
   </div>
 }
 
