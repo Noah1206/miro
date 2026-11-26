@@ -39,8 +39,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const user = await currentUser()
   // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
   const raw = (await searchParams).audience
-  // 11/20 사용자: 여성향(남자 캐릭터)은 다시 홈에서 뺀다(11/13 뺌 → 11/15 되살림 → 11/20 뺌) — 공식 여성향 38개 비공개(목록 output/ads/hidden-female-2026-11-20.txt). 유저는 여성향을 계속 만들어 올릴 수 있다.
-  const audience = raw === 'male' ? raw : undefined
+  // 11/27 사용자: 비공개했던 여성향(남자 캐릭터)을 다시 연다(11/13 뺌 → 11/15 되살림 → 11/20 뺌 → 11/24 되살렸다 뺌 → 11/27 되살림) — 공식 여성향 38개 재공개(목록 output/ads/hidden-female-2026-11-20.txt).
+  const audience = raw === 'male' || raw === 'female' ? raw : undefined
   // 11/20 사용자: 알림 종을 뺐다 — 안 읽은 연락 수도 더는 읽지 않는다.
   const [sections, unveil, profile] = await Promise.all([
     measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),  // 11/12: 로그인 전에도 이름·소개 그대로(19세 막 시절의 글자 비우기 삭제)
