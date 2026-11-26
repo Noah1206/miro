@@ -132,3 +132,7 @@
 
 /* 11/21 사용자: 데스크톱은 홈 검색창을 지운다(머리의 검색 아이콘으로). 취향 고르기는 남긴다. */
 @media (min-width: 1024px) { .searchBar { display: none; } }
+
+/* 11/27 사용자: 홈 추천 아래 작품 격자는 한 줄 6개로 줄이고(전엔 화면 폭만큼 7~8개) 카드를 키운다 — 카드 사이 간격도 넓게. 탐색·장르 격자(.grid)는 그대로. */
+.homeGrid { gap: 24px 12px; }
+@media (min-width: 1024px) { .homeGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 40px 22px; } }
