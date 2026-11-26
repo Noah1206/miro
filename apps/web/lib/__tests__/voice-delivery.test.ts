@@ -4,7 +4,7 @@ import { RpBlock, SimulationProposal, AGENCY_DIALOGUE_RESPONSE_SCHEMA } from '..
 import { renderBlocks } from '../../../../packages/engine/src/orchestrator'
 import { buildContext } from '../../../../packages/engine/src/context'
 import { snapshot } from '../../../../packages/engine/src/__tests__/fixtures'
-import { spokenSegments, SPOKEN_MAX } from '../voice-text'
+import { spokenSegments } from '../voice-text'
 
 const delivery = { emotion: 'hurt', tone: 'soft', pace: 'slow', intensity: 'soft', pauseAfterMs: 450 }
 describe('per-utterance voice delivery', () => {
@@ -42,7 +42,7 @@ describe('per-utterance voice delivery', () => {
     expect(voiceDelivery({ pauseAfterMs: 99999 }).pauseAfterMs).toBe(1500)
     expect(voiceDelivery({ pauseAfterMs: NaN }).pauseAfterMs).toBe(0)
     const parts = spokenSegments([{ type: 'dialogue', text: '가'.repeat(900) }, { type: 'dialogue', text: '나'.repeat(900) }], '')
-    expect(parts.reduce((n, s) => n + s.text.length, 0)).toBe(SPOKEN_MAX)
+    expect(parts.reduce((n, s) => n + s.text.length, 0)).toBe(1800)   // 11/26 끝까지 읽음
   })
   it('asks for delivery in the same dialogue generation and declares it for constrained agency outputs', () => {
     expect(buildContext({ ...snapshot(), voiceOut: true }).system).toContain('hidden delivery object')

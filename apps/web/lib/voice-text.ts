@@ -2,7 +2,8 @@ import { taggedSpeech, voiceDelivery, type VoiceDelivery } from '@miro/config'
 
 /** 소리 내어 읽을 글. 서술은 읽지 않는다. speech = 신음 태그가 든 음성용 대사(언베일, 화면엔 text).
  *  11/17 사용자: 긴 답도 끝까지(1200 → 2000자), 속마음(thought)도 읽는다 — 속마음 묶음은 inner 로 표시해 합성 서버가 조금 다른 소리로 낸다. */
-export const SPOKEN_MAX = 2000
+// 11/26 사용자: 답이 길든 짧든 대사·속마음을 끝까지 다 읽는다 — 상한은 사실상 없음(가장 긴 답보다 크게, 예약 계산이 무한대가 되지 않게만 둔다).
+export const SPOKEN_MAX = 20000
 /** 11/16 사용자(답 길이 비례): 음성 모드 턴은 읽는 대사 100자마다 토큰을 더 받는다 — 음성 서버(H100 2대) 원가 추정 1,000자 $0.15~0.2.
  *  11/22 1미로 = 1원 개편: 10 → 90(같은 원화 가치, 약 9.33배를 내림). */
 export const VOICE_TOKENS_PER_100 = 90
