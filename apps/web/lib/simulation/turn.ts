@@ -128,9 +128,14 @@ async function executeTurn(opts: {
       loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) ?? loaded.contactBoundary
     loaded.snapshot.contactBoundary = boundary
     // 11/3: 언베일 턴도 고른 모델 그대로(언베일 쪽 짝으로 보낸다). 짝이 없으면 기본 모델로.
-    const model = await measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro', loaded.adult.turn)
+    let model = await measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro', loaded.adult.turn)
       .catch(() => loaded.adult.turn ? resolveChatModel(userId, 'miro', true) : Promise.reject(new Error('invalid chat model')))).catch(() => null)
     if (!model) return { ok: false, reason: 'model_unavailable' }
+    // 11/16 음성 모드 턴은 읽는 대사만큼 더 받는다 — 모델 몫(maximumTokens) 위에 음성 몫을 따로 예약한다.
+    const voiceOn = !!opts.voice && feature('characterVoice') && !voicePaused()
+    // 11/26 사용자: 아르곤 무제한권으로 쓰는 턴은 출력량·생각을 3단계('조금 길게'·'보통')까지만 — 더 높게 골라도 3단계로 낮춰 무료로 돌린다. 다른 모델은 원래대로 차감.
+    const argonPass = !voiceOn && await argonPassTurn(userId, model.modelId, now.getTime())
+    if (argonPass && /:(long|saga)$/.test(opts.chatModel ?? '')) model = await resolveChatModel(userId, opts.chatModel!.replace(/:(long|saga)$/, ':plus'), loaded.adult.turn).catch(() => model!)
     const dialogueModelId = model.modelId
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
     const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
@@ -144,7 +149,8 @@ async function executeTurn(opts: {
     // 예전엔 최근 대화 4개 뒤에 입력을 붙이고 앞 2,000자만 써서, 답 하나가 2,000자를 넘으면 입력이 통째로 잘렸다.
     const situationRanking = rankSituationImages(charSettings?.situationImages ?? [], [input, loaded.snapshot.recentMessages.at(-1)?.content.slice(-400) ?? ''].join('\n'), IMAGE_LIST_MAX).catch(() => null)
     // 11/16 생각 강도는 3단계(빠름·보통·깊게) — 예전 '깊게·최대'(xhigh·max)는 Sonnet 에서 답 없이 잘렸다. 생각이 먹지 않는 모델(DeepSeek 등)은 무시한다.
-    const wanted = opts.thinking ?? charSettings?.rec?.thinking
+    const wantedRaw = opts.thinking ?? charSettings?.rec?.thinking
+    const wanted = argonPass && (wantedRaw === 'xhigh' || wantedRaw === 'max') ? 'high' as const : wantedRaw
     const thinking = model.thinking && wanted ? (wanted === 'xhigh' || wanted === 'max' ? 'high' as const : wanted) : undefined
     const thinkScale = thinking ? ({ low: 1, medium: 2, high: 3, xhigh: 4, max: 5 } as const)[thinking] ?? 1 : 1
     // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
@@ -157,10 +163,8 @@ async function executeTurn(opts: {
     let reservation: Reservation | null = null
     const balance = await usageStatus(userId)
     const availableTokens = balance.remaining + balance.rechargeRemaining
-    // 11/16 음성 모드 턴은 읽는 대사만큼 더 받는다 — 모델 몫(maximumTokens) 위에 음성 몫을 따로 예약한다.
-    const voiceOn = !!opts.voice && feature('characterVoice') && !voicePaused()
     // 11/19 오픈 이벤트 무료 턴 — 잔액 검사·예약·차감 없이(잔액 0 이어도 대화). 사용자별 하루 AI 호출 한도(AI_USER_DAILY_LIMIT)는 그대로 걸린다.
-    const free = !voiceOn && (freeChatTurn(dialogueModelId, now.getTime()) || await argonPassTurn(userId, dialogueModelId, now.getTime()))   // 11/25 창작자 아르곤 무료
+    const free = !voiceOn && (freeChatTurn(dialogueModelId, now.getTime()) || argonPass)   // 11/25 창작자 아르곤 무료(11/26 3단계까지)
     // 11/10 사용자: 잔액이 500 미만이면 대화를 시작하지 않는다(하루 무료 1,500 은 자정에 다시 채워진다).
     if (!free && availableTokens < MIN_TURN_BALANCE && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
     // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
