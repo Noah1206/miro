@@ -189,7 +189,19 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
 /** 홈 = 미로 캐릭터(첫 베타는 캐릭터챗을 싣지 않는다, E-57). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다(2026-09-29). 장르·관계 칩으로 거른다(2026-09-30). */
 export const homePage = (userId: string | null, cursor: string | null = null, filter: CardFilter = {}) => cardPage('reality', userId, cursor, true, filter)
 /** 홈·검색은 더 보기 없이, 접근 가능한 캐릭터 전체를 현재 정렬 기준으로 보여준다. */
-export const homeCatalog = (userId: string | null, filter: CardFilter = {}) => cardPage('reality', userId, null, true, filter, false, true)
+export const homeCatalog = async (userId: string | null, filter: CardFilter = {}) => {
+  const page = await cardPage('reality', userId, null, true, filter, false, true)
+  return filter.sort === 'ranking' && !filter.audience ? { ...page, items: mixAudience(page.items) } : page
+}
+/** 11/27 사용자: 탐색(채팅순)에 여성향을 섞는다 — 대화 수가 적어 한 덩어리로 몰리던 여성향을 남성향 사이에 고르게 끼운다. 각 쪽 안의 순서(고정 작품·채팅순)는 그대로. */
+function mixAudience<T extends { audience?: Audience | null }>(items: T[]): T[] {
+  const female = items.filter(c => c.audience === 'female'), rest = items.filter(c => c.audience !== 'female')
+  if (!female.length || !rest.length) return items
+  const out: T[] = []
+  let next = 0
+  rest.forEach((c, i) => { out.push(c); while (next < Math.floor((i + 1) * female.length / rest.length)) out.push(female[next++]!) })
+  return [...out, ...female.slice(next)]
+}
 /** 탐색·검색 결과의 첫 목록 — 서버에서 한 번 섞어 넘긴다(10/27). 화면에서 섞으면 서버 HTML 과 순서가 달라 그릴 때 어긋난다. */
 export function shuffledCards<T>(items: readonly T[]): T[] {
   const out = [...items]
