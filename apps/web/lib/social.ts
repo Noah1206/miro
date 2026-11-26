@@ -1,5 +1,5 @@
 import { and, desc, eq, ilike, inArray, isNull, ne, or, sql } from 'drizzle-orm'
-import { characterLikes, characterBookmarks, characterCommentLikes, characterComments, characters, db, users, worlds } from '@miro/db'
+import { characterLikes, characterBookmarks, characterCommentLikes, characterComments, characters, db, rechargeGrants, users, worlds } from '@miro/db'
 import { genreKeywords } from './genres'
 import { msg } from '@/lib/i18n'
 
@@ -96,6 +96,20 @@ export async function addComment(characterId: string, userId: string, body: stri
   const trimmed = body.trim()
   if (!trimmed) return
   await db.insert(characterComments).values({ characterId, userId, parentId: parentId ?? null, body: trimmed.slice(0, 500) })
+  await grantCommentReward(userId)
+}
+
+/**
+ * 11/27 사용자: 댓글 5개를 쓰면 500토큰(홈 배너). 계정당 한 번 — recharge_grants (provider 'comment5', 사용자 id) 고유 색인이 두 번 지급을 막는다.
+ * 도배를 막으려고 서로 다른 작품 5개에 쓴 10자 이상 댓글(답글 제외, 숨김 제외)만 센다. 7일 유효(출석 보상과 같음).
+ */
+export const COMMENT_REWARD = { comments: 5, tokens: 500, minChars: 10, validDays: 7 } as const
+async function grantCommentReward(userId: string): Promise<void> {
+  const [row] = await db.select({ n: sql<number>`count(distinct ${characterComments.characterId})::int` }).from(characterComments)
+    .where(and(eq(characterComments.userId, userId), isNull(characterComments.parentId), isNull(characterComments.hiddenAt), sql`char_length(${characterComments.body}) >= ${COMMENT_REWARD.minChars}`))
+  if ((row?.n ?? 0) < COMMENT_REWARD.comments) return
+  await db.insert(rechargeGrants).values({ userId, amount: COMMENT_REWARD.tokens, source: 'grant', provider: 'comment5', externalRef: userId,
+    expiresAt: new Date(Date.now() + COMMENT_REWARD.validDays * 86_400_000) }).onConflictDoNothing()
 }
 
 /** 자기 댓글만 지울 수 있다. 운영자의 숨김과는 별개다. */

@@ -89,7 +89,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/23 뺐다가 11/24 사용자 "배너 있어야 해" 로 되살림 — 좌우로 넘기는 작품 카드(휴대폰은 가운데 카드만). */}
       {/* 11/25 사용자: 배너는 한 장 — 창작자 아르곤 무료 이벤트(11/27~12/7). 누르면 만들기. 예전 작품 카드 배너(HomeHero)는 hero.tsx 에 그대로 있다. */}
       {/* 11/27 사용자: 배너가 3초마다 옆으로 자동으로 넘어간다 — 이벤트 배너 + 인기 작품 4개(언베일 표지는 뺀다). */}
-      <BannerSlider eventLabel={t('제작자 이벤트: 작품을 공개하면 아르곤 무료')} works={hotLists.all.filter(c => !c.coverUnveil).slice(0, 4)} />
+      <BannerSlider works={hotLists.all.filter(c => !c.coverUnveil).slice(0, 4)} events={[
+        { href: '/create', src: '/events/creator-carbon.webp', label: t('제작자 이벤트: 작품을 공개하면 카본 무료') },
+        { href: '/search', src: '/events/comment-500.webp', label: t('댓글 이벤트: 서로 다른 작품에 댓글 5개를 쓰면 500토큰') },
+      ]} />
       <HotRanking lists={hotLists} />
       {/* 11/26 사용자: 그 밑은 탐색 탭처럼 작품 카드 격자(대화량 순). */}
       <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{/* 11/27 사용자: 남성향 무리·여성향 무리로 나뉘지 않게 고르게 섞는다(각 쪽 안의 순서는 그대로). */mixAudience([...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays)).map(c => <CharacterCard key={c.id} c={c} />)}</div>

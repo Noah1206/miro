@@ -12,9 +12,10 @@ import styles from './banner-slider.module.css'
  * 가운데 배너 양옆으로 이전·다음 배너가 어둡게 걸쳐 보인다(레퍼런스). 끝없이 돌도록 앞뒤에 복제 한 장씩 두고, 복제에 닿으면 소리 없이 진짜 자리로 옮긴다.
  * 가로 스크롤 스냅이라 손으로도 넘길 수 있고, 만지는 동안과 화면 밖에서는 멈춘다.
  */
-export function BannerSlider({ works, eventLabel }: { works: HomeCard[]; eventLabel: string }) {
+export type EventBanner = { href: string; src: string; label: string }
+export function BannerSlider({ works, events }: { works: HomeCard[]; events: EventBanner[] }) {
   const track = useRef<HTMLDivElement>(null)
-  const n = works.length + 1
+  const n = works.length + events.length
   useEffect(() => {
     const el = track.current
     if (!el || n < 2) return
@@ -36,9 +37,9 @@ export function BannerSlider({ works, eventLabel }: { works: HomeCard[]; eventLa
       : setInterval(() => { if (!held && !document.hidden) el.scrollTo({ left: left(nearest() + 1), behavior: 'smooth' }) }, 3000)
     return () => { clearInterval(auto); clearTimeout(settle); el.removeEventListener('scroll', onScroll); el.removeEventListener('pointerdown', hold); removeEventListener('pointerup', release); removeEventListener('pointercancel', release) }
   }, [n])
-  const event = (key: string, clone = false) => (
-    <TransitionLink key={key} href="/create" aria-label={eventLabel} aria-hidden={clone || undefined} tabIndex={clone ? -1 : undefined} className={styles.slide}>
-      <img src="/events/creator-argon.webp" alt="" width={1800} height={510} className={styles.eventImage} />
+  const event = (e: EventBanner, key: string, clone = false) => (
+    <TransitionLink key={key} href={e.href} aria-label={e.label} aria-hidden={clone || undefined} tabIndex={clone ? -1 : undefined} className={styles.slide}>
+      <img src={e.src} alt="" width={1800} height={510} className={styles.eventImage} />
     </TransitionLink>
   )
   const work = (c: HomeCard, key: string, clone = false) => (
@@ -50,13 +51,13 @@ export function BannerSlider({ works, eventLabel }: { works: HomeCard[]; eventLa
       <div className={styles.cover}><CharacterVisual name={c.name} accent={c.accentA} slug={c.slug ?? c.id} photo={c.images[0]} ratio="1 / 1" scrim={false} /></div>
     </TransitionLink>
   )
-  const last = works.at(-1)
+  const lastWork = works.at(-1), lastEvent = events.at(-1), first = events[0]
   return (
     <div ref={track} className={styles.track}>
-      {n > 1 && last && work(last, 'clone-last', true)}
-      {event('event')}
+      {n > 1 && (lastWork ? work(lastWork, 'clone-last', true) : lastEvent && event(lastEvent, 'clone-last', true))}
+      {events.map(e => event(e, e.src))}
       {works.map(c => work(c, c.id))}
-      {n > 1 && event('clone-first', true)}
+      {n > 1 && (first ? event(first, 'clone-first', true) : works[0] && work(works[0], 'clone-first', true))}
     </div>
   )
 }
