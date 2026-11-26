@@ -1,4 +1,4 @@
-import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition } from '@miro/providers'
+import { adultRegistry, longCacheModel, registryFromEnv, providerFromEnv, type ModelDefinition } from '@miro/providers'
 import { POLICY, tokenPricing, tokenQuote, tokenRates, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
@@ -140,7 +140,7 @@ function displayName(id: string) {
  * 11/16 사용자: Fable·Opus 는 한 턴에 토큰을 1.5배 더 받는다(Fable 5.1 약 190 → 290, Opus 5.5 약 56 → 84) — 출석 500토큰으로 Fable 을 2.6턴 쓸 수 있었다.
  * 원가 비중을 그만큼 낮춰 견적·예약·차감·최소 차감이 한 값으로 같이 움직인다. 직결(claude-opus-5-5)과 OpenRouter(anthropic/claude-opus-5.5) 이름 모두.
  */
-export const PREMIUM_CHARGE = 1.5
+export const PREMIUM_CHARGE = 1   // 11/26 사용자: 1.5 → 1(할증 없앰) — Opus·Fable 이 다른 플랫폼의 3배였다
 const pricingFor = (model: ModelDefinition, base = tokenPricing()) => {
   let costShare = base.costShare
   if (/claude-(fable|opus)-/.test(model.providerModelId)) costShare /= PREMIUM_CHARGE
@@ -155,10 +155,14 @@ const pricingFor = (model: ModelDefinition, base = tokenPricing()) => {
  */
 const TYPICAL_INPUT = { normal: 16_000, adult: 30_000 }
 const TYPICAL_OUTPUT: Record<ChatLength, number> = { short: 1700, scene: 2000, plus: 2500, long: 2800, saga: 3000 }
+/** 11/26 Opus·Fable(1시간 캐시)의 '보통 한 턴'은 입력 70% 를 캐시로 읽는다고 본다(11/26 실측: 같은 방 다음 턴 원가가 첫 턴의 절반). 실제 차감은 실제 원가. */
+const LONG_CACHE_HIT = 0.7
 function typicalCostTokens(model: ModelDefinition, length: ChatLength, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {
   const input = adult ? TYPICAL_INPUT.adult : TYPICAL_INPUT.normal
   const rates = tokenRates(model, input)
-  return tokensForCost((input * rates.inputCost + TYPICAL_OUTPUT[length] * rates.outputCost) / 1e6, pricing)
+  const hit = longCacheModel(model.providerModelId) && rates.cachedInputCost !== undefined ? LONG_CACHE_HIT : 0
+  const inputUSD = input * ((1 - hit) * rates.inputCost + hit * (rates.cachedInputCost ?? rates.inputCost))
+  return tokensForCost((inputUSD + TYPICAL_OUTPUT[length] * rates.outputCost) / 1e6, pricing)
 }
 /** A cheap renderer still shares its envelope with the server-pinned verifier. */
 function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<typeof tokenPricing>, adult: boolean) {

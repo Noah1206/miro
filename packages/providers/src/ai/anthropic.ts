@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { longCacheModel } from './model-registry'
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
 
 /**
@@ -43,18 +44,21 @@ export function unstring(value: unknown, schema: unknown): unknown {
   return value
 }
 /** 11/10 캐릭터·규칙 앞부분을 캐시한다(같은 방의 다음 턴은 캐시 읽기 단가). 이번 턴 지시는 캐시 뒤 블록으로. */
-function systemBlocks(system: string, prefix?: number): string | Anthropic.Beta.BetaTextBlockParam[] {
+function systemBlocks(system: string, prefix: number | undefined, cache: { type: 'ephemeral'; ttl?: '1h' }): string | Anthropic.Beta.BetaTextBlockParam[] {
   if (!prefix || prefix <= 0 || prefix > system.length) return system
-  const head: Anthropic.Beta.BetaTextBlockParam = { type: 'text', text: system.slice(0, prefix), cache_control: { type: 'ephemeral' } }
+  const head: Anthropic.Beta.BetaTextBlockParam = { type: 'text', text: system.slice(0, prefix), cache_control: cache }
   return prefix === system.length ? [head] : [head, { type: 'text', text: system.slice(prefix) }]
 }
 
 export class AnthropicProvider implements AIProvider {
   readonly info
   private readonly client: Anthropic
+  private readonly cache: { type: 'ephemeral'; ttl?: '1h' }
   constructor(key: string, private readonly model: string) {
     this.info = { mode: 'live' as const, name: `anthropic/${model}`, notice: null }
     this.client = new Anthropic({ apiKey: key, maxRetries: 0 })
+    // 11/26 Opus·Fable 은 1시간 캐시(longCacheModel) — 두 표시 모두 같은 길이라 '긴 것 먼저' 규칙에 걸리지 않는다.
+    this.cache = longCacheModel(model) ? { type: 'ephemeral', ttl: '1h' } : { type: 'ephemeral' }
   }
 
   async healthCheck(): Promise<boolean> {
@@ -71,10 +75,10 @@ export class AnthropicProvider implements AIProvider {
         model: this.model,
         // 11/16 생각(보통 이상)은 답과 같은 상한을 먹는다 — 실측(Sonnet 5.5): '높게'가 8,192 중 8,181 을 쓰고 그 위 단계는 생각만 하다 잘려 답이 없었다. 생각을 켠 요청은 답 몫의 3배를 준다(OpenAI 쪽과 같은 셈).
         max_tokens: (req.maxTokens ?? 1024) * (req.thinking && req.thinking !== 'low' && !req.hardTokenCap ? 3 : 1),
-        system: systemBlocks(req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''), req.cacheSystemPrefix),
+        system: systemBlocks(req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''), req.cacheSystemPrefix, this.cache),
         // 11/16 최근 대화 덩이의 끝에 캐시 표시 — 다음 턴은 이 자리까지를 캐시에서 읽고(정가의 10%) 새로 붙은 메시지만 새로 쓴다.
         messages: [{ role: 'user', content: req.promptPrefix?.length
-          ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text' as const, text, ...(i === all.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}) })), { type: 'text' as const, text: req.prompt }]
+          ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text' as const, text, ...(i === all.length - 1 ? { cache_control: this.cache } : {}) })), { type: 'text' as const, text: req.prompt }]
           : req.prompt }],
         output_config: { effort: req.thinking ?? 'low' },
         ...(schema ? { tools: [{ name: 'submit', description: 'Submit the complete result.', input_schema: schema }], tool_choice: { type: 'auto' as const } } : {}),

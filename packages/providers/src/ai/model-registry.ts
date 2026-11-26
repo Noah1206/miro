@@ -68,11 +68,14 @@ export function routeModels(registry: ModelRegistry, task: AITask, tokens: numbe
 /** USD per million tokens. Unknown prices stay unknown, never silently free. */
 /** 11/22 캐시 쓰기는 정가의 1.25배(Anthropic 5분 캐시) — 전엔 일반 입력값으로 셌다. */
 const CACHE_WRITE_PREMIUM = 0.25
+/** 11/26 사용자(가격): Opus·Fable 은 캐시를 1시간 둔다 — 천천히 대화해도 매 턴 캐시로 읽게(5분이면 거의 매번 새로 써서 원가가 두 배였다). 1시간 쓰기는 정가의 2배. */
+export const longCacheModel = (providerModelId: string) => /(^|\/)claude-(opus|fable)-/.test(providerModelId)
+const LONG_CACHE_WRITE_PREMIUM = 1
 export function modelCost(m: ModelDefinition, input: number | null, output: number | null, cachedInput = 0, cacheWrite = 0): number | null {
   if (m.provider === 'mock') return 0
   if (m.inputCost === undefined || m.outputCost === undefined || input === null || output === null) return null
   const rates = tokenRates(m, input)
   const cached = Math.min(input, Math.max(0, cachedInput))
   const written = Math.min(input - cached, Math.max(0, cacheWrite))
-  return Math.ceil(((input - cached) * rates.inputCost + written * rates.inputCost * CACHE_WRITE_PREMIUM + cached * rates.cachedInputCost + output * rates.outputCost) / 1_000_000 * 1e8) / 1e8
+  return Math.ceil(((input - cached) * rates.inputCost + written * rates.inputCost * (longCacheModel(m.providerModelId) ? LONG_CACHE_WRITE_PREMIUM : CACHE_WRITE_PREMIUM) + cached * rates.cachedInputCost + output * rates.outputCost) / 1_000_000 * 1e8) / 1e8
 }

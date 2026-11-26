@@ -1,5 +1,6 @@
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
 import { flatPrompt } from './types'
+import { longCacheModel } from './model-registry'
 import type { ProviderInfo } from '../types'
 
 type Usage = { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number } }
@@ -70,6 +71,8 @@ export class OpenAICompatibleProvider implements AIProvider {
     // GPT-5/6 계열은 max_tokens·temperature 를 받지 않는다(400). 생각은 reasoning_effort 로 — 기본 none, 필수 추론 모델은 low.
     const modernGPT = /^(openai\/)?gpt-[56](?:[.-]|$)/.test(this.model)
     const anthropicViaRouter = this.name === 'openrouter' && /^~?anthropic\//.test(this.model)
+    // 11/26 Opus·Fable 은 1시간 캐시(직결과 같게) — OpenRouter 가 Anthropic 에 그대로 넘긴다.
+    const cache = longCacheModel(this.model) ? { type: 'ephemeral', ttl: '1h' } : { type: 'ephemeral' }
     const requiresReasoning = /^(openai\/)?gpt-(6-astra|6\.1-sol)(?:-|$)/.test(this.model)
     // 11/16 OpenRouter 의 Claude 중 생각을 끌 수 있는 모델(실측: none 을 받는다)은 끈다 — low 로 두면 첫 글자가 늦다(Haiku 5.5 4.0초 → 0.8초, Opus 5 2.7 → 1.6초, Opus 4.6 2.3 → 1.7초).
     // Sonnet 5.5·Opus 5.5·Fable 은 none 을 400 으로 거절한다(필수 생각) — 목록에 없는 모델은 예전처럼 low.
@@ -90,11 +93,11 @@ export class OpenAICompatibleProvider implements AIProvider {
         // JSON 모드는 지시문에 JSON 이라는 말이 있어야 받는다(없으면 400).
         // 11/16 OpenRouter 의 Claude 도 지시문 앞부분을 캐시한다(직결 Anthropic 과 같은 자리) — 안 하면 턴마다 2만 토큰을 새로 읽어 첫 글자가 늦고 입력 값을 전부 낸다.
         messages: [{ role: 'system', content: anthropicViaRouter && req.cacheSystemPrefix && req.cacheSystemPrefix > 0 && req.cacheSystemPrefix <= req.system.length
-          ? [{ type: 'text', text: req.system.slice(0, req.cacheSystemPrefix), cache_control: { type: 'ephemeral' } }, { type: 'text', text: req.system.slice(req.cacheSystemPrefix) + (req.json ? '\nReturn only a JSON object.' : '') }]
+          ? [{ type: 'text', text: req.system.slice(0, req.cacheSystemPrefix), cache_control: cache }, { type: 'text', text: req.system.slice(req.cacheSystemPrefix) + (req.json ? '\nReturn only a JSON object.' : '') }]
           : req.system + (req.json ? '\nReturn only a JSON object.' : '') },
           // 11/16 최근 대화 덩이 — OpenRouter 의 Claude 는 끝 덩이에 캐시 표시, 나머지는 한 글로(앞부분이 같으면 공급자가 자동 캐시).
           { role: 'user', content: anthropicViaRouter && req.promptPrefix?.length
-            ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text', text, ...(i === all.length - 1 ? { cache_control: { type: 'ephemeral' } } : {}) })), { type: 'text', text: req.prompt }]
+            ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text', text, ...(i === all.length - 1 ? { cache_control: cache } : {}) })), { type: 'text', text: req.prompt }]
             : flatPrompt(req) }],
         ...(modernGPT ? { max_completion_tokens: completionCap, reasoning_effort: (req.thinking === 'max' ? 'xhigh' : req.thinking) ?? (requiresReasoning ? 'low' : 'none') }
           : { max_tokens: anthropicViaRouter ? completionCap : req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }), // 11/16 OpenRouter 의 Claude 도 생각이 답 몫을 먹는다 — 직결과 같이 3배
