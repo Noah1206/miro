@@ -14,6 +14,7 @@ import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile, HeaderProfileGuest } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { BannerSlider } from './banner-slider'
 import { HomeViewBeacon, HomeVoiceWake } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
@@ -87,9 +88,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/12 사용자: 로그인 전에도 크랙식 추천(데스크톱 소개 카드의 흐린 배경 포함) — 가입 선물 안내는 로그인 팝업의 선물 카드가 맡는다. */}
       {/* 11/23 뺐다가 11/24 사용자 "배너 있어야 해" 로 되살림 — 좌우로 넘기는 작품 카드(휴대폰은 가운데 카드만). */}
       {/* 11/25 사용자: 배너는 한 장 — 창작자 아르곤 무료 이벤트(11/27~12/7). 누르면 만들기. 예전 작품 카드 배너(HomeHero)는 hero.tsx 에 그대로 있다. */}
-      <TransitionLink href="/create" aria-label={t('제작자 이벤트: 작품을 공개하면 아르곤 무료')} style={{ display: 'block', margin: '0 var(--gutter) var(--space-2)', borderRadius: 14, overflow: 'hidden', aspectRatio: '3600 / 1020', background: '#1a1a1f' }}>
-        <img src="/events/creator-argon.webp" alt="" width={1800} height={510} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
-      </TransitionLink>
+      {/* 11/27 사용자: 배너가 3초마다 옆으로 자동으로 넘어간다 — 이벤트 배너 + 인기 작품 4개(언베일 표지는 뺀다). */}
+      <BannerSlider eventLabel={t('제작자 이벤트: 작품을 공개하면 아르곤 무료')} works={hotLists.all.filter(c => !c.coverUnveil).slice(0, 4)} />
       <HotRanking lists={hotLists} />
       {/* 11/26 사용자: 그 밑은 탐색 탭처럼 작품 카드 격자(대화량 순). */}
       <div className={styles.grid} style={{ padding: '0 var(--gutter)' }}>{[...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays).map(c => <CharacterCard key={c.id} c={c} />)}</div>

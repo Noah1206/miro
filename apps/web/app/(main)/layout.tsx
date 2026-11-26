@@ -1,5 +1,6 @@
 import { OAUTH_LABEL, resolveOAuth, type OAuthProviderId } from '@miro/providers'
 import { Nav } from '@/components/ui/nav'
+import { MobileHeader } from '@/components/mobile-header'
 import { NavigationFeedback } from '@/components/navigation-feedback'
 import { HydrationCover } from '@/components/loading-dots'
 import { LoginSheetProvider } from '@/components/ui/login-sheet'
@@ -37,7 +38,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         {/* 11/21 사용자: 첫 접속에 반쯤 그려진 화면 대신 점만 — 화면이 살아나면 걷힌다. */}
         <HydrationCover />
         <Nav signedIn={!!user} providers={providers} />
-        <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>
+        <div style={{ minWidth: 0 }}><MobileHeader signedIn={!!user} /><NavigationFeedback>{children}</NavigationFeedback></div>
       </div></WalletProvider></AccountProfileProvider>
     </LoginSheetProvider>
   )

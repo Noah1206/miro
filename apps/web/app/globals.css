@@ -517,7 +517,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .app-shell:has(> aside) { --side: 280px; }
   .app-shell:has(aside[data-collapsed="true"]) { --side: 72px; }
   /* 11/6 요청(베이비챗 대시보드처럼): 탭 화면 본문은 화면 가운데가 아니라 사이드바 오른쪽 영역의 가운데, 폭은 최대 1100(양옆 24 여백). */
-  .app-shell:has(> aside):has(.nav) > div:last-child { --main-w: min(1100px, calc(100% - var(--side) - 48px)); max-width: var(--main-w); margin-left: calc(var(--side) + (100% - var(--side) - var(--main-w)) / 2); margin-right: 0; }
+  .app-shell:has(> aside):has(.nav) > div:last-child { --main-w: min(1440px, calc(100% - var(--side) - 48px));   /* 11/27 사용자: 본문 폭 1100 → 1440 */ max-width: var(--main-w); margin-left: calc(var(--side) + (100% - var(--side) - var(--main-w)) / 2); margin-right: 0; }
   /* 11/3: 채팅방도 사이드바 옆에 넓게 — 셸 폭 제한을 풀고, 사이드바 오른쪽 전체를 쓰며 본문은 그 안 가운데 860. 하단 탭이 없으니 사이드바는 바닥까지. */
   /* 사이드바만 있고 하단 탭이 없는 셸 = 채팅방 경로(대화 전 페르소나 화면 포함, nav.tsx). */
   .app-shell:has(> aside):not(:has(.nav)) { max-width: none; }
@@ -625,3 +625,12 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 html[data-theme='light'] { filter: invert(1) hue-rotate(180deg); background: #000; }
 html[data-theme='light'] :is(img, video, picture, canvas, [style*='background-image']):not([src$='.svg']) { filter: invert(1) hue-rotate(180deg); }
 html[data-theme='light'] picture img { filter: none; }
+
+/* 11/27 사용자: 휴대폰 공통 헤더(헤더 없는 화면에만 들어간다, components/mobile-header.tsx). 컴퓨터에서는 숨긴다. */
+.mobile-header-slot { display: contents; }
+.mobile-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; min-height: 48px; padding: env(safe-area-inset-top) var(--gutter) 0; background: var(--color-bg); }
+@media (min-width: 1024px) { .mobile-header { display: none; } }
+/* 11/27 사용자: 버튼을 누르면 작게 줄었다가 돌아온다. :where 라 화면마다 따로 정한 누름 효과가 있으면 그쪽이 이긴다. */
+:where(button, [role='button'], a.hit, .mobile-header a, header a) { transition: transform .16s var(--ease-standard, ease); }
+:where(button, [role='button'], a.hit, .mobile-header a, header a):active { transform: scale(.92); }
+@media (prefers-reduced-motion: reduce) { :where(button, [role='button'], a.hit, header a):active { transform: none; } }
