@@ -21,6 +21,8 @@ export async function verifyCommunicationPreferences(llm: LLMProvider, input: {
   choice?: string
   groundingEvidence?: readonly UserGroundingEvidence[]
 }): Promise<ConversationReviewResult> {
+  // 11/26 사용자: 대사 검사는 하지 않는다(턴마다 모델 호출이 늘어 느리고 비쌌다) — 늘 통과.
+  return { acceptable: true, blockIndex: 0, reason: 'none', blocksChecked: input.blocks.length, claimsChecked: 0 }
   // The experimental ledger falsely rejected three normal cases in the live fixed-case
   // comparison. Preserve the deployed preference-only check until explicitly enabled.
   if (!feature('strictConversationReview')) {

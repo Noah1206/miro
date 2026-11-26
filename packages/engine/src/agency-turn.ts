@@ -257,7 +257,7 @@ export async function runAgencyTurn(opts: {
         transition = validated; records.push(...attemptRecords)
         // Inline source/preference checks already ran. Deferred canon/action review must not
         // charge for or reinterpret the same user check a second time.
-        if (verification.deferredReview) review = { ...realization, communicationPreference: false, userGroundingEvidence: undefined }
+        // 11/26 사용자: 뒤에서 도는 실현 검토(모델 호출)도 하지 않는다.
         break
       }
       // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.

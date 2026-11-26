@@ -13,6 +13,9 @@ export class TurnMeter {
   private reserved = 0
   private settled = 0
   customerCostUSD = 0
+  /** 11/26 사용자: 다시 받은 대사·검사 호출은 미로 부담 — 사용자에게는 마지막으로 받은 대사(이어 쓴 '+cont' 포함)와 나머지 분석만 매긴다. */
+  private dialogueUSD = 0
+  private otherUSD = 0
   missingSuccessfulUsage = false
   closed = false
   constructor(readonly limitUSD: number, readonly maxInputTokens: number, readonly maxOutputTokens: number) {
@@ -36,7 +39,12 @@ export class TurnMeter {
       // The service BudgetGuard retains unknown failed-call estimates. They are
       // not measured customer usage and must not consume the reply's recovery room.
       this.settled += known ? cost : record.ok ? estimate : 0
-      if (known) this.customerCostUSD += cost
+      if (known) {
+        const task = request.task ?? 'dialogue'
+        if (task === 'dialogue') { if (!/\+cont$/.test(request.promptVersion ?? '')) this.dialogueUSD = 0; this.dialogueUSD += cost }
+        else if (task !== 'agency_verify') this.otherUSD += cost
+        this.customerCostUSD = this.dialogueUSD + this.otherUSD
+      }
       else if (record.ok) this.missingSuccessfulUsage = true
     } }
   }
