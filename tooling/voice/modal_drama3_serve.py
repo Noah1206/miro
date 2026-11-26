@@ -232,7 +232,7 @@ MAX_CER = 0.3
 # H200 1장(141GB)에 BF16 71.8GB 가 통째로 들어간다 — GPU 상태 저장은 여러 장 코드와 대체로 안 맞아서 1장으로(10/30).
 # GPU 상태 저장(알파): 첫 몇 번의 켜짐에서 모델을 GPU 에 올린 상태를 저장하고, 이후 켜짐은 그 상태에서 되살린다.
 # ponytail: 컨테이너 1개·요청 하나씩(줄 서기) — 동시 사용자가 늘면 max_containers 를 올린다(H200 1장씩 추가 과금).
-@app.cls(image=image, gpu='H200', cpu=(8, 8), memory=(131072, 196608), timeout=1200, scaledown_window=1200,   # 11/6: 5분 → 20분(Modal 상한) — 대화 중 잠깐 쉬어도 다시 켜는 대기가 없게. 11/17 사용자: 25분 — 상한이 20분이라 웹 서버가 마지막 요청 5분 뒤에 한 번 더 깨워 합쳐서 25분(apps/web/app/api/tts/route.ts holdVoiceServer)
+@app.cls(image=image, gpu='H200', cpu=(8, 8), memory=(131072, 196608), timeout=1200, scaledown_window=120,   # 11/26 사용자(비용): 20분 → 2분 — 띄엄띄엄 쓰면 H200 이 하루 9~15시간 켜져 있었다. 스냅샷이라 다시 켜기는 빠르다. 11/6: 5분 → 20분(Modal 상한) — 대화 중 잠깐 쉬어도 다시 켜는 대기가 없게. 11/17 사용자: 25분 — 상한이 20분이라 웹 서버가 마지막 요청 5분 뒤에 한 번 더 깨워 합쳐서 25분(apps/web/app/api/tts/route.ts holdVoiceServer)
          min_containers=0, max_containers=1, volumes={'/voices': voices, USER_VOICES: user_voices}, secrets=[modal.Secret.from_name('miro-drama3-tts')],
          enable_memory_snapshot=True, experimental_options={'enable_gpu_snapshot': True})
 class Speaker:
@@ -1061,7 +1061,7 @@ class Voices:
             """11/19 웹 서버가 부른다 — 듣는 방이 있으면 음성 서버 대기 20분, 없으면 곧바로 꺼지게(서버를 켜지 않는다).
             11/24 사용자: 토글을 끄거나 브라우저를 닫은 뒤의 1분도 줄인다 — 없을 때 대기 60초 → 2초(Modal 이 받는 가장 짧은 값)."""
             if not authed(request): return Response(status_code=401)
-            Speaker().update_autoscaler(scaledown_window=1200 if active else 2)
+            Speaker().update_autoscaler(scaledown_window=120 if active else 2)   # 11/26 20분 → 2분
             return {'ok': True}
 
         @api.post('/voices')
