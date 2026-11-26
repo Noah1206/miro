@@ -10,6 +10,10 @@ import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
 import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, PHOTO_PAUSE_MS, REPLY_TYPING_PACE, replyTypingBoost } from '@/components/scene/typing'
 import { UnveilCover } from '@/components/unveil-badge'
+import { characterImageSources } from '@/components/character-visual'
+
+/** 11/27 사용자(사진이 늦게 뜬다): 채팅방 사진이 원본(장당 약 500KB)으로 내려갔다 — 화면 폭에 맞게 줄인 WebP(720·1080)로. */
+const PHOTO_SIZES = '(max-width: 760px) 100vw, 720px'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { ENDING_VIEW, UNDO, useTurns } from './turns'
@@ -226,7 +230,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
                 return <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {def?.image && <img src={def.image} alt="" className={styles.endingImage} />}
+                {def?.image && <img {...characterImageSources(def.image, 'detail')} sizes={PHOTO_SIZES} alt="" className={styles.endingImage} decoding="async" />}
                 <div className={styles.endingInfo}>
                   <strong>{def && <span className={styles.endingGrade} data-grade={def.grade}>{def.grade}</span>}ENDING · {title}</strong>
                   {others.length > 0 && <p>{t('다른 엔딩 {n}개', { n: others.length })}{others.some(e => e.hint) ? ` — ${others.filter(e => e.hint).map(e => e.hint).join(' · ')}` : ''}</p>}
@@ -288,10 +292,10 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {veil
           ? <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
-              <img src={m.content} alt="" className={styles.photo} onLoad={onGrow} />
+              <img {...characterImageSources(m.content, 'detail')} sizes={PHOTO_SIZES} alt="" className={styles.photo} decoding="async" onLoad={onGrow} />
               <UnveilCover veiled label={t('언베일')} unlock={{ signedIn: true, returnTo: "/home?unveil=enable" }} />
             </div>
-          : <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} className={styles.photo} onLoad={onGrow} />}
+          : <img {...characterImageSources(m.content, 'detail')} sizes={PHOTO_SIZES} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} className={styles.photo} decoding="async" onLoad={onGrow} />}
         {reality?.caption && <p className="t-caption t-quote">{reality.caption}</p>}
       </Reportable>
     )
