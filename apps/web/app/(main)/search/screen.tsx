@@ -150,6 +150,9 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, initialK
     {isResults && <section className={styles.filters} aria-labelledby="search-filters">
       <h2 id="search-filters" className="sr-only">{t('검색 필터')}</h2>
       <div className={styles.sortTabs} role="tablist" aria-label={t('정렬')}>
+        {/* 11/26 사용자: 맨 앞에 '신작' — 방금 올라온 작품이 맨 앞(최신순과 같은 sort=latest). */}
+        <button type="button" role="tab" aria-selected={latest} onClick={() => { const next = new URLSearchParams(key); next.set('sort', 'latest'); update(next) }}>{t('신작')}</button>
+        <span aria-hidden>/</span>
         <button type="button" role="tab" aria-selected={!rank && !latest} onClick={() => { const next = new URLSearchParams(key); if (rankDefault) next.set('sort', 'all'); else next.delete('sort'); update(next) }}>All</button>
         <span aria-hidden>/</span>
         <button type="button" role="tab" aria-selected={rank} onClick={() => { const next = new URLSearchParams(key); next.set('sort', 'ranking'); update(next) }}>Rank</button>
