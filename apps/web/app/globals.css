@@ -619,3 +619,9 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-speech { font-weight: 400; }
 .intro-speech strong { font-weight: 700; }
 .intro-preview > .intro-preview .intro-bubble:not(.intro-typing) { font-weight: 400; }
+
+/* 11/27 사용자: 라이트 모드(헤더 버튼). ponytail: 화면 전체를 뒤집고(밝기만 뒤집고 색상은 유지) 사진·영상만 다시 뒤집는다 —
+   색이 토큰 밖에 1,400곳 박혀 있어 한 번에 모든 글자·버튼 색을 바꾸는 가장 작은 방법. 색을 하나씩 다듬으려면 화면별로 토큰화한 뒤 [data-theme='light'] 토큰 값을 따로 둔다. */
+html[data-theme='light'] { filter: invert(1) hue-rotate(180deg); background: #000; }
+html[data-theme='light'] :is(img, video, picture, canvas, [style*='background-image']):not([src$='.svg']) { filter: invert(1) hue-rotate(180deg); }
+html[data-theme='light'] picture img { filter: none; }

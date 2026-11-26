@@ -13,6 +13,7 @@ import { getLanguage, getT } from '@/lib/i18n/server'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile, HeaderProfileGuest } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { HomeViewBeacon, HomeVoiceWake } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { feature, voicePaused } from '@miro/config'
@@ -67,6 +68,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
 
         <div className={styles.headerTools} style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: -8, marginLeft: 'auto' }}>
           {user && <HeaderWallet />}
+          <ThemeToggle className={`hit ${styles.headerItem}`} />
           {/* 11/20 사용자: 알림 종 삭제, 19 토글은 프로필 사진 옆, 그 왼쪽에 흰 검색 아이콘 — 누르면 검색 화면(최근 검색어·입력칸 포커스). */}
           <HeaderSearch signedIn={!!user} label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />

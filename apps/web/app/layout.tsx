@@ -56,6 +56,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={language === 'zh' ? 'zh-CN' : language}>
       <head>
+        {/* 11/27 라이트 모드: 첫 그리기 전에 기억한 테마를 건다(깜빡임 방지). */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('miro:theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}" }} />
         <Script id="google-ads-init" strategy="beforeInteractive">{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}

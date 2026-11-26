@@ -2643,5 +2643,7 @@
  "대화방 {n}": "Room {n}",
  "지금 대화방": "Current",
  "아직 대화 전": "No messages yet",
- "가입 후 1년 동안 20% 할인된 가격이에요.": "Discounted 20% for your first year after sign-up."
+ "가입 후 1년 동안 20% 할인된 가격이에요.": "Discounted 20% for your first year after sign-up.",
+  "라이트 모드로": "Switch to light mode",
+  "다크 모드로": "Switch to dark mode"
 }
