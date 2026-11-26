@@ -29,3 +29,7 @@ export function creatorName(c: { slug?: string | null; audience?: 'male' | 'fema
   const style = KNOWN[c.slug] ?? styleFor(audience, c.slug)
   return PEN_NAMES[style] ?? pick(c.slug, POOL[audience])
 }
+
+/** 11/27 사용자: 필명마다 프로필 사진(강아지·고양이 등) — public/creators 의 CC0·퍼블릭 도메인 사진(출처 credits.txt). MIRO 는 로고 그대로. */
+const PEN_AVATAR_ORDER = ['달무리', '새벽잉크', '모카', '유리온실', '밤편지', '설화담', '먹빛', '청람', '라일락', '은하수', '복숭아티', '초승달', '민트초코', '해무', '별사탕', '물망초', '달빛조각', '체리블라썸', '안개꽃', '백야', '노을빛']
+export const penAvatar = (name: string): string | null => { const i = PEN_AVATAR_ORDER.indexOf(name); return i < 0 ? null : `/creators/pen-${String(i + 1).padStart(2, '0')}.webp` }

@@ -10,9 +10,9 @@ export function CreatorRow({ creator, signedIn }: { creator: Creator; signedIn: 
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 48 }}>
       <TransitionLink href={`/creator/${encodeURIComponent(creator.key)}`} style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1, color: 'var(--color-text-primary)' }}>
         <span aria-hidden style={{ flex: 'none', width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--color-surface-3)' }}>
-          {creator.pen ? <LogoMark size={18} label="" />
-            // eslint-disable-next-line @next/next/no-img-element -- 작은 프로필 사진
-            : creator.avatarUrl ? <img src={creator.avatarUrl} alt="" width={32} height={32} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {/* eslint-disable-next-line @next/next/no-img-element -- 작은 프로필 사진 */}
+          {creator.avatarUrl ? <img src={creator.avatarUrl} alt="" width={32} height={32} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : creator.pen ? <LogoMark size={18} label="" />
             : <span style={{ fontSize: 13, fontWeight: 700 }}>{creator.name.slice(0, 1)}</span>}
         </span>
         {/* 11/12 사용자: 팔로워 수는 빼고 이름만 — 팔로우 버튼은 줄 오른쪽 끝 */}

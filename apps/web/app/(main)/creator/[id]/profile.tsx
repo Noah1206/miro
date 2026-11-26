@@ -35,9 +35,9 @@ export function CreatorProfile({ creator, works, signedIn, cheerId }: { creator:
     <section className={styles.head}>
       <div className={styles.identity}>
         <span className={styles.avatar} aria-hidden>
-          {creator.pen ? <LogoMark size={36} label="" />
-            // eslint-disable-next-line @next/next/no-img-element -- 프로필 사진
-            : creator.avatarUrl ? <img src={creator.avatarUrl} alt="" width={76} height={76} />
+          {/* eslint-disable-next-line @next/next/no-img-element -- 프로필 사진 */}
+          {creator.avatarUrl ? <img src={creator.avatarUrl} alt="" width={76} height={76} />
+            : creator.pen ? <LogoMark size={36} label="" />
             : <span>{creator.name.slice(0, 1)}</span>}
         </span>
         <div className={styles.who}>

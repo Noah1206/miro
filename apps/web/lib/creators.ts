@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { creatorFollows, db, users } from '@miro/db'
-import { creatorName } from '@/lib/creator-name'
+import { creatorName, penAvatar } from '@/lib/creator-name'
 
 /** 공식 작품을 올리는 운영자 계정(scripts/seed-bl-characters.mts 의 OWNER) — 작품마다 그림체별 필명으로 보인다(lib/creator-name). */
 export const OFFICIAL_OWNER_ID = 'f5a0dfcb-0e4c-443e-be17-c982234926c1'
@@ -23,7 +23,7 @@ export async function creatorOf(key: string, viewerId: string | null): Promise<C
     following: viewerId ? sql<boolean>`coalesce(bool_or(${creatorFollows.followerId} = ${viewerId}), false)` : sql<boolean>`false`,
   }).from(creatorFollows).where(eq(creatorFollows.creatorKey, key))
   const base = { key, followers: counts?.followers ?? 0, following: !!counts?.following }
-  if (key.startsWith('pen:')) return { ...base, name: key.slice(4), avatarUrl: null, pen: true, self: false, followingCount: 0, bio: '' }  // 필명은 운영자에게도 별도 크리에이터로 보인다
+  if (key.startsWith('pen:')) return { ...base, name: key.slice(4), avatarUrl: penAvatar(key.slice(4)), pen: true, self: false, followingCount: 0, bio: '' }  // 필명은 운영자에게도 별도 크리에이터로 보인다
   const [[u], [mine]] = await Promise.all([
     db.select({ name: users.displayName, avatarUrl: users.avatarUrl, bio: users.creatorBio }).from(users).where(eq(users.id, key)).limit(1),
     db.select({ n: sql<number>`count(*)::int` }).from(creatorFollows).where(eq(creatorFollows.followerId, key)),
