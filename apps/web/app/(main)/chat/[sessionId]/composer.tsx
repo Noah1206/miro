@@ -8,6 +8,7 @@ import { Pressable, TransitionLink, useToast } from '@/components/ui'
 import { ATTENDANCE_GRANT, MIN_TURN_BALANCE } from '@miro/config'
 import styles from './chat.module.css'
 import glass from '@/components/chat-composer-glass.module.css'
+import { GUEST_SEND } from '@/lib/guest-chat'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
 import { PersonaPicker } from './persona-picker'
@@ -159,9 +160,17 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       const carried = JSON.parse(sessionStorage.getItem(UNVEIL_CARRY) ?? 'null')
       sessionStorage.removeItem(UNVEIL_CARRY)
       if (!input && carried && typeof carried.text === 'string' && carried.text.length <= 2000 && Date.now() - Number(carried.at) < 600_000) input = carried.text
+      // 11/27 게스트 대화창에서 적은 말 — 로그인·온보딩 뒤 이 방으로 넘어오면 채워서 바로 보낸다(10분 안).
+      const guest = JSON.parse(localStorage.getItem(GUEST_SEND) ?? 'null')
+      if (guest?.sessionId === sessionId) {
+        localStorage.removeItem(GUEST_SEND)
+        if (!input && typeof guest.text === 'string' && guest.text.length <= 2000 && Date.now() - Number(guest.at) < 600_000) { input = guest.text; setAutoSend(true) }
+      }
     } catch { /* Storage may be unavailable in private browsing. */ }
     setDraft(input); setRequestId(id); setReady(true)
-  }, [storageKey])
+  }, [storageKey, sessionId])
+  const [autoSend, setAutoSend] = useState(false)
+  useEffect(() => { if (autoSend && ready && draft.trim()) { setAutoSend(false); ref.current?.requestSubmit() } }, [autoSend, ready, draft])
   useEffect(() => {
     if (!ready) return
     try {

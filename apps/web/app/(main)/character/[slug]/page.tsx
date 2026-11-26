@@ -206,7 +206,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
                 ? <form id="start-roleplay" action={enter}><ResumeOrNew resume={t('이어서 대화')} fresh={t('새로 대화')} /></form>
                 : user
                 ? <form id="start-roleplay" action={enter}><SubmitNavigates /><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
-                : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
+                : c.adultOnly
+                ? <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />
+                // 11/27 사용자: 로그인 전에도 대화방이 인트로까지 열린다(게스트 대화창) — 말을 보낼 때 로그인을 묻는다. 고른 시작 상황은 ?scene 으로 간다.
+                : <form id="start-roleplay" action={`/chat/guest/${slug}`} method="get"><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>}
             </div>
           </div>
         </div>
@@ -235,7 +238,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null} veil={veilIntro}
           start={locked
             ? <StartWithUnveil returnTo={unlockAt.returnTo} label={t('대화 바로 시작하기')} />
-            : user
+            : user || !c.adultOnly
             ? <button type="submit" form="start-roleplay" className="btn-start" style={{ width: '100%', minHeight: 52, borderRadius: 'var(--radius-lg)', background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontSize: 16, fontWeight: 'var(--weight-regular)', fontFamily: 'inherit', cursor: 'pointer' }}>{t('대화 바로 시작하기')}</button>
             : <StartWithLogin slug={slug} label={t('대화 바로 시작하기')} />}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />

@@ -17,8 +17,7 @@ import { Back, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
 import { ChatComposer } from './composer'
-import { getPersona, needsPersona } from '@/lib/persona'
-import { WorldIntro } from './world-intro'
+import { getPersona } from '@/lib/persona'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
 import { chatModelOptions, middleLength, recommendedChoice } from '@/lib/ai/chat-models'
@@ -69,7 +68,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const voiceData = feature('characterVoice') ? Promise.all([voiceOptions(user.id), db.select({ o: roleplaySessions.voiceOverrides }).from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).limit(1)]) : null
   const extras = homeUnveilEnabled(user.id)
   voiceData?.catch(() => {}); extras.catch(() => {})
-  const [loaded, all, modelOptions, mature, adult, media, profile, rec, myPersona, needPersona] = await Promise.all([
+  const [loaded, all, modelOptions, mature, adult, media, profile, rec, myPersona] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
@@ -82,8 +81,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, playGuide: characters.playGuide, firstReplies: characters.firstReplies, endings: characters.endings, ensemblePhotos: characters.ensemblePhotos, ensembleVoices: characters.ensembleVoices, bgm: characters.bgm, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
     // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
     getPersona(user.id),
-    // 첫 대화 전 세계관 카드(11/4) — 이 방의 '나'를 적기 전에는 입력창 대신 카드가 뜬다.
-    needsPersona(user.id, sessionId),
   ])
   // 11/8 방에서 화자별 목소리 고르기 — 고를 수 있는 목소리, 이 방에서 고른 것, 화자마다 지금 쓰는 기본(만든 사람이 정한 것 → 자동).
   const roomVoice = voiceData && rec ? await (async () => {
@@ -158,14 +155,12 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           )}
           {/* 플레이 가이드(11/10) — 사용자에게만 보이는 안내, AI 에는 가지 않는다. 11/20 사용자: 인트로 바로 밑에, 대화가 이어져도 그 자리에 남는다. */}
           <MessageList afterIntro={rec?.playGuide ? <aside className={styles.playGuide} aria-label={t('플레이 가이드')}><strong>{t('플레이 가이드')}</strong><p>{rec.playGuide}</p></aside> : undefined} endings={rec?.endings ?? []} sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={cast} castPhotos={castPhotos} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
-          {needPersona && <WorldIntro sessionId={sessionId} worldSetting={s.worldSetting ?? null} guide={rec?.guide ?? ''} presets={rec?.presets ?? []} personality={s.character.personality.personality} audience={rec?.audience ?? null} />}
         </div>
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         {/* 11/21 사용자: 대화방마다 처음 들어왔을 때 무조건 한 번 — 방마다 따로 기억한다. */}
         <CoachMarks storageKey="miro:tour:chat:v2" steps={CHAT_COACH} />
-        {/* 11/13 사용자: '이 세계에서의 나'는 선택 — 카드가 떠 있어도 입력창을 같이 보여 준다. */}
         {<ChatComposer adultAllowed={!(await minor)} sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies?.map(fill) : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
           persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
           photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />}

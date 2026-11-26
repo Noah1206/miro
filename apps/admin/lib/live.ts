@@ -132,7 +132,8 @@ export function pageName(path: string, names: Map<string, string> = new Map()): 
     case 'search': return '검색'
     case 'genre': return `장르 · ${decodeURIComponent(seg[1] ?? '')}`
     case 'character': return with_(seg[2] === 'comments' ? '캐릭터 댓글' : '캐릭터 상세', seg[1])
-    case 'chat': return with_(seg[2] === 'memory' ? '대화 기억' : seg[2] === 'note' ? '유저노트' : seg[2] === 'novel' ? '웹소설' : '채팅방', seg[1])
+    case 'chat': if (seg[1] === 'guest') return with_('게스트 대화창', seg[2])
+      return with_(seg[2] === 'memory' ? '대화 기억' : seg[2] === 'note' ? '유저노트' : seg[2] === 'novel' ? '웹소설' : '채팅방', seg[1])
     case 'messages': return seg[1] === 'story' ? '스토리 문자' : with_(seg[1] ? '문자방' : '문자 목록', seg[1])
     case 'stories': return seg[1] === 'play' ? '오리지널 스토리 플레이' : with_(seg[1] ? '오리지널 스토리 소개' : '오리지널 스토리', seg[1])
     case 'live': return with_('장면 보기', seg[1])
