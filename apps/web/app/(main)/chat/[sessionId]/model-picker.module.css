@@ -13,6 +13,8 @@
 .group h3 { margin:0; padding:10px 9px 5px; color:#89858f; font-size:10px; font-weight:400; }
 .option { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; width:100%; min-height:65px; padding:12px 9px; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; cursor:pointer; text-align:left; }
 .option:hover,.option[aria-pressed='true'] { background:#ffffff08; }
+/* 11/26 사용자: 모델마다 아래 구분선(묶음의 마지막 모델 제외) */
+.group > .option:not(:last-child) { border-bottom:1px solid rgb(255 255 255 / .08); border-radius:0; }
 .copy { min-width:0; flex:1; }
 .heading { display:flex; align-items:center; gap:7px; }
 .heading strong { font-size:15px; font-weight:500; line-height:1.5; overflow-wrap:anywhere; }
