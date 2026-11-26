@@ -475,7 +475,7 @@ function StatusCard({ blocks, open }: { blocks: Array<Record<string, unknown>>; 
   const stats = b.stats && typeof b.stats === 'object' ? Object.entries(b.stats as Record<string, number>) : []
   if (!text && !stats.length) return null
   return <details className={styles.statusCard} open={open}>
-    <summary>{t('상태창')}</summary>
+    <summary aria-label={t('상태창')}>INFO</summary>
     {text ? <pre className={styles.statusText}>{text}</pre>
       : <ul className={styles.statusStats}>{stats.map(([k, v]) => <li key={k}><span>{k}</span><b>{v}</b></li>)}</ul>}
   </details>

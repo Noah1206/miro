@@ -878,6 +878,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* ── 11/24 사용자: 화면 설정(채팅방 설정 → 화면 설정) — 글자 크기·글씨체·사진 크기. 이 기기에 저장되고 대화 영역(.messages)에만 걸린다.
    값은 채팅방 뿌리(components/chat-theme.tsx)의 data-chat-* 속성. ── */
+/* 11/27 사용자: 상태창을 에덴챗 INFO 상자처럼 — 진한 제목 띠(31px)·옅은 남색 바탕·1px 테두리·모서리 4px, 본문은 대화 글꼴 15px/170% 흐린 회색, 접기 화살표 없음. */
+.statusCard, .turnCard .statusCard { margin: 0; border: 1px solid #2A3040; border-radius: 4px; background: #1A1E27; }
+.statusCard summary, .turnCard .statusCard summary { display: flex; align-items: center; height: 31px; padding: 0 12px; background: #1E2230; color: #6B7280; font-size: 15px; letter-spacing: -.01em; }
+.statusCard summary::before { content: none; }
+.statusText { padding: 16px; font: 400 15px/1.7 inherit; font-family: inherit; letter-spacing: -.01em; color: #8890A0; }
+.statusStats { padding: 16px; font-size: 15px; color: #8890A0; }
 /* 기본 테마의 글(서술·대사·속마음·내 말풍선·상태창)은 14px 고정이라, 고른 단계의 크기로 직접 바꾼다(줄 간격은 1.5배 그대로). */
 :global([data-chat-font='small']) .messages :is(.flowText, .flowLine, .thought, .userBubble, .statusText, .bubble) { font-size: 12.5px; line-height: 1.5; }
 :global([data-chat-font='large']) .messages :is(.flowText, .flowLine, .thought, .userBubble, .statusText, .bubble) { font-size: 16px; line-height: 1.5; }
