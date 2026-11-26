@@ -1,5 +1,7 @@
 import { adultRegistry, longCacheModel, registryFromEnv, providerFromEnv, type ModelDefinition } from '@miro/providers'
 import { POLICY, tokenPricing, tokenQuote, tokenRates, tokensForCost, productionRuntime } from '@miro/config'
+import { db, users } from '@miro/db'
+import { eq } from 'drizzle-orm'
 
 export type ChatModel = string
 /** 11/19 사용자: 오픈 이벤트 — 11/20~11/26(KST) 채팅방 Haiku 대화는 토큰을 깎지 않는다(음성 턴은 평소대로). ponytail: 날짜 고정, 다음 이벤트 때 env 로. */
@@ -55,9 +57,19 @@ function turnScale(model: ModelDefinition, pricing: ReturnType<typeof tokenPrici
  */
 export const TURN_PROMO = { rate: 0.2, until: Date.parse('2027-01-01T00:00:00+09:00'), models: ['Claude Fable 5.2', 'GPT 6 Astra', 'GPT 6.1 Sol', 'Claude Opus 5.5', 'GPT-5.5'] }
 const promoModel = (model: ModelDefinition) => TURN_PROMO.models.includes(displayName(model.providerModelId))
-/** 할인 중이면 1, 할인이 끝난 할인 대상 모델은 정가 배수(1/0.8), 나머지 1. */
-const promoScale = (model: ModelDefinition, now = Date.now()) => promoModel(model) && now >= TURN_PROMO.until ? 1 / (1 - TURN_PROMO.rate) : 1
-const promoActive = (model: ModelDefinition, now = Date.now()) => promoModel(model) && now < TURN_PROMO.until
+/**
+ * 11/26 사용자: 가입 1년 할인(전 모델 20%) — 가입한 날부터 365일 동안은 할인가, 지나면 정가를 실제로 받는다.
+ * 할인가 = 바꾸기 전 가격(누구도 오르지 않는다). 정가 = 할인가 ÷ 0.8 — 위 TURN_PROMO 모델은 원래 정가가 그 값이라 그대로, 나머지는 정가만 올렸다.
+ * 로그인 전(방문자)은 가입하면 받을 값(할인가)을 보여 준다.
+ */
+const WELCOME_DISCOUNT_DAYS = 365
+export async function welcomeDiscount(userId: string | null | undefined, now = Date.now()): Promise<boolean> {
+  if (!userId) return true
+  const [u] = await db.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1).catch(() => [])
+  return !u || now - u.createdAt.getTime() < WELCOME_DISCOUNT_DAYS * 86_400_000
+}
+/** 최소 차감 배수 — 할인 받는 사람은 1, 1년이 지난 사람은 정가 배수(1/0.8). */
+const promoScale = (discounted: boolean) => discounted ? 1 : 1 / (1 - TURN_PROMO.rate)
 /** 11/18 사용자: 고르는 목록에서 뺀 모델(예비 역할 gpt-5.4-mini 는 그대로 — 목록에만 안 뜬다). */
 // 11/21 사용자: 겹쳐 보이는 모델은 같은 계열의 최신 하나만 — Opus 5.5(5·4.6 뺌), GPT 6.1 Sol·Terra(6 Sol·5.6 Sol·5.6 Terra 뺌), GPT-5.5(5.4 뺌).
 // GPT 6 Luna·Gemma 4·DeepSeek 도 뺀다. 예전에 골라 둔 방은 기본 모델로 이어진다.
@@ -141,11 +153,13 @@ function displayName(id: string) {
  * 원가 비중을 그만큼 낮춰 견적·예약·차감·최소 차감이 한 값으로 같이 움직인다. 직결(claude-opus-5-5)과 OpenRouter(anthropic/claude-opus-5.5) 이름 모두.
  */
 export const PREMIUM_CHARGE = 1   // 11/26 사용자: 1.5 → 1(할증 없앰) — Opus·Fable 이 다른 플랫폼의 3배였다
-const pricingFor = (model: ModelDefinition, base = tokenPricing()) => {
+const pricingFor = (model: ModelDefinition, discounted: boolean, base = tokenPricing()) => {
   let costShare = base.costShare
   if (/claude-(fable|opus)-/.test(model.providerModelId)) costShare /= PREMIUM_CHARGE
-  // 11/22 1미로 = 1원: 원가 기반 차감이 최소 차감보다 커져 할인이 화면에만 있었다 — 할인 기간엔 원가 기반 차감에도 같은 할인(최소 차감은 turnScale 이 표 값으로 맞춘다).
-  if (promoActive(model)) costShare /= 1 - TURN_PROMO.rate
+  // 11/26 정가: TURN_PROMO 밖 모델은 지금 값 ÷ 0.8 이 정가(원가 비중 × 0.8 = 차감 1.25배).
+  if (!promoModel(model)) costShare *= 1 - TURN_PROMO.rate
+  // 11/22 1미로 = 1원: 원가 기반 차감에도 같은 할인(최소 차감은 turnScale·promoScale 이 맞춘다).
+  if (discounted) costShare /= 1 - TURN_PROMO.rate
   return costShare === base.costShare ? base : { ...base, costShare }
 }
 /**
@@ -174,24 +188,25 @@ function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<t
   const maximumUSD = quote.maximumUSD + Math.max(0, verification.maximumUSD - quote.maximumUSD / pricing.turnAllowance)
   return { ...quote, maximumUSD, maximumTokens: tokensForCost(maximumUSD, pricing) }
 }
-export async function chatModelOptions(_userId: string, adult = false) {
+export async function chatModelOptions(userId: string, adult = false) {
   try {
     const base = tokenPricing()
+    const discounted = await welcomeDiscount(userId)
     const choices: ChatModelChoice[] = choiceModels(adult).flatMap(({ key, model }) => LENGTHS.map(length => {
-      const pricing = pricingFor(model, base)
+      const pricing = pricingFor(model, discounted, base)
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
-      const floorTypical = Math.round(Math.round((liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId)) * turnScale(model, pricing)) * promoScale(model))
+      const floorTypical = Math.round(Math.round((liftTurnTokens(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE) + nudge(model.providerModelId)) * turnScale(model, pricing)) * promoScale(discounted))
       const typical = Math.min(quote.maximumTokens, Math.max(floorTypical, typicalCostTokens(model, length, pricing, adult)))
       return { id: choiceId(key, length), name: displayName(model.providerModelId) + (freeChatTurn(model.id) ? ' · 무료' : ''), provider: model.provider, length: tier.replyLength,
         maximumTokens: quote.maximumTokens, typicalTokens: typical, maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId), free: freeChatTurn(model.id),
-        ...(promoActive(model) ? { listTokens: Math.round(typical / (1 - TURN_PROMO.rate)), discountRate: TURN_PROMO.rate } : {}) }
+        ...(discounted ? { listTokens: Math.round(typical / (1 - TURN_PROMO.rate)), discountRate: TURN_PROMO.rate } : {}) }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
   } catch { return { freeReady: false, proReady: false, choices: [] as ChatModelChoice[] } }
 }
 /** Legacy product ids still resolve, but all dialogue now draws from the token wallet. */
-export async function resolveChatModel(_userId: string, choice: string, adult = false) {
+export async function resolveChatModel(userId: string, choice: string, adult = false) {
   const models = choiceModels(adult)
   // 기본 모델은 두 방이 같다(11/3) — 일반 방의 지정 모델(MIRO_CHAT_MODEL_ID)이 언베일 방에서도 첫 값.
   const pinned = process.env.MIRO_CHAT_MODEL_ID
@@ -207,11 +222,12 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   if (!model) throw new Error('chat model unavailable')
   const tierName = TIER_OF[length]
   const tier = POLICY.chatTier[tierName]
-  const pricing = pricingFor(model)
+  const discounted = await welcomeDiscount(userId)
+  const pricing = pricingFor(model, discounted)
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
   // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
   const main = adult ? availableModels(false).find(m => m.id === key) : model
-  const floorTokens = Math.round((liftTurnTokens(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE) + nudge(model.providerModelId)) * turnScale(main ?? model, pricing) * promoScale(main ?? model))
+  const floorTokens = Math.round((liftTurnTokens(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE) + nudge(model.providerModelId)) * turnScale(main ?? model, pricing) * promoScale(discounted))
   // thinking 은 선택 칸으로 — 이 반환형을 흉내 내는 시험 자료를 깨지 않는다.
   return Object.assign({ modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }, { thinking: modelThinks(model.providerModelId) } as { thinking?: boolean })
 }
