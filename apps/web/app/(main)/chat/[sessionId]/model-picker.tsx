@@ -95,7 +95,7 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
                 <span className={sheet.description}>{t(presentation.description)}</span></span>
               <span className={sheet.side} aria-label={choice.listTokens ? t('보통 {typical} 토큰/턴, 정가 {list}에서 {rate}% 할인', { typical: choice.typicalTokens.toLocaleString(locale), list: choice.listTokens.toLocaleString(locale), rate: Math.round((choice.discountRate ?? 0) * 100) }) : t('보통 {typical} 토큰/턴', { typical: choice.typicalTokens.toLocaleString(locale) })}>
                 <span className={sheet.sidePrice}>{choice.typicalTokens.toLocaleString(locale)}<img src="/miro-token.svg" alt="" aria-hidden="true" width={16} height={16} decoding="async"/></span>
-                {choice.listTokens && <><span className={sheet.sideOff}>−{Math.round((choice.discountRate ?? 0) * 100)}%</span><s className={sheet.sideList}>{choice.listTokens.toLocaleString(locale)}</s></>}
+                {choice.listTokens && <><span className={sheet.sideOff} aria-hidden="true">{Math.round((choice.discountRate ?? 0) * 100)}%</span><s className={sheet.sideList}>{choice.listTokens.toLocaleString(locale)}</s></>}
               </span>
             </button>
           })}

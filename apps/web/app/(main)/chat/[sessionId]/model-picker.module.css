@@ -77,6 +77,9 @@
 .side { flex:none; display:grid; justify-items:end; gap:1px; min-width:56px; padding-top:1px; }
 .sidePrice { display:inline-flex; align-items:center; gap:3px; color:#fff; font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; }
 .sidePrice img { width:16px; height:16px; }
-.sideOff { color:#fff; font-size:11px; font-weight:700; }
+.sideOff { position:relative; display:grid; place-items:center; width:34px; height:34px; margin:2px 0 1px; color:#fff; font-size:10px; font-weight:800; letter-spacing:-.3px; line-height:1;
+  /* 11/26 사용자: '−20%' 글자를 빨간 톱니 딱지로(할인 스티커) */ clip-path:polygon(50.0% 0.0%, 60.6% 10.4%, 75.0% 6.7%, 79.0% 21.0%, 93.3% 25.0%, 89.6% 39.4%, 100.0% 50.0%, 89.6% 60.6%, 93.3% 75.0%, 79.0% 79.0%, 75.0% 93.3%, 60.6% 89.6%, 50.0% 100.0%, 39.4% 89.6%, 25.0% 93.3%, 21.0% 79.0%, 6.7% 75.0%, 10.4% 60.6%, 0.0% 50.0%, 10.4% 39.4%, 6.7% 25.0%, 21.0% 21.0%, 25.0% 6.7%, 39.4% 10.4%);
+  background:radial-gradient(circle at 35% 30%, #ff6a6a 0%, #e8262b 55%, #b5121b 100%); text-shadow:0 1px 1px rgb(0 0 0 / .35); }
+.sideOff::after { content:''; position:absolute; inset:5px; border-radius:50%; box-shadow:inset 0 1px 2px rgb(255 255 255 / .35), inset 0 -2px 3px rgb(0 0 0 / .25); pointer-events:none; }
 .sideList { color:rgb(255 255 255 / .4); font-size:11px; font-variant-numeric:tabular-nums; }
 .heading .check { margin-left:2px; height:auto; }
