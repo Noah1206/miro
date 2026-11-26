@@ -32,7 +32,9 @@
 
 /* 11/20 사용자: 웹툰 앱 '최근 본' 목록 모양으로 — 촘촘한 줄, 둥근 네모 사진, 제목 아래 시간, 오른쪽 '이어하기 ›'. 위 규칙을 덮는다. */
 .list { gap: 0; }
-.row { gap: 14px; padding: 8px 12px; }
+.row { gap: 14px; padding: 10px 12px; }
+/* 11/26 사용자: 작품마다 아래 구분선(마지막 줄 제외) */
+.list > li:not(:last-child) .row { border-bottom: 1px solid rgb(255 255 255 / .08); border-radius: 0; }
 .avatar { width: 56px; height: 56px; border-radius: 6px; }
 .body { gap: 2px; }
 .titleRow { justify-content: flex-start; gap: 6px; min-height: 22px; }
