@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import type { HomeCard } from '@/lib/home'
 import { TransitionLink } from '@/components/ui'
-import { CharacterVisual } from '@/components/character-visual'
+import { characterImageSources } from '@/components/character-visual'
 import { cardBlurb } from '@/components/character-card'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import styles from './banner-slider.module.css'
@@ -42,15 +42,22 @@ export function BannerSlider({ works, events }: { works: HomeCard[]; events: Eve
       <img src={e.src} alt="" width={1800} height={510} className={styles.eventImage} />
     </TransitionLink>
   )
-  const work = (c: HomeCard, key: string, clone = false) => (
-    <TransitionLink key={key} href={`/character/${c.slug ?? c.id}`} aria-hidden={clone || undefined} tabIndex={clone ? -1 : undefined} className={`${styles.slide} ${styles.work}`}>
-      <div className={styles.copy}>
-        <p className={styles.title}>{coverTitle(c)}</p>
-        <p className={styles.blurb}>{cardBlurb(c)}</p>
-      </div>
-      <div className={styles.cover}><CharacterVisual name={c.name} accent={c.accentA} slug={c.slug ?? c.id} photo={c.images[0]} ratio="1 / 1" scrim={false} /></div>
-    </TransitionLink>
-  )
+  // 11/27 사용자: 작품 배너도 이벤트 배너처럼 한 장의 그림으로 — 표지를 흐리게 깐 배경 + 오른쪽에 표지가 번지듯 이어지고 그 위에 제목.
+  const work = (c: HomeCard, key: string, clone = false) => {
+    const art = c.images[0] ? characterImageSources(c.images[0], 'detail') : null
+    const thumb = c.images[0] ? characterImageSources(c.images[0], 'thumbnail').src : null
+    return (
+      <TransitionLink key={key} href={`/character/${c.slug ?? c.id}`} aria-hidden={clone || undefined} tabIndex={clone ? -1 : undefined} className={`${styles.slide} ${styles.work}`}>
+        {thumb && <span aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(thumb)})` }} />}
+        <span aria-hidden className={styles.shade} />
+        {art && <img {...art} sizes="(max-width: 1023px) 50vw, 600px" alt="" className={styles.art} loading="lazy" decoding="async" />}
+        <div className={styles.copy}>
+          <p className={styles.title}>{coverTitle(c)}</p>
+          <p className={styles.blurb}>{cardBlurb(c)}</p>
+        </div>
+      </TransitionLink>
+    )
+  }
   const lastWork = works.at(-1), lastEvent = events.at(-1), first = events[0]
   return (
     <div ref={track} className={styles.track}>
