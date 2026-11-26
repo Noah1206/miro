@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { setHomeUnveilFor } from '@/lib/home-mode'
 import { revalidatePath } from 'next/cache'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, ne, sql } from 'drizzle-orm'
 import { characters, db, messages, roleplaySessions } from '@miro/db'
 import { selectableVoice } from '@/lib/voice'
 import { requireUser } from '@/lib/auth'
@@ -115,4 +115,33 @@ export async function startNewRoom(sessionId: string): Promise<{ sessionId: stri
     const started = await createRoleplaySession(user.id, room.characterId, { fresh: true, unveil: false })
     return { sessionId: started.sessionId }
   } catch { return { error: msg('지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.') } }
+}
+
+export type CharacterRoom = { id: string; createdAt: string; lastAt: string; turns: number; preview: string | null; current: boolean }
+/** 11/26 사용자: 같은 캐릭터의 대화방들 — 대화 목록에는 캐릭터당 한 줄만 두고, 채팅방 메뉴에서 이 목록으로 오간다. */
+export async function listCharacterRooms(sessionId: string): Promise<CharacterRoom[]> {
+  const user = await requireUser()
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) return []
+  const [room] = await db.select({ characterId: roleplaySessions.characterId }).from(roleplaySessions)
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt))).limit(1)
+  if (!room) return []
+  const rows = await db.execute<{ id: string; created_at: string; last_at: string; turns: number; preview: string | null }>(sql`
+    SELECT r.id, r.created_at, r.last_interaction_at AS last_at, r.turn_count AS turns,
+      (SELECT left(m.content, 80) FROM messages m WHERE m.session_id = r.id AND m.hidden_at IS NULL AND m.kind = 'text' ORDER BY m.created_at DESC LIMIT 1) AS preview
+    FROM roleplay_sessions r WHERE r.user_id = ${user.id}::uuid AND r.character_id = ${room.characterId}::uuid AND r.deleted_at IS NULL
+    ORDER BY r.last_interaction_at DESC LIMIT 30`)
+  return [...rows].map(r => ({ id: r.id, createdAt: new Date(r.created_at).toISOString(), lastAt: new Date(r.last_at).toISOString(), turns: r.turns, preview: r.preview, current: r.id === sessionId }))
+}
+
+/** 11/26 다른 대화방으로 옮길 때 — 그 방을 진행 중으로, 같은 캐릭터의 다른 방은 보관으로(대화 목록엔 진행 중인 방 한 줄). */
+export async function openCharacterRoom(fromSessionId: string, toSessionId: string): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  if (![fromSessionId, toSessionId].every(id => /^[0-9a-f-]{36}$/i.test(id))) return { error: msg('대화방을 찾을 수 없어요.') }
+  const rows = await db.select({ id: roleplaySessions.id, characterId: roleplaySessions.characterId }).from(roleplaySessions)
+    .where(and(eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), sql`${roleplaySessions.id} in (${fromSessionId}::uuid, ${toSessionId}::uuid)`))
+  const target = rows.find(r => r.id === toSessionId), from = rows.find(r => r.id === fromSessionId)
+  if (!target || !from || target.characterId !== from.characterId) return { error: msg('대화방을 찾을 수 없어요.') }
+  await db.update(roleplaySessions).set({ status: 'archived' }).where(and(eq(roleplaySessions.userId, user.id), eq(roleplaySessions.characterId, target.characterId), ne(roleplaySessions.id, toSessionId), isNull(roleplaySessions.deletedAt)))
+  await db.update(roleplaySessions).set({ status: 'active', lastInteractionAt: new Date() }).where(eq(roleplaySessions.id, toSessionId))
+  return { ok: true }
 }

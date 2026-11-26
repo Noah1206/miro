@@ -23,7 +23,7 @@ import { RoomGallery } from '@/components/room-gallery'
 import { ReplyLengthPanel } from '@/components/reply-length-sheet'
 import { PacePanel } from '@/components/chat-pace'
 import { DisplayPanel } from '@/components/chat-display'
-import { startNewRoom } from '@/app/(main)/chat/[sessionId]/actions'
+import { listCharacterRooms, openCharacterRoom, startNewRoom, type CharacterRoom } from '@/app/(main)/chat/[sessionId]/actions'
 import styles from './room-menu.module.css'
 import sheetStyles from './push-subscribe.module.css'
 
@@ -91,12 +91,16 @@ function RoomPage({ title, onBack, children, footer, action }: { title: string; 
   </div>, document.body)
 }
 
-/** 11/24 '새 대화방' 화면 — 같은 캐릭터와 처음부터. 지금 방은 지우지 않는다(대화 목록에 남는다). */
+/** 11/24 '새 대화방' → 11/26 사용자: '대화방' 화면 — 이 캐릭터의 대화방 목록에서 오가고, 맨 아래에서 새로 연다. 대화 목록에는 캐릭터당 한 줄. */
 function NewRoomPanel({ sessionId }: { sessionId: string }) {
   const t = useT()
+  const language = useLanguage()
   const router = useRouter()
   const toast = useToast()
   const [pending, setPending] = useState(false)
+  const [rooms, setRooms] = useState<CharacterRoom[] | null>(null)
+  useEffect(() => { let alive = true; listCharacterRooms(sessionId).then(r => { if (alive) setRooms(r) }).catch(() => { if (alive) setRooms([]) }); return () => { alive = false } }, [sessionId])
+  const day = (iso: string) => new Intl.DateTimeFormat(INTL_LOCALE[language], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
   const start = async () => {
     if (pending) return
     setPending(true)
@@ -106,13 +110,31 @@ function NewRoomPanel({ sessionId }: { sessionId: string }) {
       router.push(`/chat/${r.sessionId}`)
     } catch { toast(t('지금은 새 대화방을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.'), 'error'); setPending(false) }
   }
+  const open = async (id: string) => {
+    if (pending) return
+    setPending(true)
+    try {
+      const r = await openCharacterRoom(sessionId, id)
+      if ('error' in r) { toast(t(r.error), 'error'); setPending(false); return }
+      router.push(`/chat/${id}`)
+    } catch { toast(t('대화방을 찾을 수 없어요.'), 'error'); setPending(false) }
+  }
   return (
     <div className="stack" style={{ gap: 12, padding: '4px 0 var(--space-5)' }}>
-      <div style={{ padding: '14px', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)', display: 'grid', gap: 6, fontSize: 14, lineHeight: 1.55 }}>
-        <span>{t('같은 캐릭터와 처음부터 새로 시작해요.')}</span>
-        <span style={{ color: 'var(--color-text-secondary)' }}>{t('지금 대화방은 지워지지 않아요. 대화 목록에서 언제든 다시 열 수 있어요.')}</span>
-        <span style={{ color: 'var(--color-text-secondary)' }}>{t('기억 노트와 유저노트는 대화방마다 따로예요.')}</span>
-      </div>
+      {rooms === null && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('불러오는 중')}</p>}
+      {rooms && rooms.length > 0 && <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+        {rooms.map((r, i) => <li key={r.id}>
+          <button type="button" disabled={r.current || pending} aria-current={r.current ? 'true' : undefined} onClick={() => open(r.id)}
+            style={{ all: 'unset', boxSizing: 'border-box', width: '100%', display: 'grid', gap: 4, padding: '12px 14px', borderRadius: 'var(--radius-lg)', cursor: r.current ? 'default' : 'pointer',
+              background: 'var(--color-surface-2)', border: r.current ? '1px solid var(--color-lavender-400)' : '1px solid transparent' }}>
+            <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 14, fontWeight: 700 }}>
+              <span>{t('대화방 {n}', { n: rooms.length - i })}{r.current && <em style={{ fontStyle: 'normal', marginLeft: 8, fontSize: 12, color: 'var(--color-lavender-300)' }}>{t('지금 대화방')}</em>}</span>
+              <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--color-text-tertiary)' }}>{day(r.lastAt)}</span>
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.preview?.replace(/\s+/g, ' ') || t('아직 대화 전')}</span>
+          </button>
+        </li>)}
+      </ul>}
       <Button variant="primary" full onClick={start} status={pending ? 'loading' : 'idle'} disabled={pending}>{t('새 대화방 시작')}</Button>
     </div>
   )
@@ -207,7 +229,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     {screen === 'length' && <RoomPage title={t('출력량 설정')} onBack={back}><ReplyLengthPanel open onClose={back} choices={choices}/></RoomPage>}
     {screen === 'pace' && <RoomPage title={t('전개 설정')} onBack={back}><PacePanel onClose={back}/></RoomPage>}
     {screen === 'display' && <RoomPage title={t('화면 설정')} onBack={back}><DisplayPanel onClose={back}/></RoomPage>}
-    {screen === 'fresh' && <RoomPage title={t('새 대화방')} onBack={back}><NewRoomPanel sessionId={sessionId}/></RoomPage>}
+    {screen === 'fresh' && <RoomPage title={t('대화방')} onBack={back}><NewRoomPanel sessionId={sessionId}/></RoomPage>}
     {screen === 'main' && <RoomPage title={t('채팅방 설정')} onBack={back} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       {/* 11/19 사용자: 채팅방 메뉴에서는 갤러리를 뺀다 — 문자방 메뉴에는 그대로. */}
       {messenger && <RoomGallery sessionId={sessionId} open={open}/>}
@@ -242,7 +264,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
         {/* 11/24 사용자: 같은 캐릭터로 새 대화방 — 지금 방은 대화 목록에 남는다 */}
-        {!messenger && <button type="button" className={styles.row} onClick={() => go('fresh')}><MenuIcon name="fresh"/><span>{t('새 대화방')}</span><Chevron/></button>}
+        {!messenger && <button type="button" className={styles.row} onClick={() => go('fresh')}><MenuIcon name="fresh"/><span>{t('대화방')}</span><Chevron/></button>}
         {row(`/chat/${sessionId}/novel`, 'download', t('웹소설로 만들기'))}
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>

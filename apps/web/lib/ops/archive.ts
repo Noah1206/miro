@@ -101,6 +101,9 @@ export async function listSessions(userId: string, options: {
         ORDER BY m.created_at DESC,m.id DESC LIMIT 1
       ) latest ON true
       WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL AND (r.adult_since IS NOT NULL) = ${unveil && !inlineMirrorEnabled()}
+        -- 11/26 사용자: 같은 캐릭터 방이 여러 개면 대화 목록엔 가장 최근 방 한 줄만(나머지는 채팅방 메뉴 '대화방'에서 오간다).
+        AND r.id = (SELECT r2.id FROM roleplay_sessions r2 WHERE r2.user_id = r.user_id AND r2.character_id = r.character_id AND r2.deleted_at IS NULL
+          AND (r2.adult_since IS NOT NULL) = (r.adult_since IS NOT NULL) ORDER BY r2.last_interaction_at DESC, r2.id DESC LIMIT 1)
         ${options.channel==='dm'?sql`AND c.experience_type='reality'`:sql``}
       UNION ALL
       SELECT latest.id, person->>'name', s.slug || '-' || (person->>'key'), person->>'image',

@@ -2637,5 +2637,9 @@
  "대화 {count}": "{count} chats",
  "아직 집계된 작품이 없어요": "No rankings yet",
  "신작": "New",
- "제작자 이벤트: 작품을 공개하면 아르곤 무료": "Creator event: publish a work and get Argon free"
+ "제작자 이벤트: 작품을 공개하면 아르곤 무료": "Creator event: publish a work and get Argon free",
+ "대화방": "Chat rooms",
+ "대화방 {n}": "Room {n}",
+ "지금 대화방": "Current",
+ "아직 대화 전": "No messages yet"
 }
