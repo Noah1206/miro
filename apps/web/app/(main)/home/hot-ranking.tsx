@@ -12,7 +12,7 @@ import { AfterMount } from '@/components/after-mount'
 import styles from './hot-ranking.module.css'
 
 export type HotTab = 'new' | 'all'
-const TABS: Array<[HotTab, string]> = [['new', '신작'], ['all', '전체']]
+const TABS: Array<[HotTab, string]> = [['all', '전체'], ['new', '신작']]
 
 /** 11/25~26 사용자: 배너 아래 '지금 가장 핫한' — 신작·전체 탭, 세 개씩 세로로 묶은 순위 열을 옆으로 넘긴다(화살표·밀기). */
 export function HotRanking({ lists }: { lists: Record<HotTab, HomeCard[]> }) {

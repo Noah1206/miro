@@ -1,9 +1,9 @@
 .section { margin: var(--space-5) 0 var(--space-6); }
 .title { padding: 0 var(--gutter); margin: 0 0 12px; font-size: 24px; font-weight: 800; letter-spacing: -.03em; }
-.tabs { display: flex; align-items: center; padding: 0 var(--gutter); margin-bottom: 18px; }
-.tabs button { padding: 4px 0; border: 0; background: none; color: #8a8a93; font-size: 18px; font-weight: 700; cursor: pointer; }
-.tabs button + button::before { content: '·'; margin: 0 12px; color: #55555c; font-weight: 400; }
-.tabs button[aria-selected='true'] { color: var(--color-lavender-400); }
+.tabs { display: flex; align-items: center; gap: 8px; padding: 0 var(--gutter); margin-bottom: 18px; }
+/* 11/27 사용자: 탭은 스티커(알약) 모양 — 고른 쪽은 보라 바탕에 흰 글자. */
+.tabs button { padding: 7px 16px; border: 0; border-radius: 999px; background: rgb(255 255 255 / .08); color: #c8c8cf; font-size: 15px; font-weight: 700; cursor: pointer; }
+.tabs button[aria-selected='true'] { background: #6b46e5; color: #fff; }
 .wrap { position: relative; }
 .pager { display: grid; grid-auto-flow: column; grid-auto-columns: min(80%, 460px); gap: 14px; padding: 0 var(--gutter); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--gutter); scrollbar-width: none; }
 .pager::-webkit-scrollbar { display: none; }
@@ -23,13 +23,13 @@
 .prev { left: 6px; }
 .next { right: 6px; }
 .empty { padding: 24px 0; color: var(--color-text-secondary); font-size: 13px; }
-.emptyCard { display: flex; align-items: center; gap: 14px; margin: 4px var(--gutter) 0; padding: 18px; border: 1px dashed rgb(255 255 255 / .18); border-radius: 16px; background: linear-gradient(135deg, rgb(138 99 255 / .14), rgb(255 255 255 / .03)); }
-.emptyIcon { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: rgb(138 99 255 / .22); color: #c9b8ff; }
-.emptyText { flex: 1; min-width: 0; }
+.emptyCard { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; margin: 0 var(--gutter); min-height: calc(3 * min(45.6vw, 225px) + 36px); padding: 24px; border-radius: 16px; background: #2a2a2e; text-align: center; }
+.emptyIcon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: rgb(255 255 255 / .08); color: #fff; }
+.emptyText { min-width: 0; }
 .emptyTitle { margin: 0; font-size: 16px; font-weight: 800; color: #fff; }
 .emptySub { margin: 4px 0 0; font-size: 13px; line-height: 1.4; color: #a5a5ae; }
-.emptyButton { flex: none; padding: 10px 16px; border-radius: 999px; background: #6b46e5; color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
-@media (max-width: 480px) { .emptyCard { flex-wrap: wrap; } .emptyButton { width: 100%; text-align: center; padding: 12px 16px; } }
+.emptyButton { flex: none; padding: 12px 22px; border-radius: 999px; background: #6b46e5; color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
+@media (max-width: 480px) { .emptyCard { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; margin: 0 var(--gutter); min-height: calc(3 * min(45.6vw, 225px) + 36px); padding: 24px; border-radius: 16px; background: #2a2a2e; text-align: center; } .emptyButton { width: 100%; text-align: center; padding: 12px 16px; } }
 /* 11/27 사용자: 컴퓨터에선 한 화면에 1~3위를 가로로 나란히(전엔 세 개씩 세로 묶음), 옆으로 넘기면 4~6위 — 작품 하나의 크기도 키운다. 휴대폰은 폭이 좁아 세로 묶음 그대로. */
 @media (min-width: 768px) {
   .pager { grid-auto-columns: 100%; }
