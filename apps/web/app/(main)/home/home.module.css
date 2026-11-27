@@ -137,8 +137,11 @@
 .homeGrid { gap: 24px 12px; }
 @media (min-width: 1024px) { .homeGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 40px 22px; } }
 /* 11/27 사용자: 홈 격자는 세 줄까지(컴퓨터 15개, 휴대폰 6개) — 그 밑에 탐색 탭으로 가는 버튼. */
-@media (max-width: 1023px) { .homeGrid > :nth-child(n+7) { display: none; } }
 .more { display: flex; align-items: center; justify-content: center; width: fit-content; min-height: 44px; margin: 28px auto 0; padding: 0 28px; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-primary); font-size: 14px; font-weight: 600; text-decoration: none; }
 /* 11/27 사용자: 순위와 작품 격자 사이 제목 '탐색' — 순위 제목과 같은 크기. */
 .exploreTitle { padding: 0 var(--gutter); margin: 20px 0 14px; font-size: 24px; font-weight: 800; letter-spacing: -.03em; }
 @media (min-width: 1024px) { .exploreTitle { margin: 40px 0 18px; } }
+/* 11/27 사용자: 홈 탐색은 한 줄만 온전히, 둘째 줄은 위 3분의 1쯤만 흐리게 비치고 그 밑에 탐색 탭 버튼. (표지 2:3 → 칸 너비의 절반 높이 = 표지의 1/3) */
+@media (max-width: 599px) { .homeGrid > :nth-child(n+5) { display: none; } .homeGrid > :nth-child(n+3) { aspect-ratio: 2 / 1; min-height: 0; overflow: hidden; filter: blur(3px); -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); pointer-events: none; } }
+@media (min-width: 600px) and (max-width: 1023px) { .homeGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .homeGrid > :nth-child(n+9) { display: none; } .homeGrid > :nth-child(n+5) { aspect-ratio: 2 / 1; min-height: 0; overflow: hidden; filter: blur(3px); -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); pointer-events: none; } }
+@media (min-width: 1024px) { .homeGrid > :nth-child(n+6) { aspect-ratio: 2 / 1; min-height: 0; overflow: hidden; filter: blur(3px); -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); pointer-events: none; } }
