@@ -53,7 +53,9 @@ export function HotRanking({ lists }: { lists: Record<HotTab, HomeCard[]> }) {
             </TransitionLink>
           </li> })}
         </ol>)}
-        {items.length === 0 && <p className={styles.empty}>{t('아직 집계된 작품이 없어요')}</p>}
+        {items.length === 0 && (tab === 'new'
+          ? <p className={styles.empty}>{t('아직 신작이 없어요. 첫 작품을 올려 보세요.')} <TransitionLink href="/create" className={styles.emptyLink}>{t('첫 작품 만들기')}</TransitionLink></p>
+          : <p className={styles.empty}>{t('아직 집계된 작품이 없어요')}</p>)}
       </div>
       {columns.length > 1 && <>
         <button type="button" aria-label={t('이전')} className={`${styles.arrow} ${styles.prev}`} onClick={() => step(-1)}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="m15 6-6 6 6 6" /></svg></button>

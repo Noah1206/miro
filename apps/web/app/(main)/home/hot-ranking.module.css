@@ -23,3 +23,4 @@
 .prev { left: 6px; }
 .next { right: 6px; }
 .empty { padding: 24px 0; color: var(--color-text-secondary); font-size: 13px; }
+.emptyLink { margin-left: 8px; color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }

@@ -2647,5 +2647,7 @@
   "라이트 모드로": "Switch to light mode",
   "다크 모드로": "Switch to dark mode",
   "제작자 이벤트: 작품을 공개하면 카본 무료": "Creator event: publish a work and use Carbon for free",
-  "댓글 이벤트: 서로 다른 작품에 댓글 5개를 쓰면 500토큰": "Comment event: write 5 comments on different works and get 500 tokens"
+  "댓글 이벤트: 서로 다른 작품에 댓글 5개를 쓰면 500토큰": "Comment event: write 5 comments on different works and get 500 tokens",
+  "아직 신작이 없어요. 첫 작품을 올려 보세요.": "No new works yet. Be the first to publish one.",
+  "첫 작품 만들기": "Create the first work"
 }
