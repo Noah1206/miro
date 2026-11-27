@@ -79,7 +79,7 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : (r.uploading ? t('올리는 중…') : '+')}
             </label>
-            <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
               onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(r.id, f) }} />
             <span style={{ flex: 1, fontSize: 13, color: r.error ? 'var(--color-danger, #d33)' : 'var(--color-text-secondary)' }}>{r.error ?? t('엔딩 카드 그림 (선택) — 엔딩에 닿으면 카드와 도감에 보여요.')}</span>
             {r.image && <button type="button" onClick={() => patch(r.id, { image: '' })} style={{ border: 0, background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>{t('빼기')}</button>}

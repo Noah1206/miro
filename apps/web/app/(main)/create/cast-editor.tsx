@@ -126,7 +126,7 @@ export function CastProfiles({ cast, onChange, heading, adultAllowed = false }: 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {c.photo ? <img src={c.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : busy === i ? '…' : '+'}
           </label>
-          <input id={`${uid}-${i}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(i, f) }} />
+          <input id={`${uid}-${i}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(i, f) }} />
           <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('PNG·JPG·WebP·HEIC 형식만 올릴 수 있어요')}<br />{t('정사각형(1:1)이 가장 좋고, 장당 5MB까지예요')}</p>
         </div>
         <LabeledField label={t('이름')} required><Field label={t('이름')} value={c.name} max={20} big onChange={v => set(i, { name: v })} /></LabeledField>

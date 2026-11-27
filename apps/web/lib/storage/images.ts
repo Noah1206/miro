@@ -7,7 +7,7 @@ import { PUBLIC_BUCKET, publicMediaUrl, writeMedia } from './media'
  * 캐릭터 사진 업로드 — 서버 디스크의 `character-images` 폴더(공개 읽기, 11/16 Supabase Storage 에서 옮김 — lib/storage/media).
  * 클라이언트가 직접 올리지 않는다 — 크기·형식 검증을 여기서 한다.
  */
-const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
+const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']) // 11/27 사용자: 움직이는 GIF 도 올릴 수 있다(브라우저 축소는 GIF 를 건드리지 않는다)
 const MAX_BYTES = 5 * 1024 * 1024
 
 export type UploadResult = { ok: true; url: string } | { ok: false; error: string }

@@ -189,7 +189,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
   return (
     <>
       {/* 실제 파일 — 서버 액션(saveCharacter)이 업로드한다. 순서가 바뀔 때마다 useEffect 가 다시 채운다. */}
-      <input ref={fileInputRef} type="file" name="images" multiple hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" />
+      <input ref={fileInputRef} type="file" name="images" multiple hidden accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" />
       {/* 이미 저장된 사진 — 새로 고르지 않으면 이 URL 목록 그대로 유지된다 (편집 화면). */}
       {items.filter(it => it.kind === 'existing').map(({ url }) => <input key={url} type="hidden" name="keptImages" value={url} />)}
       {/* 최종 순서 — 'existing'(기존 URL 그대로) 또는 'new'(방금 고른 파일, images 의 순서대로) 토큰을 대표부터 나열한다.
@@ -277,7 +277,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       </div>
 
       {/* 고르기 input 은 시트 밖에 둔다 — 대표 사진 칸을 누르면 시트 없이 바로 연다(10/28). */}
-      <input ref={pickerRef} id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
+      <input ref={pickerRef} id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" hidden
         onChange={async (e) => {
           const picked = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
           e.target.value = ''

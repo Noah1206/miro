@@ -78,7 +78,7 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
                 {r.image ? <img src={r.image} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span className="t-caption">{r.uploading ? t('올리는 중…') : t('사진 고르기')}</span>}
               </label>
-              <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
                 onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(r.id, f, r.situation) }} />
               <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6 }}>
                 <label htmlFor={`${uid}-${r.id}`} role="button" tabIndex={0} aria-label={t('상황 사진 바꾸기')} style={iconBtn}
@@ -112,7 +112,7 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
         </button>
       )}
       {rows.length < SITUATION_LIMITS.entries && <>
-        <input id={`${uid}-bulk`} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        <input id={`${uid}-bulk`} type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
           onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; void bulk(fs) }} />
         <label htmlFor={`${uid}-bulk`} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click() } }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
