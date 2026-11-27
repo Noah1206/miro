@@ -30,6 +30,14 @@ export function HotRanking({ lists }: { lists: Record<HotTab, HomeCard[]> }) {
       {TABS.map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t(label)}</button>)}
     </div>
     <div className={styles.wrap}>
+      {items.length === 0 && tab === 'new' && <div className={styles.emptyCard}>
+        <span className={styles.emptyIcon} aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg></span>
+        <div className={styles.emptyText}>
+          <p className={styles.emptyTitle}>{t('아직 신작이 없어요')}</p>
+          <p className={styles.emptySub}>{t('첫 작품을 올리면 이 자리 맨 앞에 바로 걸려요.')}</p>
+        </div>
+        <TransitionLink href="/create" className={styles.emptyButton}>{t('첫 작품 만들기')}</TransitionLink>
+      </div>}
       <div key={tab} ref={pager} className={styles.pager}>
         {columns.map((col, ci) => <ol key={ci} className={styles.column} start={ci * 3 + 1}>
           {col.map((c, i) => { const tags = characterTags(c); return <li key={c.id}>
@@ -53,9 +61,7 @@ export function HotRanking({ lists }: { lists: Record<HotTab, HomeCard[]> }) {
             </TransitionLink>
           </li> })}
         </ol>)}
-        {items.length === 0 && (tab === 'new'
-          ? <p className={styles.empty}>{t('아직 신작이 없어요. 첫 작품을 올려 보세요.')} <TransitionLink href="/create" className={styles.emptyLink}>{t('첫 작품 만들기')}</TransitionLink></p>
-          : <p className={styles.empty}>{t('아직 집계된 작품이 없어요')}</p>)}
+        {items.length === 0 && tab !== 'new' && <p className={styles.empty}>{t('아직 집계된 작품이 없어요')}</p>}
       </div>
       {columns.length > 1 && <>
         <button type="button" aria-label={t('이전')} className={`${styles.arrow} ${styles.prev}`} onClick={() => step(-1)}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="m15 6-6 6 6 6" /></svg></button>
