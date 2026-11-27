@@ -30,15 +30,14 @@
 .emptySub { margin: 4px 0 0; font-size: 13px; line-height: 1.4; color: #a5a5ae; }
 .emptyButton { flex: none; padding: 10px 16px; border-radius: 999px; background: #6b46e5; color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
 @media (max-width: 480px) { .emptyCard { flex-wrap: wrap; } .emptyButton { width: 100%; text-align: center; padding: 12px 16px; } }
-/* 11/27 사용자: 컴퓨터에선 한 화면에 1~3위를 가로로 나란히(전엔 세 개씩 세로 묶음), 옆으로 넘기면 4~6위 — 작품 하나의 크기도 키운다. 휴대폰은 폭이 좁아 세로 묶음 그대로. */
+/* 11/27 사용자: 컴퓨터에선 한 화면에 1~3위를 가로로 나란히(전엔 세 개씩 세로 묶음), 옆으로 넘기면 4~6위. 표지는 칸을 꽉 채운 큰 세로 카드, 글은 표지 아래. 휴대폰은 폭이 좁아 세로 묶음 그대로. */
 @media (min-width: 768px) {
   .pager { grid-auto-columns: 100%; }
   .column { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
-  .item { gap: 18px; }
-  .cover { width: 46%; max-width: 230px; border-radius: 14px; }
-  .rank { font-size: 38px; left: 12px; top: 6px; }
-  .text { gap: 7px; padding-top: 6px; }
-  .name { font-size: 20px; }
+  .item { flex-direction: column; gap: 14px; }
+  .cover { width: 100%; max-width: none; border-radius: 16px; }
+  .rank { font-size: 44px; left: 16px; top: 8px; }
+  .text { gap: 6px; padding-top: 0; }
+  .name { font-size: 19px; -webkit-line-clamp: 1; }
   .creator, .blurb, .tags, .stats { font-size: 15px; }
-  .blurb { -webkit-line-clamp: 3; }
 }
