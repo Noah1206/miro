@@ -3,10 +3,10 @@ import { chromium } from '/Users/johyeon-ung/Desktop/Miro/node_modules/.pnpm/pla
 import { mkdirSync, readFileSync } from 'node:fs'
 
 const OUT = new URL('../../output/dc/', import.meta.url).pathname
-// 11/27 같은 디자인으로 홈 배너도 만든다 — BANNER=home-carbon | home-comment (1200x340, 버튼 없음). 기본은 디시용 큰 그림.
+// 11/27 같은 디자인으로 홈 배너도 만든다 — BANNER=home-carbon | home-comment (1200x400 = 3:1, 버튼 없음). 기본은 디시용 큰 그림.
 const KIND = { 'home-carbon': { file: 'home-carbon.png', k: '내 캐릭터 그대로 · 이식 이벤트', h: '<em>Carbon</em> 100% 무료!' },
   'home-comment': { file: 'home-comment.png', k: '서로 다른 작품에 · 댓글 이벤트', h: '<em>댓글 5개</em> 쓰면 500토큰!' } }[process.env.BANNER ?? '']
-const W = 1200, H = KIND ? 340 : 680
+const W = 1200, H = KIND ? 400 : 680
 const mark = 'data:image/svg+xml;base64,' + readFileSync(new URL('../../apps/web/public/logo-mark.svg', import.meta.url)).toString('base64')
 const tape = (top, rot, dark) => `<div class="tape${dark ? ' dk' : ''}" style="top:${top}px;transform:rotate(${rot}deg)">${`<span><img src="${mark}"><b>MIRO</b></span>`.repeat(14)}</div>`
 

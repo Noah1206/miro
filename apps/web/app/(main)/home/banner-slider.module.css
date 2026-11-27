@@ -1,7 +1,7 @@
 /* 가운데 배너(휴대폰 88%·컴퓨터 74%) 양옆으로 이전·다음 배너가 어둡게 걸친다. */
 .track { --slide-w: 88%; display: flex; gap: 8px; margin: 0 0 var(--space-2); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .track::-webkit-scrollbar { display: none; }
-.slide { flex: 0 0 var(--slide-w); display: block; aspect-ratio: 3600 / 1020; border-radius: 14px; overflow: hidden; background: #1a1a1f; scroll-snap-align: center; color: #fff; opacity: .35; transition: opacity .3s ease; }
+.slide { flex: 0 0 var(--slide-w); display: block; aspect-ratio: 3 / 1; border-radius: 14px; overflow: hidden; background: #1a1a1f; scroll-snap-align: center; color: #fff; opacity: .35; transition: opacity .3s ease; }
 .slide[data-active] { opacity: 1; }
 .eventImage { display: block; width: 100%; height: 100%; object-fit: cover; }
 .work { position: relative; }
