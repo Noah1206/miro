@@ -48,14 +48,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     user ? accountProfile(user) : null,
   ])
   const [t, language] = await Promise.all([getT(), getLanguage()])
-  // 11/25 사용자: 배너 아래 '지금 가장 핫한' — 기간별 대화한 사람 수 순, 탭마다 12개.
+  // 11/25 사용자: 배너 아래 '지금 가장 핫한' — 기간별 대화한 사람 수 순, 탭마다 10개(11/27 사용자: 1~10위까지만).
   const pool = sections.all.filter(c => c.isPublic || c.isOfficial)
   const hot = await hotCounts(pool.map(c => c.id))
   const cutoff = new Date(Date.now() - 21 * 864e5).toISOString()
   const rank = (key: 'live' | 'day' | 'month' | 'all', pick: (c: HomeCard) => boolean = c => (hot.get(c.id)?.[key] ?? 0) > 0) =>
-    pool.filter(pick).sort((a, b) => (hot.get(b.id)?.[key] ?? 0) - (hot.get(a.id)?.[key] ?? 0) || (hot.get(b.id)?.all ?? 0) - (hot.get(a.id)?.all ?? 0) || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 12)
+    pool.filter(pick).sort((a, b) => (hot.get(b.id)?.[key] ?? 0) - (hot.get(a.id)?.[key] ?? 0) || (hot.get(b.id)?.all ?? 0) - (hot.get(a.id)?.all ?? 0) || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')).slice(0, 10)
   // 11/26 사용자: 탭은 신작·전체 두 개만. 신작 = 올리면 바로 1위(최근 3주 작품을 최신순, 11/27 사용자: 공식 작품은 넣지 않는다 — 제작자가 올린 작품만), 전체 = 누적 인원 순.
-  const hotLists: Record<HotTab, HomeCard[]> = { new: mixAudience(pool.filter(c => !c.isOfficial && !c.slug?.startsWith('official-') && (c.createdAt ?? '') >= cutoff).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))).slice(0, 12), all: rank('all') }
+  const hotLists: Record<HotTab, HomeCard[]> = { new: mixAudience(pool.filter(c => !c.isOfficial && !c.slug?.startsWith('official-') && (c.createdAt ?? '') >= cutoff).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))).slice(0, 10), all: rank('all') }
   // 11/13 사용자: 인증 직후(하루)와 로그인 전에는 안내 시트(음성 예고·제작자 모집)를 띄우지 않는다 — 인증한 10명 중 9명이 홈에서 대화를 시작하지 않았다.
   const settled = !!user && (!user.adultVerifiedAt || Date.now() - new Date(user.adultVerifiedAt).getTime() > 86_400_000)
 
