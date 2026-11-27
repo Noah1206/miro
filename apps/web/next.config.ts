@@ -49,7 +49,7 @@ const config: NextConfig = {
   // 11/16 캐릭터 사진 크기 변환(components/character-visual 의 IMAGE_WIDTHS 와 같은 폭만) — 파일이 바뀌지 않으므로 변환본을 1년 둔다.
   images: { imageSizes: [96, 192, 320], deviceSizes: [640, 720, 1080], qualities: [80], minimumCacheTTL: 31536000, localPatterns: [{ pathname: '/media/character-images/**' }] },
   // Vercel 함수는 요청 본문을 4.5MB 까지만 받는다 — 26mb 는 운영에서 의미가 없었다(10/6). 사진은 브라우저에서 줄여 보낸다(lib/shrink-image).
-  experimental: { serverActions: { bodySizeLimit: '10mb' } },
+  experimental: { serverActions: { bodySizeLimit: '32mb' } },
   async headers() { return [{ source: '/(.*)', headers: securityHeaders }] },
   // 없어진 페이지의 예전 주소 — 발견·검색은 홈의 장르 칩으로 합쳤다(2026-09-30).
   // 예전 주소 — 설정 페이지는 '나' 화면 아래 메뉴로 옮겼다(2026-10-01).

@@ -9,13 +9,14 @@ import { PUBLIC_BUCKET, publicMediaUrl, writeMedia } from './media'
  */
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']) // 11/27 사용자: 움직이는 GIF 도 올릴 수 있다(브라우저 축소는 GIF 를 건드리지 않는다)
 const MAX_BYTES = 5 * 1024 * 1024
+const MAX_GIF_BYTES = 10 * 1024 * 1024 // 11/27 사용자: GIF 는 10MB 까지
 
 export type UploadResult = { ok: true; url: string } | { ok: false; error: string }
 
 /** 파일 하나를 올리고 공개 URL을 돌려준다. 저장소가 설정되지 않았으면 명확히 실패한다 — 조용히 무시하지 않는다. */
 export async function uploadCharacterImage(file: File, ownerId: string): Promise<UploadResult> {
   if (!ALLOWED.has(file.type)) return { ok: false, error: msg('지원하지 않는 이미지 형식이에요.') }
-  if (file.size > MAX_BYTES) return { ok: false, error: msg('5MB 이하 사진만 올릴 수 있어요.') }
+  if (file.type === 'image/gif' ? file.size > MAX_GIF_BYTES : file.size > MAX_BYTES) return { ok: false, error: file.type === 'image/gif' ? msg('10MB 이하 GIF만 올릴 수 있어요.') : msg('5MB 이하 사진만 올릴 수 있어요.') }
 
   const ext = (file.type.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg')
   const path = `${ownerId}/${randomUUID()}.${ext}`

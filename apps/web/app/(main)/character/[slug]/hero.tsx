@@ -15,7 +15,9 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
   veil?: Veil
 }) {
   const t = useT()
-  const [selected, setSelected] = useState(0)
+  // 11/27 사용자: GIF 가 있으면 그 GIF 를 대표로 보여 주고 저절로 넘기지 않는다(< > 로는 넘길 수 있다).
+  const gif = photos.findIndex(p => /\.gif(\?|$)/i.test(p))
+  const [selected, setSelected] = useState(gif < 0 ? 0 : gif)
   // 11/23 사용자: < > 는 사진을 눌렀을 때만 보인다(다시 누르면 숨김).
   const [nav, setNav] = useState(false)
   const photo = photos[selected] ?? null
@@ -30,10 +32,10 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
   // 11/6: 대표 사진은 저절로 다음 장으로(11/7 사용자: 3.5초 → 1초, 누르면 그 자리에서 다시 센다). 움직임 줄이기 설정·표지 고정 작품이면 넘기지 않는다(< > 로는 넘길 수 있다).
   const reduce = useReducedMotion()
   useEffect(() => {
-    if (reduce || photos.length < 2 || stillCover(slug)) return
+    if (reduce || photos.length < 2 || gif >= 0 || stillCover(slug)) return
     const id = setInterval(() => setSelected(i => (i + 1) % photos.length), 1000)
     return () => clearInterval(id)
-  }, [reduce, photos.length, selected])
+  }, [reduce, photos.length, selected, gif])
   return (
     <div style={{ position: 'relative' }} onClick={event => { if (photos.length > 1 && !(event.target as HTMLElement).closest('button, a')) setNav(v => !v) }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
