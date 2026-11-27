@@ -628,7 +628,7 @@ html[data-theme='light'] picture img { filter: none; }
 
 /* 11/27 사용자: 휴대폰 공통 헤더(헤더 없는 화면에만 들어간다, components/mobile-header.tsx). 컴퓨터에서는 숨긴다. */
 .mobile-header-slot { display: contents; }
-.mobile-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; min-height: 48px; padding: env(safe-area-inset-top) var(--gutter) 0; background: var(--color-bg); }
+.mobile-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; min-height: 60px; padding: calc(env(safe-area-inset-top) + 6px) var(--gutter) 6px; background: var(--color-bg); }
 @media (min-width: 1024px) { .mobile-header { display: none; } }
 /* 11/27 사용자: 버튼을 누르면 작게 줄었다가 돌아온다. :where 라 화면마다 따로 정한 누름 효과가 있으면 그쪽이 이긴다. */
 :where(button, [role='button'], a.hit, .mobile-header a, header a) { transition: transform .16s var(--ease-standard, ease); }
