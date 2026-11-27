@@ -11,6 +11,10 @@ const COVER_TITLES: Record<string, string> = {
   'official-m-reverse-world': '정조역전 세계',
   'official-m-idol-girlfriend': '아이돌 여자친구',
   'official-m-stray-cat': '구해준 길고양이가 수인이 되었다',
+  'official-m-rogue-noble': '기사단장의 노비',
+  'official-m-gumiho-partner': '내 짝꿍은 구미호',
+  'official-m-apocalypse-bully': '종말에 만난 일진',
+  'official-m-elevator-senior': '13층에 갇힌 사수',
 }
 
 export const coverTitle = (c: { slug?: string | null; name: string }) => (c.slug && COVER_TITLES[c.slug]) || c.name
