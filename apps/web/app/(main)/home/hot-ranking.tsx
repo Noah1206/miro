@@ -25,9 +25,11 @@ export function HotRanking({ lists }: { lists: Record<HotTab, HomeCard[]> }) {
   const step = (dir: 1 | -1) => { const el = pager.current; const col = el?.firstElementChild as HTMLElement | null; if (el && col) el.scrollBy({ left: dir * (col.offsetWidth + 14), behavior: 'smooth' }) }
   if (!lists.new.length && !lists.all.length) return null
   return <section aria-labelledby="hot-title" className={styles.section}>
-    <h2 id="hot-title" className={styles.title}>{t('지금 가장 핫한')}</h2>
+    <div className={styles.head}>
+    <h2 id="hot-title" className={styles.title}>{t('인기 랭킹')}</h2>
     <div role="tablist" className={styles.tabs}>
       {TABS.map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t(label)}</button>)}
+    </div>
     </div>
     <div className={styles.wrap}>
       {items.length === 0 && tab === 'new' && <div className={styles.emptyCard}>

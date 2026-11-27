@@ -46,3 +46,8 @@
   .column:nth-child(n+4) { display: contents; }
   .column:nth-child(n+6) { display: none; }
 }
+/* 11/27 사용자: 제목과 전체·신작 탭을 같은 줄에(제목 왼쪽, 탭 오른쪽) — 제목은 더 크게. */
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 var(--gutter); margin-bottom: 18px; }
+.head .title { padding: 0; margin: 0; font-size: 30px; }
+.head .tabs { padding: 0; margin: 0; flex: none; }
+@media (max-width: 480px) { .head .title { font-size: 26px; } }
