@@ -95,7 +95,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       ]} />
       <HotRanking lists={hotLists} />
       {/* 11/26 사용자: 그 밑은 탐색 탭처럼 작품 카드 격자(대화량 순). */}
-      <div className={`${styles.grid} ${styles.homeGrid}`} style={{ padding: '0 var(--gutter)' }}>{/* 11/27 사용자: 남성향 무리·여성향 무리로 나뉘지 않게 고르게 섞는다(각 쪽 안의 순서는 그대로). */mixAudience([...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays)).map(c => <CharacterCard key={c.id} c={c} />)}</div>
+      <div className={`${styles.grid} ${styles.homeGrid}`} style={{ padding: '0 var(--gutter)' }}>{/* 11/27 사용자: 남성향 무리·여성향 무리로 나뉘지 않게 고르게 섞는다(각 쪽 안의 순서는 그대로). */mixAudience([...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays)).slice(0, 5).map(c => <CharacterCard key={c.id} c={c} />)}</div>
+      {/* 11/27 사용자: 홈에는 한 줄(5개)만, 나머지는 탐색 탭으로 가는 버튼. */}
+      <TransitionLink href="/search" className={styles.more}>{t('더 보기')}</TransitionLink>
       {/* 11/25 사용자: 휴대폰·컴퓨터 모두 검색칸·전체 버튼·섹션 줄·작품 격자 없이 배너·지금 가장 핫한·신작만. 검색은 헤더 아이콘, 전체 목록은 탐색 탭. */}
       <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}

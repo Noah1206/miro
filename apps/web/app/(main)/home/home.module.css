@@ -136,3 +136,6 @@
 /* 11/27 사용자: 홈 추천 아래 작품 격자는 한 줄 5개로 줄이고(전엔 화면 폭만큼 7~8개, 처음엔 6개) 카드를 키운다 — 카드 사이 간격도 넓게. 탐색·장르 격자(.grid)는 그대로. */
 .homeGrid { gap: 24px 12px; margin-top: 20px; }
 @media (min-width: 1024px) { .homeGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 40px 22px; margin-top: 40px; } }
+/* 11/27 사용자: 홈 격자는 한 줄만(휴대폰은 2줄 4개) — 그 밑에 탐색 탭으로 가는 버튼. */
+@media (max-width: 1023px) { .homeGrid > :nth-child(n+5) { display: none; } }
+.more { display: flex; align-items: center; justify-content: center; width: fit-content; min-height: 44px; margin: 28px auto 0; padding: 0 28px; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-primary); font-size: 14px; font-weight: 600; text-decoration: none; }
