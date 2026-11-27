@@ -72,8 +72,8 @@
 
 /* 11/20 사용자: 태그 칸 배경을 지우고(태그만), 위에 글자만 All / Rank. */
 .filters { padding: 0; border-radius: 0; background: transparent; }
-.sortTabs { display: flex; align-items: center; gap: 10px; font-size: 22px; letter-spacing: -.02em; color: #6f6f6f; }
-.sortTabs button { min-height: 40px; padding: 0; border: 0; background: none; color: #6f6f6f; font: inherit; font-weight: 600; cursor: pointer; transition: color .15s; }
+.sortTabs { display: flex; align-items: center; gap: 16px; font-size: 22px; letter-spacing: -.02em; color: #6f6f6f; }
+.sortTabs button { min-height: 40px; padding: 0; border: 0; background: none; color: #b8a9f5; font: inherit; font-weight: 600; cursor: pointer; transition: color .15s; }
 .sortTabs button[aria-selected='true'] { color: #fff; font-weight: 800; }
 
 /* 11/21 사용자 스크린샷: 데스크톱에서 검색·탐색 화면이 왼쪽 대화 사이드바 밑에 깔려 < ·검색창 앞·최근 검색어가 가려졌다 — 캐릭터 상세처럼 사이드바 오른쪽 영역의 가운데에 선다. */
