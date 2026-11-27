@@ -95,7 +95,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       ]} />
       <HotRanking lists={hotLists} />
       {/* 11/26 사용자: 그 밑은 탐색 탭처럼 작품 카드 격자(대화량 순). */}
-      <div className={`${styles.grid} ${styles.homeGrid}`} style={{ padding: '0 var(--gutter)' }}>{/* 11/27 사용자: 남성향 무리·여성향 무리로 나뉘지 않게 고르게 섞는다(각 쪽 안의 순서는 그대로). */mixAudience([...sections.all].filter(c => c.isPublic || c.isOfficial).sort((a, b) => b.plays - a.plays)).slice(0, 15).map(c => <CharacterCard key={c.id} c={c} />)}</div>
+      <div className={`${styles.grid} ${styles.homeGrid}`} style={{ padding: '0 var(--gutter)' }}>{/* 11/27 사용자: 남성향 무리·여성향 무리로 나뉘지 않게 고르게 섞는다(각 쪽 안의 순서는 그대로). *//* 11/27 사용자: 위 순위(전체·신작)에 나온 작품은 이 격자에서 뺀다. */mixAudience(pool.filter(c => !hotLists.all.includes(c) && !hotLists.new.includes(c)).sort((a, b) => b.plays - a.plays)).slice(0, 15).map(c => <CharacterCard key={c.id} c={c} />)}</div>
       {/* 11/27 사용자: 홈에는 세 줄(컴퓨터 15개·휴대폰 6개)까지, 나머지는 탐색 탭으로 가는 버튼. */}
       <TransitionLink href="/search" className={styles.more}>{t('더 보기')}</TransitionLink>
       {/* 11/25 사용자: 휴대폰·컴퓨터 모두 검색칸·전체 버튼·섹션 줄·작품 격자 없이 배너·지금 가장 핫한·신작만. 검색은 헤더 아이콘, 전체 목록은 탐색 탭. */}
