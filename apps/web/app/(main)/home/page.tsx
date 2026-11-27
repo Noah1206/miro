@@ -71,7 +71,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
           {user && <HeaderWallet />}
           <ThemeToggle className={`hit ${styles.headerItem}`} />
           {/* 11/20 사용자: 알림 종 삭제, 19 토글은 프로필 사진 옆, 그 왼쪽에 흰 검색 아이콘 — 누르면 검색 화면(최근 검색어·입력칸 포커스). */}
-          <HeaderSearch signedIn={!!user} label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
+          <HeaderSearch signedIn={!!user} label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerCircle}`} />
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
           {profile ? <HeaderProfile initial={profile} /> : !user && <HeaderProfileGuest />}
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}
