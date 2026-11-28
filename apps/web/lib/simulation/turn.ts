@@ -23,7 +23,6 @@ import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
 import { UsageExceededError, reserve, rollback, usageStatus, type Reservation } from '@/lib/usage/guard'
 import { type BudgetKind } from '@/lib/usage/ai-usage'
 import { prepareMoments } from '@/lib/reality/moments'
-import { unveilOfferFor } from '@/lib/ops/safety'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { track } from '@/lib/analytics/track'
 import { measured, observe, timed } from '@/lib/observe'
@@ -61,8 +60,7 @@ export type ConversationOutcome =
       delayed?: { until: string; label: string }
     }
   | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'model_unavailable' | 'command_unavailable' | 'command_adult_only' }
-  /** unveil: 일반 방에서 거절됐고 사용자가 언베일로 이어갈 수 있다(ready=인증·동의 완료, verify=인증·동의가 남음). 권유일 뿐 전환은 사용자가 한다. */
-  | { ok: false; reason: 'safety'; unveil?: 'ready' | 'verify' | null }
+  | { ok: false; reason: 'safety' }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
   | { ok: false; reason: 'budget'; kind: BudgetKind }
 
@@ -153,8 +151,6 @@ async function executeTurn(opts: {
     const wanted = argonPass && (wantedRaw === 'xhigh' || wantedRaw === 'max') ? 'high' as const : wantedRaw
     const thinking = model.thinking && wanted ? (wanted === 'xhigh' || wanted === 'max' ? 'high' as const : wanted) : undefined
     const thinkScale = thinking ? ({ low: 1, medium: 2, high: 3, xhigh: 4, max: 5 } as const)[thinking] ?? 1 : 1
-    // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
-    const offerUnveil = () => loaded.adult.since === null ? unveilOfferFor(userId, loaded.characterId, sessionId).catch(() => null) : Promise.resolve(null)
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
     // 정책은 서버가 여기서 한 번 확정한다(§3.1). 등급은 서버가 검증한 선택에서, 경험은 캐릭터에서, 채널은 진입 경로에서 온다.
@@ -249,7 +245,7 @@ async function executeTurn(opts: {
 
     } catch (e) {
       await refund()
-      if (e instanceof UnsafeContentError) { observe('turn.refused', { sessionId, turn: turnIndex, model: dialogueModelId, by: 'provider' }); return { ok: false, reason: 'safety', unveil: await offerUnveil() } }
+      if (e instanceof UnsafeContentError) { observe('turn.refused', { sessionId, turn: turnIndex, model: dialogueModelId, by: 'provider' }); return { ok: false, reason: 'safety' } }
       if (e instanceof AIBudgetDeniedError) return { ok: false, reason: 'budget', kind: e.reason as BudgetKind }
       if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }
       // Only our own stage codes: a DB error message can carry query parameters, i.e. user text.

@@ -32,7 +32,6 @@ export async function GET(req: Request) {
       and exists (select 1 from information_schema.columns where table_name = 'user_settings' and column_name = 'unveil_enabled')
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'user_persona')
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'character_status_at')
-      and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'adult_level')
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'contact_boundary')
       and exists (select 1 from information_schema.columns where table_name = 'world_states' and column_name = 'narrative_calendar') as ok`)
     schema = (rows[0] as { ok: boolean } | undefined)?.ok ? 'ready' : 'behind'

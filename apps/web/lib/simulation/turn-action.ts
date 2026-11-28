@@ -33,8 +33,6 @@ export type TurnState = {
   messages?: TurnMsg[]
   /** 문자: 캐릭터가 바빠서 답장이 나중에 온다. */
   delayed?: { until: string; label: string }
-  /** 일반 방 거절 뒤 언베일 권유(캐릭터챗만). ready=바로 켤 수 있음, verify=본인인증·동의가 남음. */
-  unveil?: 'ready' | 'verify'
   /** 리롤로 되돌린 옛 턴의 메시지 — 화면이 지운다. 있으면 새 답을 못 받았어도 옛 턴은 이미 없다. */
   undone?: string[]
 }
@@ -99,7 +97,7 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
       }
       // 답을 못 만든 것은 유저가 고칠 수 있는 일이 아니다. 오류 문구 대신 기다림을 이어 둔다.
       case 'generation': return { error: null, notice: null, limit: null, keepWaiting: true }
-      case 'safety': return { ...fail(msg('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')), blocked: true, ...(opts.mode === 'chat' && r.unveil ? { unveil: r.unveil } : {}) }
+      case 'safety': return { ...fail(msg('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')), blocked: true }
       default: return { error: null, notice: null, limit: null }
     }
   }
