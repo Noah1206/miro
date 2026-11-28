@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { mockProvidersAllowed } from '@miro/config'
 import { OAUTH_LABEL, resolveOAuth } from '@miro/providers'
 import { Button, Field, Input, Notice, Page, PageHeader } from '@/components/ui'
 import { isProvider } from '@/lib/oauth-state'
@@ -12,7 +13,7 @@ export default async function MockConsent({ params, searchParams }: { params: Pr
   const { provider } = await params
   if (!isProvider(provider)) notFound()
   if (resolveOAuth(provider).info.mode !== 'mock') notFound()
-  if (process.env.VERCEL_ENV === 'production') notFound()
+  if (!mockProvidersAllowed()) notFound()   // 운영(맥 호스팅 포함)에서는 열리지 않는다 — 교환 단계(MockOAuthProvider.exchange)와 같은 기준
   const { state = '', redirect_uri = '' } = await searchParams
   const t = await getT()
   return (
