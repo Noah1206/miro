@@ -9,12 +9,18 @@ import './globals.css'
 import { Providers } from '@/components/ui/providers'
 import { LanguageProvider } from '@/lib/i18n/client'
 import { getLanguage, getT, messagesFor } from '@/lib/i18n/server'
+import { translate, type T } from '@/lib/i18n'
+import { headers } from 'next/headers'
 import { PresenceBeacon } from '@/components/presence-beacon'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT()
-  // 탭 제목은 어느 화면에서나 이 한 줄로 고정한다(2026-09-30 요청) — 문장 | 서비스 이름. template 에 %s 가 없어 각 화면이 정한 제목은 쓰이지 않는다.
-  const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('미로 AI 캐릭터챗')}`
+  // 11/28 검색 결과 제목이 영어로 잡혔다(봇이 Accept-Language: en 으로 긁음) — 검색·미리보기 봇에게는 언제나 한국어 제목을 준다.
+  const bot = /bot|crawl|spider|slurp|yeti|daum|facebookexternalhit|kakaotalk|preview/i.test((await headers()).get('user-agent') ?? '')
+  const language = bot ? 'ko' : await getLanguage()
+  const t: T = (text, params) => translate(messagesFor(language), text, params)
+  // 탭 제목은 어느 화면에서나 이 한 줄로 고정한다(2026-09-30 요청). template 에 %s 가 없어 각 화면이 정한 제목은 쓰이지 않는다.
+  // 11/28 사용자: 검색 결과에 깔끔하게 — 이름(MIRO) - 문장.
+  const title = `${language === 'ko' ? '미로 AI 캐릭터챗(MIRO)' : t('미로 AI 캐릭터챗')} - ${t('최애 캐릭터를 현실에서 만나봐')}`
   // 11/12 링크 미리보기 그림 — 미로 시그니처 캐릭터 8명(미로·가린·문자 요정·서하·채이·다온·하진·수아), 짙은 라벤더 단색 배경·흰 굵은 MIRO(사용자 선택 A안, 힉스필드 생성 + 글씨는 직접 얹음, output/share-image). 파일 이름을 바꿔야 메신저 캐시가 새로 받는다.
   const shareImage = { url: '/miro-share-v3.png', width: 1200, height: 630, alt: 'MIRO' }
   // 11/13 검색(SEO·AEO): 검색 결과·AI 답변에 쓰이는 한 줄 설명.
