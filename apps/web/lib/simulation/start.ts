@@ -66,7 +66,7 @@ export async function createRoleplaySession(
       eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
     )).limit(1)
   // 재진입은 저장된 상태 위에서 이어진다. 새 세션을 만들지 않는다.
-  if (existing[0] && separate) await db.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, existing[0].id))
+  if (existing[0] && separate) await db.update(roleplaySessions).set({ adultMode: true }).where(eq(roleplaySessions.id, existing[0].id))
   if (existing[0]) return { sessionId: existing[0].id, characterId: character.characterId, isOfficial: character.isOfficial, created: false }
 
   const result = await db.transaction(async (tx) => {
@@ -77,7 +77,7 @@ export async function createRoleplaySession(
       eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
     )).limit(1)
     if (active) {
-      if (separate) await tx.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, active.id))
+      if (separate) await tx.update(roleplaySessions).set({ adultMode: true }).where(eq(roleplaySessions.id, active.id))
       return { sessionId: active.id, created: false, revisionId: undefined }
     }
 
@@ -102,7 +102,7 @@ export async function createRoleplaySession(
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: starting.worldId, policyVersion,
       openingScene: scene ? opts.scene : null,
-      ...(separate ? { adultMode: true, adultSince: new Date(), adultLevel: 'explicit' as const } : {}),
+      ...(separate ? { adultMode: true, adultSince: new Date() } : {}),
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.

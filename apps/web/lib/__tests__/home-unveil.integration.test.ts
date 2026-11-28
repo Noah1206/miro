@@ -48,7 +48,7 @@ describeDb('home unveil consent and isolated conversations', () => {
     await setHomeUnveilFor(userId, true)
     const adult = await createRoleplaySession(userId, c.id)
     expect(adult.sessionId).not.toBe(normal.sessionId)
-    expect((await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, adult.sessionId)))[0]).toMatchObject({ adultMode: true, adultLevel: 'explicit' })
+    expect((await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, adult.sessionId)))[0]).toMatchObject({ adultMode: true })
     expect(await memoryRetriever.retrieve({ sessionId: adult.sessionId, userId, query: '약속', limit: 10 })).toEqual([])
     expect((await listSessions(userId)).items.map(i => i.id)).toEqual([adult.sessionId])
     expect(await loadSession(normal.sessionId, userId)).toBeNull()

@@ -68,12 +68,12 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
 
   // 언베일 사진(10/19): 이 대화방에서 언베일이 켜져 있고 서버 판정(성인 인증·19세 이상 캐릭터·페르소나)을 다시 통과할 때만 자체 오픈 모델로.
   const request = String(form.get('request') ?? '').trim().slice(0, 300) || undefined
-  let unveil: { level: 'soft' | 'deep' | 'explicit'; characterAge: number; request?: string } | null = null
+  let unveil: { characterAge: number; request?: string } | null = null
   // 11/3 한 방(인라인 미러링): 방 종류가 아니라 지금 언베일 판정(인증·동의·19+ 캐릭터·언베일 켜짐)으로 정한다. 통과 못 하면 일반 사진.
   const [c] = await db.select({ age: characters.age, photoScenes: characters.photoScenes }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
   const gate = await adultModeGateFor(user.id, loaded.characterId, sessionId)
   const age = Number.parseInt(String(c?.age ?? ''), 10)
-  if (gate.allowed && Number.isFinite(age) && age >= 19) unveil = { level: loaded.adult.level, characterAge: age, request }
+  if (gate.allowed && Number.isFinite(age) && age >= 19) unveil = { characterAge: age, request }
   // 고정 세부사항(11/2) — 머리·옷·속옷 색처럼 사진마다 같아야 하는 것. 사용자가 적은 글이라 요청과 같은 안전 검사를 거친다.
   const details = String(form.get('details') ?? '').replace(/\s+/g, ' ').trim().slice(0, 300) || undefined
   const unsafe = unsafeRequest(request) ?? unsafeRequest(details)

@@ -13,21 +13,6 @@ export function openImageReady() {
   return !!(process.env.RUNPOD_SD_ENDPOINT_ID && process.env.RUNPOD_API_KEY) || !!process.env.SD_WEBUI_URL
 }
 
-/** 언베일 수위 → 프롬프트 태그. 최대 수위는 MIRO_UNVEIL_IMAGE_MAX_LEVEL(soft|deep|explicit, 기본 explicit)로 운영자가 낮출 수 있다. */
-export type UnveilLevel = 'soft' | 'deep' | 'explicit'
-const LEVELS: UnveilLevel[] = ['soft', 'deep', 'explicit']
-const LEVEL_TAGS: Record<UnveilLevel, { mature: boolean; positive: string; negative: string }> = {
-  soft: { mature: false, positive: 'suggestive, alluring, clothed', negative: 'nsfw, nude, nipples, genitals' },
-  deep: { mature: true, positive: 'sensual, partially undressed, intimate mood', negative: 'genitals, explicit sex' },
-  explicit: { mature: true, positive: 'nsfw', negative: '' },
-}
-export function cappedLevel(level: UnveilLevel): UnveilLevel {
-  const max = (process.env.MIRO_UNVEIL_IMAGE_MAX_LEVEL ?? 'explicit') as UnveilLevel
-  const cap = LEVELS.includes(max) ? LEVELS.indexOf(max) : 0
-  return LEVELS[Math.min(LEVELS.indexOf(level), cap)]!
-}
-export const levelTags = (level: UnveilLevel) => LEVEL_TAGS[cappedLevel(level)]
-
 // 안전장치(필수, 10/19): 유저 요청 글에 미성년 신호나 실존 인물·실사 사진 요청이 있으면 그리지 않는다.
 const MINOR_EN = /\b(child|kid|loli|shota|teen(?:ager)?|underage|minor|schoolgirl|schoolboy|(?<!(?:college|university|grad|graduate) )student|young boy|young girl|preteen|elementary|middle school|high school)\b/i
 const REAL_PERSON = /(https?:\/\/|실존|연예인|아이돌|배우 .{1,6} 얼굴|실제 사람|내 사진|이 사진|real person|celebrity|photo of me|my face|this photo|deepfake)/i
@@ -84,8 +69,6 @@ export type LocalImageRequest = {
   characterAge: number | null
   /** 언베일(성인 모드) 대화방에서만 true. */
   mature: boolean
-  /** 언베일 수위 — 있으면 mature 대신 이 값(운영자 상한 적용)으로 태그를 정한다. */
-  level?: UnveilLevel
   width?: number
   height?: number
   seed?: number
@@ -97,13 +80,6 @@ export function buildPrompt(req: LocalImageRequest): { prompt: string; negative:
   const s = req.style ? STYLE_LORAS[req.style] : null
   if (s && s.base !== req.model) throw new Error(`${req.style} 그림체는 ${s.base} 모델 전용이에요`)
   const lora = s ? `<lora:${s.lora}:${s.weight}>, ${s.trigger}, ` : ''
-  if (req.level) {
-    const tag = levelTags(req.level)
-    return {
-      prompt: `${lora}${m.quality}, ${tag.mature ? m.mature : m.safe}, ${ADULT_ONLY}, ${tag.positive}, ${req.prompt}`,
-      negative: [m.negative, NO_MINORS, tag.negative].filter(Boolean).join(', '),
-    }
-  }
   return {
     prompt: `${lora}${m.quality}, ${req.mature ? m.mature : m.safe}, ${ADULT_ONLY}, ${req.prompt}`,
     negative: `${m.negative}, ${NO_MINORS}${req.mature ? '' : ', nsfw, nude'}`,

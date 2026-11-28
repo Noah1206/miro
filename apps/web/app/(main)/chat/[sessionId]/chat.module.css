@@ -26,21 +26,6 @@
 .contextButton svg { width: 20px; height: 20px; }
 .voiceStatus { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 12px; flex: 0 0 auto; color: var(--color-text-secondary); font-size: 12px; }
 .voiceStatus button { border: 0; background: none; color: var(--color-accent-text); font: inherit; min-height: 36px; cursor: pointer; }
-/* 언베일 — 클래식 토글과 수위 메뉴, 자수정 그라데이션. */
-.adultControl { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
-.adultMenuToggle { width: 24px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; cursor: pointer; }
-.adultMenuToggle:disabled { opacity: .6; cursor: default; }
-.adultMenuToggle:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
-/* 첫 켜기 시트의 두 동의 체크 — 가운데 정렬 묶음 아래에서 왼쪽 정렬로 읽힌다. */
-/* 언베일 수위 메뉴(10/3) — 모드 고르기 목록처럼: 작은 머리말, 한 단어 항목, 고른 항목에 체크. */
-.adultMenuHead { margin: 4px 10px 6px; font-size: 12px; color: var(--color-text-tertiary); }
-.adultMenuItem { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 8px 10px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-primary); text-align: left; cursor: pointer; }
-.adultMenuItem:hover, .adultMenuItem:focus-visible { background: var(--color-surface-3); outline: none; }
-.adultMenuItem[aria-checked='true'] { background: linear-gradient(115deg, #281b3e, #382448); color: #e0caf6; }
-.adultMenuItem svg { flex: 0 0 auto; color: currentColor; }
-.adultMenuTitle { display: block; font-size: 15px; font-weight: 600; line-height: 1.35; }
-.adultConsent { display: grid; text-align: left; margin-top: calc(-1 * var(--space-3)); }
-.adultBadge { width: 64px; height: 64px; box-sizing: border-box; display: grid; place-items: center; border: 5px solid #ef3038; border-radius: 50%; background: #fff; color: #111; font-size: 31px; line-height: 1; font-weight: 850; letter-spacing: -1.5px; }
 .stylePicker { position: relative; flex-shrink: 0; }
 .styleButton { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 8px 0 10px; border: 0; border-radius: 8px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; }
 .transcript { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 18px 16px 0; scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
@@ -104,11 +89,11 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .input:focus-visible { outline: none; }
 .send { display: grid; place-items: center; width: 32px; height: 29px; flex-shrink: 0; padding: 0; border: 0; border-radius: 999px; background: var(--color-accent); color: var(--color-accent-on); cursor: pointer; }
 .send:disabled { opacity: .45; cursor: default; }
-.contextButton, .storyDateButton, .adultMenuToggle, .adultMenuItem, .iconButton, .avatar { transition: transform 160ms var(--ease-standard), background-color 160ms var(--ease-standard); }
-.contextButton:active, .storyDateButton:active, .adultMenuToggle:active, .adultMenuItem:active, .iconButton:active, .avatar:active { transform: scale(.94); }
+.contextButton, .storyDateButton, .iconButton, .avatar { transition: transform 160ms var(--ease-standard), background-color 160ms var(--ease-standard); }
+.contextButton:active, .storyDateButton:active, .iconButton:active, .avatar:active { transform: scale(.94); }
 @media (prefers-reduced-motion: reduce) {
-  .contextButton, .storyDateButton, .adultMenuToggle, .adultMenuItem, .iconButton, .avatar { transition: none; }
-  .contextButton:active, .storyDateButton:active, .adultMenuToggle:active, .adultMenuItem:active, .iconButton:active, .avatar:active { transform: none; }
+  .contextButton, .storyDateButton, .iconButton, .avatar { transition: none; }
+  .contextButton:active, .storyDateButton:active, .iconButton:active, .avatar:active { transform: none; }
 }
 .styleButton:focus-visible, .contextButton:focus-visible, .send:focus-visible { outline: 2px solid var(--color-white); outline-offset: 2px; }
 @media (max-width: 360px) { .header { gap: 4px; padding-inline: 8px; } .title { font-size: 16px; } .styleButton { padding: 0 8px 0 12px; font-size: 12px; } .transcript { padding-inline: 12px; } }
@@ -153,14 +138,14 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .composerForm { background:#161616; border:1px solid #333; border-radius:24px; }
 :global([data-chat-theme='talk']) .composerForm { background:#fff; border:1px solid #dedede; border-radius:8px; }
 
-:global([data-chat-theme='talk']) .contextButton, :global([data-chat-theme='talk']) .storyDateButton, :global([data-chat-theme='talk']) .adultMenuToggle { color:#354653; }
+:global([data-chat-theme='talk']) .contextButton, :global([data-chat-theme='talk']) .storyDateButton { color:#354653; }
 :global([data-chat-theme='dm']) .speaker, :global([data-chat-theme='dm']) .narrationText, :global([data-chat-theme='dm']) .opening { color:#a8a8a8; }
 :global([data-chat-theme='talk']) .speaker, :global([data-chat-theme='talk']) .narrationText, :global([data-chat-theme='talk']) .opening, :global([data-chat-theme='talk']) .storyDateMarker { color:#485967; }
 :global([data-chat-theme='talk']) .narrationIcon { color:#526573; }
 :global([data-chat-theme='talk']) .bubble strong { color:inherit; }
 :global([data-chat-theme='dm']) .messages, :global([data-chat-theme='talk']) .messages { gap:16px; }
 :global([data-chat-theme='dm']) .narrationText, :global([data-chat-theme='talk']) .narrationText { font-size:13px; line-height:1.65; }
-@media(max-width:420px) { .header { gap:4px; padding-inline:6px; } .contextButton, .storyDateButton { width:34px; } .adultMenuToggle { width:20px; } }
+@media(max-width:420px) { .header { gap:4px; padding-inline:6px; } .contextButton, .storyDateButton { width:34px; } }
 
 /* Light DM: compact neutral incoming bubbles and a vivid outgoing gradient. */
 :global([data-chat-theme='dm-light']) .main { background:#fff; color:#171717; color-scheme:light; }
@@ -179,7 +164,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm-light']) .composerForm { background:#f1f1f1; border:1px solid transparent; border-radius:24px; padding:2px 6px 2px 12px; }
 :global([data-chat-theme='dm-light']) .composerForm:focus-within { border-color:#c7b4ef; }
 
-:global([data-chat-theme='dm-light']) .contextButton, :global([data-chat-theme='dm-light']) .storyDateButton, :global([data-chat-theme='dm-light']) .adultMenuToggle { color:#505050; }
+:global([data-chat-theme='dm-light']) .contextButton, :global([data-chat-theme='dm-light']) .storyDateButton { color:#505050; }
 :global([data-chat-theme='dm-light']) .transcript { padding:16px 12px 0; }
 :global([data-chat-theme='dm-light']) .messages { gap:12px; }
 :global([data-chat-theme='dm-light']) .reply { gap:12px; }
@@ -355,7 +340,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .bubble p + p { margin-top:10px; }
 
 /* 기존 언베일 시트의 흰색 CTA를 실제 본인인증에도 유지한다. */
-.adultVerification button[type='submit'] { background:#fff !important; color:#181818 !important; border-color:#fff !important; }
 
 /* Compact separation from the final bubble, including while the keyboard is open. */
 .composer, :global([data-chat-theme]) .composer { padding-top: 4px; }

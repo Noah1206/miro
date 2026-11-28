@@ -10,7 +10,6 @@ import { and, eq, isNull } from 'drizzle-orm'
 import { db, characters, characterVisualIdentities } from '@miro/db'
 import { buildVisualPrompt } from '@miro/domain'
 import { generateModalImage, styleFor, toImageTags } from '../lib/ai/modal-image'
-import { levelTags } from '../lib/ai/local-image'
 import { PHOTO_SCENES } from '../lib/photo-scenes'
 
 const OWNER = 'f5a0dfcb-0e4c-443e-be17-c982234926c1'
@@ -50,9 +49,8 @@ async function run(job: (typeof jobs)[number]) {
   const path = `${dir}/${job.file}.png`
   if (existsSync(path)) { done++; return }   // 다시 돌리면 이어서
   try {
-    const level = job.unveil ? levelTags('explicit') : null
-    const tags = [level?.positive, job.s.tags].filter(Boolean).join(', ')
-    const png = await generateModalImage({ style: styleFor(job.c.audience), look: await lookTags(job.c), tags, unveil: !!level?.mature, couple: job.s.couple, extraNeg: level?.negative,
+    const tags = [job.unveil && 'nsfw', job.s.tags].filter(Boolean).join(', ')
+    const png = await generateModalImage({ style: styleFor(job.c.audience), look: await lookTags(job.c), tags, unveil: job.unveil, couple: job.s.couple,
       seed: Math.floor(Math.random() * 2_000_000_000), refUrl: job.c.images?.[0] })
     mkdirSync(dir, { recursive: true }); writeFileSync(path, png)
     done++

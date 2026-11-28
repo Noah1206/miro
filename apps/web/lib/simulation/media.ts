@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { budgetedImage } from '@/lib/ai/media-budget'
-import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
+import { generateLocalImage, openImageReady, unsafeRequest, type BaseModel } from '@/lib/ai/local-image'
 import { generateModalImage, LOOK_VERSION, lookFor, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
 // 11/18 사용자 결정: 언베일 사진은 남성 성기를 무조건 흰색으로 칠한 뒤에만 저장한다(lib/ai/censor → tooling/image/modal_censor.py). 가림이 실패하면 사진을 내보내지 않는다.
 import { censorPng } from '@/lib/ai/censor'
@@ -95,7 +95,7 @@ export async function getOrGenerate(opts: {
    * 언베일 사진(10/19) — 호출자가 adultModeGateFor 를 통과한 대화방에서만 넘긴다. 자체 오픈 모델로 그리고,
    * 결과는 그 대화방 주인만 열 수 있는 비공개 버킷에만 둔다. 공급자가 없으면 요청을 거절한다.
    */
-  unveil?: { level: UnveilLevel; characterAge: number; request?: string } | null
+  unveil?: { characterAge: number; request?: string } | null
   /** 사용자가 고정해 둔 세부사항(11/2, 머리·옷·속옷 색 등) — 프롬프트와 캐시 키에 같이 들어간다. 호출자가 안전 검사를 마친 값. */
   details?: string
   /** 사진 시트에서 고른 장면·구도(11/2, 영어 태그) — Modal 경로에서만 쓴다. couple 이면 상대 인물도 그린다. */
@@ -197,7 +197,7 @@ async function unveilPhoto(
   // 안전장치: 실존 인물 레퍼런스가 걸린 캐릭터, 미성년·실존 인물 신호가 있는 요청은 그리지 않는다.
   if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
   if (unsafeRequest(opts.unveil.request)) throw new Error(`unveil_request_${unsafeRequest(opts.unveil.request)}`)
-  const cacheKey = `unveil:${opts.sessionId}:${opts.unveil.level}:${buildMediaKey(opts.kind, context)}:${opts.unveil.request ?? ''}${opts.details ? `:d:${opts.details}` : ''}`
+  const cacheKey = `unveil:${opts.sessionId}:explicit:${buildMediaKey(opts.kind, context)}:${opts.unveil.request ?? ''}${opts.details ? `:d:${opts.details}` : ''}`
   const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
   if (hit) return { ...hit, cached: true, providerNotice: null }
@@ -209,13 +209,13 @@ async function unveilPhoto(
   const generateAndSave = async () => {
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `open-model:${model}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? usageWeight('photo') : 0 },
-      async () => censorPng(await generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, level: opts.unveil.level, width: 832, height: 1216 })))
+      async () => censorPng(await generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, width: 832, height: 1216 })))
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
     const [saved] = await db.insert(generatedMedia).values({
       id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt,
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,
-      providerMetadata: { provider: `open-model:${model}`, unveilLevel: opts.unveil.level, storage },
+      providerMetadata: { provider: `open-model:${model}`, storage },
     }).returning({ id: generatedMedia.id, url: generatedMedia.url })
     return saved!
   }
@@ -252,10 +252,9 @@ async function modalPhoto(
   if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
   const request = opts.unveil?.request
   if (unsafeRequest(request) || unsafeRequest(opts.details)) throw new Error('unsafe_request')
-  const level = opts.unveil ? cappedLevel(opts.unveil.level) : null
   const style = styleFor(audience, slug)
   const seed = opts.seed ?? 11
-  const cacheKey = `modal:${opts.sessionId}:${style}:${heroine?.name ?? ''}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:${opts.composition ?? ''}:s${seed}`
+  const cacheKey = `modal:${opts.sessionId}:${style}:${heroine?.name ?? ''}:${opts.unveil ? 'explicit' : 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:${opts.composition ?? ''}:s${seed}`
   const units = opts.usage?.units ?? usageWeight('photo')
   const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
@@ -273,22 +272,22 @@ async function modalPhoto(
     const [saved, moment] = await Promise.all([lookTags(opts.characterId, source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM, !!adultLLM) : Promise.resolve('')])
     // 11/15 언베일 방이어도 수위 태그·노출은 그 사진이 노출·성행위 장면일 때만(언베일 장면을 골랐거나 지금 순간이 그럴 때) —
     // 예전엔 방 수위만 보고 붙여서 밥 먹는 순간·카페 장면도 벗은 사진이 됐다. 아니면 일반 사진과 똑같이 그린다.
-    const tag = level && (opts.scene ? opts.scene.unveil : explicitMoment(moment)) ? levelTags(level) : null
+    const mature = !!opts.unveil && !!(opts.scene ? opts.scene.unveil : explicitMoment(moment))
     // 장면을 안 골랐으면 지금 순간 + 그 장의 구도(11/3 — 예전엔 구도를 고르면 순간 태그가 빠졌다).
     const sceneTags = opts.scene?.tags ?? momentWithComposition(moment, opts.composition)
-    const tags = [tag?.positive, sceneTags].filter(Boolean).join(', ')
+    const tags = [mature && 'nsfw', sceneTags].filter(Boolean).join(', ')
     // 장면·순간이 옷을 말하면 평소 옷은 뺀다(11/15) — 저장은 "외형 | 평소 옷" 그대로.
     const look = lookFor(saved.look, sceneTags)
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
       // 11/18 언베일 사진은 남성 성기를 흰색으로 칠한 뒤에만 저장한다(파일 맨 위 설명).
-      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? twoPeopleMoment(moment), extraNeg: tag?.negative, seed, refUrl }); return tag?.mature ? censorPng(png) : png })
+      async () => { const png = await generateModalImage({ style, look, tags, unveil: mature, couple: opts.scene?.couple ?? twoPeopleMoment(moment), seed, refUrl }); return mature ? censorPng(png) : png })
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
     const [row] = await db.insert(generatedMedia).values({
       id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt: [look, tags].filter(Boolean).join(' | '),
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,
-      providerMetadata: { provider: `modal:${style}`, unveilLevel: level, storage, ...(saved.key ? { lookKey: saved.key, look: saved.look } : {}) },
+      providerMetadata: { provider: `modal:${style}`, storage, ...(saved.key ? { lookKey: saved.key, look: saved.look } : {}) },
     }).returning({ id: generatedMedia.id, url: generatedMedia.url })
     return row!
   }

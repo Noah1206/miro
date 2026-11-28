@@ -47,7 +47,7 @@ export type LoadedSession = {
   lastInteractionAt: Date
   contactBoundary: ContactBoundary | null
   /** 성인 모드 — on: 지금 켜짐(화면 토글), since: 처음 켠 시각(있으면 이 방의 모든 AI 호출이 성인 전용 모델로 간다). */
-  adult: { on: boolean; since: Date | null; level: 'soft' | 'deep' | 'explicit'; turn: boolean }
+  adult: { on: boolean; since: Date | null; turn: boolean }
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시. 제작자가 캐릭터에 붙인 복사본. */
   commands: Array<{ name: string; hint: string; prompt: string }>
 }
@@ -180,7 +180,6 @@ export async function loadSession(
     life: lifeLines(life, timeZone),
     userMoments: momentLines(moments, now, timeZone),
     adultMode: adultOk || inlineAdult,
-    adultLevel: inlineAdult ? 'explicit' : row.session.adultLevel,
     recentCalls: calls.map((c) => {
       const when = localClock(c.endedAt ?? c.createdAt, timeZone).label
       const kind = c.channel === 'voice' ? '음성통화' : '영상통화'
@@ -209,7 +208,7 @@ export async function loadSession(
     policyVersion: row.session.policyVersion,
     contactBoundary: row.session.contactBoundary,
     lastInteractionAt: row.session.lastInteractionAt,
-    adult: { on: row.session.adultMode, since: row.session.adultSince, level: row.session.adultLevel, turn: adultTurn },
+    adult: { on: row.session.adultMode, since: row.session.adultSince, turn: adultTurn },
     commands: c.commands,
   }
 }
